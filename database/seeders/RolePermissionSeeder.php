@@ -54,7 +54,7 @@ class RolePermissionSeeder extends Seeder
                 'name' => 'Viewer',
                 'slug' => 'viewer',
                 'description' => 'View-only access to reports and data',
-                'permissions' => Permission::filter(fn($p) => str_ends_with($p['slug'], '.view'))->pluck('id')->toArray(),
+                'permissions' => Permission::where('slug', 'LIKE', '%.view')->pluck('id')->toArray(),
             ],
         ];
 

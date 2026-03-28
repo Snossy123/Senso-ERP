@@ -110,10 +110,12 @@ class SalesSeeder extends Seeder
             $total = $subtotal + $taxAmount;
 
             $paymentMethods = ['cash', 'card', 'bank_transfer'];
-            $paymentStatuses = ['paid', 'paid', 'paid', 'pending'];
+            $paymentStatuses = ['paid', 'paid', 'paid', 'partial'];
+
+            $saleNumber = 'SL-' . now()->format('Ymd') . '-' . strtoupper(substr(md5($tenantId . $i . time()), 0, 6));
 
             $sale = Sale::create([
-                'sale_number' => Sale::generateSaleNumber(),
+                'sale_number' => $saleNumber,
                 'user_id' => $user->id,
                 'subtotal' => $subtotal,
                 'discount_amount' => 0,
@@ -146,6 +148,7 @@ class SalesSeeder extends Seeder
 
         $statuses = ['pending', 'processing', 'shipped', 'delivered', 'delivered', 'delivered'];
         $paymentStatuses = ['pending', 'paid', 'paid', 'paid'];
+        $paymentMethods = ['cash_on_delivery', 'online'];
         $cities = ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix'];
 
         for ($i = 0; $i < 20; $i++) {
@@ -173,8 +176,10 @@ class SalesSeeder extends Seeder
             $taxAmount = $subtotal * $taxRate;
             $total = $subtotal + $shippingCost + $taxAmount;
 
+            $orderNumber = 'ORD-' . now()->format('Ymd') . '-' . strtoupper(substr(md5($tenantId . $i . uniqid()), 0, 6));
+
             $order = Order::create([
-                'order_number' => Order::generateOrderNumber(),
+                'order_number' => $orderNumber,
                 'customer_name' => $customerName . ' ' . ($i + 1),
                 'customer_email' => 'order' . ($i + 1) . '@example.com',
                 'customer_phone' => '555-' . rand(1000, 9999),
@@ -185,7 +190,7 @@ class SalesSeeder extends Seeder
                 'shipping_cost' => $shippingCost,
                 'tax_amount' => $taxAmount,
                 'total' => $total,
-                'payment_method' => 'card',
+                'payment_method' => $paymentMethods[array_rand($paymentMethods)],
                 'payment_status' => $paymentStatuses[array_rand($paymentStatuses)],
                 'notes' => rand(0, 10) > 8 ? 'Please leave at door' : null,
                 'tenant_id' => $tenantId,
