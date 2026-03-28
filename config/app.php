@@ -229,4 +229,16 @@ return [
 
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | ERP Custom Configuration
+    |--------------------------------------------------------------------------
+    */
+    'currency' => env('APP_CURRENCY', 'USD'),
+    'currency_symbol' => env('APP_CURRENCY_SYMBOL', '$'),
+    'tax_rate' => env('APP_TAX_RATE', 15),
+    'address' => env('APP_ADDRESS', ''),
+    'phone' => env('APP_PHONE', ''),
+    'email' => env('APP_EMAIL', ''),
+
 ];

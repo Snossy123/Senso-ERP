@@ -254,16 +254,18 @@
 										<div class="d-flex wd-100p">
 											<div class="main-img-user"><img alt="" src="{{URL::asset('assets/img/faces/6.jpg')}}" class=""></div>
 											<div class="mr-3 my-auto">
-												<h6>Petey Cruiser</h6><span>Premium Member</span>
+												<h6>{{ Auth::user()->name }}</h6><span>Staff Member</span>
 											</div>
 										</div>
 									</div>
-									<a class="dropdown-item" href=""><i class="bx bx-user-circle"></i>Profile</a>
-									<a class="dropdown-item" href=""><i class="bx bx-cog"></i> Edit Profile</a>
-									<a class="dropdown-item" href=""><i class="bx bxs-inbox"></i>Inbox</a>
-									<a class="dropdown-item" href=""><i class="bx bx-envelope"></i>Messages</a>
-									<a class="dropdown-item" href=""><i class="bx bx-slider-alt"></i> Account Settings</a>
-									<a class="dropdown-item" href="{{ url('/' . $page='page-signin') }}"><i class="bx bx-log-out"></i> Sign Out</a>
+									<a class="dropdown-item" href="#"><i class="bx bx-user-circle"></i>Profile</a>
+									<a class="dropdown-item" href="{{ route('logout') }}" 
+									   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+										<i class="bx bx-log-out"></i> Sign Out
+									</a>
+									<form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+										@csrf
+									</form>
 								</div>
 							</div>
 							<div class="dropdown main-header-message right-toggle">

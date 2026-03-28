@@ -22,27 +22,36 @@
 							<div class="row">
 								<div class="col-md-10 col-lg-10 col-xl-9 mx-auto">
 									<div class="card-sigin">
-										<div class="mb-5 d-flex"> <a href="{{ url('/' . $page='index') }}"><img src="{{URL::asset('assets/img/brand/favicon.png')}}" class="sign-favicon ht-40" alt="logo"></a><h1 class="main-logo1 ml-1 mr-0 my-auto tx-28">Va<span>le</span>x</h1></div>
+										<div class="mb-5 d-flex"> <a href="{{ route('dashboard') }}"><img src="{{URL::asset('assets/img/brand/favicon.png')}}" class="sign-favicon ht-40" alt="logo"></a><h1 class="main-logo1 ml-1 mr-0 my-auto tx-28">Senso <span>ERP</span></h1></div>
 										<div class="card-sigin">
 											<div class="main-signup-header">
 												<h2>Welcome back!</h2>
-												<h5 class="font-weight-semibold mb-4">Please sign in to continue.</h5>
-												<form action="#">
+												<h5 class="font-weight-semibold mb-4">Staff Admin Login</h5>
+												<form action="{{ route('login') }}" method="POST">
+													@csrf
+													@if($errors->any())
+														<div class="alert alert-danger mb-4">
+															<ul class="mb-0">@foreach($errors->all() as $error) <li>{{ $error }}</li> @endforeach</ul>
+														</div>
+													@endif
 													<div class="form-group">
-														<label>Email</label> <input class="form-control" placeholder="Enter your email" type="text">
+														<label>Email</label> <input class="form-control" name="email" placeholder="Enter your email" type="email" value="{{ old('email') }}" required autofocus>
 													</div>
 													<div class="form-group">
-														<label>Password</label> <input class="form-control" placeholder="Enter your password" type="password">
-													</div><button class="btn btn-main-primary btn-block">Sign In</button>
-													<div class="row row-xs">
-														<div class="col-sm-6">
-															<button class="btn btn-block"><i class="fab fa-facebook-f"></i> Signup with Facebook</button>
-														</div>
-														<div class="col-sm-6 mg-t-10 mg-sm-t-0">
-															<button class="btn btn-info btn-block"><i class="fab fa-twitter"></i> Signup with Twitter</button>
+														<label>Password</label> <input class="form-control" name="password" placeholder="Enter your password" type="password" required>
+													</div>
+													<div class="form-group">
+														<div class="checkbox">
+															<div class="custom-checkbox custom-control">
+																<input type="checkbox" name="remember" data-checkboxes="mygroup" class="custom-control-input" id="checkbox-1">
+																<label for="checkbox-1" class="custom-control-label mt-1">Remember me</label>
+															</div>
 														</div>
 													</div>
+													<button type="submit" class="btn btn-main-primary btn-block">Sign In</button>
 												</form>
+											</div>
+										</div>
 												<div class="main-signin-footer mt-5">
 													<p><a href="">Forgot password?</a></p>
 													<p>Don't have an account? <a href="{{ url('/' . $page='signup') }}">Create an Account</a></p>
