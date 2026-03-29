@@ -56,6 +56,11 @@ class ProductController extends Controller
         $data['is_active']    = $request->boolean('is_active', true);
         $data['is_ecommerce'] = $request->boolean('is_ecommerce');
 
+        $tenant = app(\App\Services\TenantManager::class)->getCurrent();
+        if ($tenant && !$tenant->canAddProduct()) {
+            return redirect()->back()->with('error', 'You have reached your product limit of ' . $tenant->getProductsUsage()?->capacity_limit . '. Please upgrade your plan.');
+        }
+
         Product::create($data);
         return redirect()->route('inventory.products.index')->with('success', 'Product created.');
     }

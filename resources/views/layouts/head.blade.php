@@ -1,5 +1,4 @@
-<!-- Title -->
-<title> Senso ERP - Advanced Inventory & POS </title>
+<title> @yield('title') - Senso ERP </title>
 <!-- Favicon -->
 <link rel="icon" href="{{URL::asset('assets/img/brand/favicon.png')}}" type="image/x-icon"/>
 <!-- Icons css -->

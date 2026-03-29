@@ -2,74 +2,81 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\SettingService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 
 class SettingsController extends Controller
 {
-    public function __construct()
+    protected SettingService $settings;
+
+    public function __construct(SettingService $settings)
     {
+        $this->settings = $settings;
         $this->middleware('auth');
     }
 
-    public function __invoke()
+    public function index()
     {
-        abort_if(!auth()->user()->isAdmin(), 403);
-
-        $appSettings = [
-            'app_name' => config('app.name'),
-            'app_currency' => config('app.currency'),
-            'app_currency_symbol' => config('app.currency_symbol', '$'),
-            'app_tax_rate' => config('app.tax_rate', 0),
-            'app_address' => config('app.address', ''),
-            'app_phone' => config('app.phone', ''),
-            'app_email' => config('app.email', ''),
+        $groups = $this->settings->allGrouped();
+        
+        // Define default structure for grouped settings
+        $settingsConfig = [
+            'business' => [
+                'company_name' => ['label' => 'Company Name', 'type' => 'string'],
+                'company_logo' => ['label' => 'Company Logo', 'type' => 'file'],
+                'vat_number' => ['label' => 'VAT Number', 'type' => 'string'],
+                'invoice_prefix' => ['label' => 'Invoice Prefix', 'type' => 'string', 'default' => 'INV-'],
+                'invoice_format' => ['label' => 'Invoice Format', 'type' => 'select', 'options' => ['standard' => 'Standard', 'modern' => 'Modern', 'classic' => 'Classic']],
+            ],
+            'localization' => [
+                'language' => ['label' => 'Language', 'type' => 'select', 'options' => ['en' => 'English', 'es' => 'Spanish', 'fr' => 'French', 'ar' => 'Arabic']],
+                'timezone' => ['label' => 'Timezone', 'type' => 'string', 'default' => 'UTC'],
+                'date_format' => ['label' => 'Date Format', 'type' => 'select', 'options' => ['Y-m-d' => 'YYYY-MM-DD', 'd/m/Y' => 'DD/MM/YYYY', 'm/d/Y' => 'MM/DD/YYYY']],
+            ],
+            'sales' => [
+                'default_payment_method' => ['label' => 'Default Payment Method', 'type' => 'select', 'options' => ['cash' => 'Cash', 'card' => 'Credit Card', 'bank_transfer' => 'Bank Transfer']],
+                'pos_tax_enabled' => ['label' => 'Enable Tax in POS', 'type' => 'boolean', 'default' => true],
+                'default_discount_limit' => ['label' => 'Max Discount (%)', 'type' => 'integer', 'default' => 20],
+            ],
+            'inventory' => [
+                'low_stock_threshold' => ['label' => 'Low Stock Threshold', 'type' => 'integer', 'default' => 5],
+                'allow_negative_stock' => ['label' => 'Allow Negative Stock', 'type' => 'boolean', 'default' => false],
+                'auto_stock_updates' => ['label' => 'Auto Update Stock on Sale', 'type' => 'boolean', 'default' => true],
+            ],
+            'security' => [
+                'session_timeout' => ['label' => 'Session Timeout (min)', 'type' => 'integer', 'default' => 120],
+                'max_login_attempts' => ['label' => 'Max Login Attempts', 'type' => 'integer', 'default' => 5],
+                'password_min_length' => ['label' => 'Min Password Length', 'type' => 'integer', 'default' => 8],
+            ],
+            'notifications' => [
+                'email_alerts_enabled' => ['label' => 'Enable Email Alerts', 'type' => 'boolean', 'default' => true],
+                'low_stock_notification' => ['label' => 'Low Stock Alerts', 'type' => 'boolean', 'default' => true],
+                'notification_email' => ['label' => 'Notification Email Address', 'type' => 'string'],
+            ],
         ];
 
-        return view('admin.settings.index', compact('appSettings'));
+        return view('admin.settings.index', compact('groups', 'settingsConfig'));
     }
 
     public function store(Request $request)
     {
-        abort_if(!auth()->user()->isAdmin(), 403);
+        $group = $request->input('group', 'general');
+        $inputs = $request->except(['_token', 'group']);
 
-        $request->validate([
-            'app_name' => 'required|string|max:255',
-            'app_currency' => 'required|string|max:10',
-            'app_currency_symbol' => 'required|string|max:5',
-            'app_tax_rate' => 'required|numeric|min:0|max:100',
-        ]);
-
-        $this->updateEnv([
-            'APP_NAME' => $request->app_name,
-            'APP_CURRENCY' => $request->app_currency,
-            'APP_CURRENCY_SYMBOL' => $request->app_currency_symbol,
-            'APP_TAX_RATE' => $request->app_tax_rate,
-            'APP_ADDRESS' => $request->app_address ?? '',
-            'APP_PHONE' => $request->app_phone ?? '',
-            'APP_EMAIL' => $request->app_email ?? '',
-        ]);
-
-        return back()->with('success', 'Settings saved and cached cleared.');
-    }
-
-    protected function updateEnv($data)
-    {
-        $envPath = base_path('.env');
-        $envContent = File::exists($envPath) ? File::get($envPath) : '';
-
-        foreach ($data as $key => $value) {
-            if (preg_match("/^{$key}=.*/m", $envContent)) {
-                $envContent = preg_replace("/^{$key}=.*/m", "{$key}={$value}", $envContent);
-            } else {
-                $envContent .= "\n{$key}={$value}";
+        foreach ($inputs as $key => $value) {
+            if ($request->hasFile($key)) {
+                $path = $request->file($key)->store('settings', 'public');
+                $value = $path;
             }
+
+            // Handle checkbox/boolean
+            if ($value === 'on') $value = true;
+            if ($value === 'off') $value = false;
+
+            $this->settings->set($key, $value, $group);
         }
 
-        File::put($envPath, $envContent);
-
-        Artisan::call('config:clear');
-        Artisan::call('cache:clear');
+        return back()->with('success', ucfirst($group) . ' settings updated successfully.');
     }
 }

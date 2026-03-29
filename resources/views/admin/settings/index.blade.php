@@ -1,116 +1,137 @@
 @extends('layouts.master')
+@section('title', 'Business Settings')
+
 @section('page-header')
-<div class="breadcrumb-header justify-content-between">
-    <div class="my-auto">
-        <div class="d-flex">
-            <h4 class="content-title mb-0 my-auto">Admin</h4><span class="text-muted mt-1 tx-13 ml-2 mb-0">/ Settings</span>
+    <div class="breadcrumb-header justify-content-between">
+        <div class="left-content">
+            <div>
+                <h2 class="main-content-title tx-24 mg-b-1 mg-b-lg-1">System Settings</h2>
+                <p class="mg-b-0">Configure your business, localization, and system preferences.</p>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@section('content')
+<div class="container-fluid">
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    @endif
+
+    <div class="row">
+        <div class="col-lg-3 col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+                    <div class="nav flex-column nav-pills" id="settings-tabs" role="tablist" aria-orientation="vertical">
+                        @foreach($settingsConfig as $groupKey => $group)
+                            <button class="nav-link text-start py-3 px-4 {{ $loop->first ? 'active' : '' }}" 
+                                    id="tab-{{ $groupKey }}" 
+                                    data-toggle="pill" 
+                                    data-target="#content-{{ $groupKey }}" 
+                                    type="button" role="tab">
+                                <i class="fas fa-{{ match($groupKey) {
+                                    'business' => 'briefcase',
+                                    'localization' => 'globe',
+                                    'sales' => 'shopping-cart',
+                                    'inventory' => 'boxes',
+                                    'security' => 'shield-alt',
+                                    'notifications' => 'bell',
+                                    default => 'cog'
+                                } }} me-2"></i> 
+                                {{ ucfirst($groupKey) }}
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9 col-md-8">
+            <div class="tab-content" id="settings-content">
+                @foreach($settingsConfig as $groupKey => $config)
+                    <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" 
+                         id="content-{{ $groupKey }}" role="tabpanel">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-white py-3">
+                                <h5 class="mb-0 text-primary">{{ ucfirst($groupKey) }} Configuration</h5>
+                            </div>
+                            <div class="card-body">
+                                <form action="{{ route('admin.settings.store') }}" method="POST" enctype="multipart/form-data">
+                                    @csrf
+                                    <input type="hidden" name="group" value="{{ $groupKey }}">
+                                    
+                                    @foreach($config as $key => $field)
+                                        <div class="mb-4 row">
+                                            <label class="col-sm-4 col-form-label fw-bold">{{ $field['label'] }}</label>
+                                            <div class="col-sm-8">
+                                                @if($field['type'] === 'string')
+                                                    <input type="text" name="{{ $key }}" class="form-control" 
+                                                           value="{{ setting($key, $field['default'] ?? '') }}">
+                                                @elseif($field['type'] === 'integer')
+                                                    <input type="number" name="{{ $key }}" class="form-control" 
+                                                           value="{{ setting($key, $field['default'] ?? 0) }}">
+                                                @elseif($field['type'] === 'boolean')
+                                                    <div class="form-check form-switch mt-2">
+                                                        <input class="form-check-input" type="checkbox" name="{{ $key }}" 
+                                                               {{ setting($key, $field['default'] ?? false) ? 'checked' : '' }}>
+                                                    </div>
+                                                @elseif($field['type'] === 'select')
+                                                    <select name="{{ $key }}" class="form-select">
+                                                        @foreach($field['options'] as $v => $l)
+                                                            <option value="{{ $v }}" {{ setting($key) == $v ? 'selected' : '' }}>{{ $l }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                @elseif($field['type'] === 'file')
+                                                    @if(setting($key))
+                                                        <div class="mb-2">
+                                                            <img src="{{ asset('storage/' . setting($key)) }}" class="img-thumbnail" style="height: 50px;">
+                                                        </div>
+                                                    @endif
+                                                    <input type="file" name="{{ $key }}" class="form-control">
+                                                @endif
+                                                @if(isset($field['description']))
+                                                    <div class="form-text mt-1 text-mutedSmall">{{ $field['description'] }}</div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endforeach
+
+                                    <div class="text-end mt-3">
+                                        <button type="submit" class="btn btn-primary px-5">
+                                            <i class="fas fa-save me-2"></i> Save {{ ucfirst($groupKey) }} Settings
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
         </div>
     </div>
 </div>
 @endsection
-@section('content')
-<div class="row">
-    <div class="col-lg-10 mx-auto">
-        @if(session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
-        @endif
 
-        <form action="{{ route('admin.settings.store') }}" method="POST">
-            @csrf
-
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">General Settings</h4>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label">Application Name</label>
-                                <input type="text" name="app_name" class="form-control" value="{{ config('app.name') }}" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label">Application URL</label>
-                                <input type="text" class="form-control" value="{{ config('app.url') }}" disabled>
-                                <small class="text-muted">Change in .env file</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Store Settings</h4>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-label">Currency Code</label>
-                                <input type="text" name="app_currency" class="form-control" value="{{ config('app.currency') }}" placeholder="USD, EUR, GBP" required>
-                                <small class="text-muted">e.g., USD, EUR, GBP, EGP</small>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-label">Currency Symbol</label>
-                                <input type="text" name="app_currency_symbol" class="form-control" value="{{ config('app.currency_symbol') }}" placeholder="$" required>
-                                <small class="text-muted">e.g., $, €, £, EGP</small>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-label">Tax Rate (%)</label>
-                                <input type="number" name="app_tax_rate" class="form-control" value="{{ config('app.tax_rate') }}" step="0.01" min="0" max="100" required>
-                                <small class="text-muted">Default tax rate for sales</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Contact Information</h4>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label">Business Address</label>
-                                <textarea name="app_address" class="form-control" rows="2">{{ config('app.address') }}</textarea>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label">Phone Number</label>
-                                <input type="text" name="app_phone" class="form-control" value="{{ config('app.phone') }}">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label">Email Address</label>
-                                <input type="email" name="app_email" class="form-control" value="{{ config('app.email') }}">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-body">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fa fa-save"></i> Save Settings
-                    </button>
-                    <a href="{{ route('dashboard') }}" class="btn btn-secondary">Cancel</a>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
+@section('scripts')
+<style>
+    .nav-pills .nav-link.active {
+        background-color: #f8f9fa;
+        color: #0d6efd;
+        border-left: 4px solid #0d6efd;
+        border-radius: 0;
+    }
+    .nav-pills .nav-link {
+        color: #495057;
+        font-weight: 500;
+        border-bottom: 1px solid #f1f1f1;
+    }
+    .nav-pills .nav-link:hover {
+        background-color: #fbfbfb;
+    }
+</style>
 @endsection

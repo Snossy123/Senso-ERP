@@ -24,11 +24,31 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $filters = $request->only(['search', 'role', 'branch', 'is_active', 'locked']);
-        $result = $this->userService->getUsers($filters);
         
-        $users = $result['users'];
+        $query = User::with(['role:id,name,slug', 'branch:id,name']);
+
+        if (!empty($filters['search'])) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('name', 'like', "%{$filters['search']}%")
+                    ->orWhere('email', 'like', "%{$filters['search']}%");
+            });
+        }
+
+        if (!empty($filters['role'])) {
+            $query->whereHas('role', fn($q) => $q->where('slug', $filters['role']));
+        }
+
+        if (!empty($filters['branch'])) {
+            $query->where('branch_id', $filters['branch']);
+        }
+
+        if (isset($filters['is_active'])) {
+            $query->where('is_active', $filters['is_active']);
+        }
+
+        $users = $query->latest()->paginate(15);
         $roles = \App\Models\Role::active()->get(['id', 'name', 'slug']);
-        $branches = $this->userService->getBranches()['branches'];
+        $branches = \App\Models\Branch::active()->get();
 
         return view('admin.users.index', compact('users', 'roles', 'branches'));
     }
@@ -50,7 +70,7 @@ class UserController extends Controller
         return view('admin.users.create', compact('roles', 'branches', 'permissionsGrouped'));
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -69,11 +89,7 @@ class UserController extends Controller
         
         $user = $this->userService->createUser($validated);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'User created successfully.',
-            'data' => ['id' => $user->id]
-        ]);
+        return redirect()->route('admin.users.index')->with('success', 'User created successfully.');
     }
 
     public function edit(User $user)
@@ -82,11 +98,12 @@ class UserController extends Controller
         $roles = \App\Models\Role::active()->get(['id', 'name', 'slug']);
         $branches = $this->userService->getBranches()['branches'];
         $permissionsGrouped = $this->userService->getPermissionsGrouped();
+        $effectivePermissions = \App\Models\Permission::whereIn('slug', $user->all_permissions)->pluck('id')->toArray();
 
-        return view('admin.users.edit', compact('user', 'roles', 'branches', 'permissionsGrouped'));
+        return view('admin.users.edit', compact('user', 'roles', 'branches', 'permissionsGrouped', 'effectivePermissions'));
     }
 
-    public function update(Request $request, User $user): JsonResponse
+    public function update(Request $request, User $user)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -105,10 +122,7 @@ class UserController extends Controller
         
         $user = $this->userService->updateUser($user, $validated);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'User updated successfully.',
-        ]);
+        return redirect()->route('admin.users.index')->with('success', 'User updated successfully.');
     }
 
     public function destroy(Request $request, User $user): JsonResponse

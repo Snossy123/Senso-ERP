@@ -36,7 +36,19 @@ class SaleController extends Controller
             'tax_rate'       => 'nullable|numeric|min:0|max:100',
         ]);
 
-        DB::transaction(function () use ($request) {
+        $tenant = app(\App\Services\TenantManager::class)->getCurrent();
+        if ($tenant && !$tenant->hasFeature('pos')) {
+             return response()->json(['success' => false, 'error' => 'POS feature is not enabled for your plan.'], 403);
+        }
+        
+        $usage = $tenant?->getOrdersUsage();
+        if ($tenant && $usage && $usage->isAtLimit()) {
+            return response()->json(['success' => false, 'error' => 'Monthly order limit reached for your plan. Please upgrade to continue.'], 403);
+        }
+
+        $lowStockProducts = [];
+
+        DB::transaction(function () use ($request, &$lowStockProducts) {
             $items         = $request->input('items');
             $discountAmt   = (float) $request->input('discount', 0);
             $taxRate       = (float) $request->input('tax_rate', 0);
@@ -61,8 +73,6 @@ class SaleController extends Controller
                 'payment_status'  => 'paid',
                 'notes'           => $request->input('notes'),
             ]);
-
-            $lowStockProducts = [];
 
             foreach ($items as $item) {
                 $product = Product::lockForUpdate()->findOrFail($item['id']);
@@ -103,7 +113,7 @@ class SaleController extends Controller
         }
 
         foreach ($lowStockProducts as $product) {
-            $admins = User::where('role', 'admin')->get();
+            $admins = User::whereHas('role', fn($q) => $q->where('slug', 'admin'))->get();
             foreach ($admins as $admin) {
                 $admin->notify(new LowStockAlertNotification($product));
             }

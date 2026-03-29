@@ -62,6 +62,13 @@ class UserManagementService
 
     public function createUser(array $data): User
     {
+        $tenantId = $data['tenant_id'] ?? auth()->user()->tenant_id;
+        $tenant = $tenantId ? \App\Models\Tenant::find($tenantId) : null;
+
+        if ($tenant && !$tenant->canAddUser()) {
+            throw new \Exception('User limit reached for this tenant. Please upgrade your plan.');
+        }
+
         $user = DB::transaction(function () use ($data) {
             $user = User::create([
                 'name' => $data['name'],
@@ -135,7 +142,27 @@ class UserManagementService
             $user->update($updateData);
 
             if (isset($data['permissions'])) {
-                $user->permissions()->sync($data['permissions']);
+                $rolePermissionIds = $user->role?->permissions->pluck('id')->toArray() ?? [];
+                $checkedIds = array_map('intval', $data['permissions']);
+                
+                $syncData = [];
+                // Get all affected permission IDs (either currently in role or checked in form)
+                $affectedIds = array_unique(array_merge($rolePermissionIds, $checkedIds));
+                
+                foreach ($affectedIds as $id) {
+                    $isChecked = in_array($id, $checkedIds);
+                    $inRole = in_array($id, $rolePermissionIds);
+                    
+                    if ($isChecked) {
+                        // Always ensure checked items are grants (we can be redundant for safety)
+                        $syncData[$id] = ['granted' => 1];
+                    } elseif ($inRole) {
+                        // If in role but UNCHECKED, this is an explicit DENY
+                        $syncData[$id] = ['granted' => 0];
+                    }
+                }
+                
+                $user->permissions()->sync($syncData);
             }
 
             if (!empty($changes)) {

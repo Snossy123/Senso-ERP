@@ -11,9 +11,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 
+use App\Traits\Loggable;
+
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, BelongsToTenant;
+    use HasFactory, Notifiable, BelongsToTenant, Loggable;
 
     protected $fillable = [
         'name', 'email', 'password', 'phone', 'avatar', 'is_active', 'tenant_id',
@@ -36,11 +38,11 @@ class User extends Authenticatable
         'password_changed_at' => 'datetime',
     ];
 
-    protected $appends = ['permissions'];
+    protected $appends = ['all_permissions'];
 
     public function role(): BelongsTo
     {
-        return $this->belongsTo(Role::class);
+        return $this->belongsTo(Role::class, 'role_id');
     }
 
     public function branch(): BelongsTo
@@ -73,12 +75,12 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return $this->role?->slug === 'admin' || $this->attributes['role'] === 'admin';
+        return $this->role?->slug === 'admin';
     }
 
     public function isManager(): bool
     {
-        return $this->role?->slug === 'manager' || $this->attributes['role'] === 'manager';
+        return $this->role?->slug === 'manager';
     }
 
     public function isLocked(): bool
@@ -134,10 +136,6 @@ class User extends Authenticatable
 
     public function hasPermission(string $permission, bool $checkUserOverride = true): bool
     {
-        if ($this->isAdmin()) {
-            return true;
-        }
-
         if ($checkUserOverride) {
             $userPermission = $this->permissions()->where('slug', $permission)->first();
             if ($userPermission) {
@@ -171,11 +169,15 @@ class User extends Authenticatable
     public function getAllPermissions(): array
     {
         $rolePermissions = $this->role?->permissions->pluck('slug')->toArray() ?? [];
-        $userPermissions = $this->permissions->pluck('slug')->toArray();
-        return array_unique(array_merge($rolePermissions, $userPermissions));
+        
+        $overrides = $this->permissions()->get();
+        $grants = $overrides->where('pivot.granted', true)->pluck('slug')->toArray();
+        $denies = $overrides->where('pivot.granted', false)->pluck('slug')->toArray();
+        
+        return array_values(array_diff(array_unique(array_merge($rolePermissions, $grants)), $denies));
     }
 
-    public function getPermissionsAttribute(): array
+    public function getAllPermissionsAttribute(): array
     {
         return $this->getAllPermissions();
     }
