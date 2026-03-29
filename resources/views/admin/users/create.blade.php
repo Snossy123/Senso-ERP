@@ -53,12 +53,13 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="form-label">Role <span class="text-danger">*</span></label>
-                                <select name="role" class="form-control @error('role') is-invalid @enderror" required>
-                                    <option value="staff" {{ old('role') == 'staff' ? 'selected' : '' }}>Staff</option>
-                                    <option value="manager" {{ old('role') == 'manager' ? 'selected' : '' }}>Manager</option>
-                                    <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
+                                <select name="role_id" class="form-control @error('role_id') is-invalid @enderror" required>
+                                    <option value="">Select Role</option>
+                                    @foreach($roles as $role)
+                                        <option value="{{ $role->id }}" {{ old('role_id') == $role->id ? 'selected' : '' }}>{{ $role->name }}</option>
+                                    @endforeach
                                 </select>
-                                @error('role') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                @error('role_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -68,12 +69,46 @@
                             </div>
                         </div>
                     </div>
+                    @if($branches->count() > 0)
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Branch</label>
+                                <select name="branch_id" class="form-control">
+                                    <option value="">No Branch</option>
+                                    @foreach($branches as $branch)
+                                        <option value="{{ $branch->id }}" {{ old('branch_id') == $branch->id ? 'selected' : '' }}>{{ $branch->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
                     <div class="form-group">
                         <label class="custom-control custom-checkbox">
                             <input type="checkbox" class="custom-control-input" name="is_active" value="1" checked>
                             <span class="custom-control-label">Active User</span>
                         </label>
                     </div>
+                    <hr>
+                    <h5>Permissions (inherited from role, can override)</h5>
+                    @if(!empty($permissionsGrouped))
+                        @foreach($permissionsGrouped as $groupKey => $group)
+                            <div class="card mb-2">
+                                <div class="card-header py-2 bg-light">
+                                    <strong>{{ $group['name'] ?? ucfirst($groupKey) }}</strong>
+                                </div>
+                                <div class="card-body py-2">
+                                    @foreach($group['permissions'] as $permission)
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" name="permissions[]" value="{{ $permission->id }}" id="perm_{{ $permission->id }}">
+                                            <label class="form-check-label" for="perm_{{ $permission->id }}">{{ $permission->name }}</label>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
+                    @endif
                     <div class="form-footer mt-4">
                         <button type="submit" class="btn btn-primary">Create User</button>
                         <a href="{{ route('admin.users.index') }}" class="btn btn-secondary">Cancel</a>

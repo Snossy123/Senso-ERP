@@ -7,9 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+use App\Traits\Loggable;
+
 class Order extends Model
 {
-    use BelongsToTenant;
+    use BelongsToTenant, Loggable;
 
     protected $fillable = [
         'order_number', 'customer_id', 'customer_name', 'customer_email', 'customer_phone',

@@ -17,13 +17,18 @@ class Activity extends Model
         'model_type',
         'model_id',
         'description',
+        'severity',
         'properties',
+        'before_values',
+        'after_values',
         'ip_address',
         'user_agent',
     ];
 
     protected $casts = [
-        'properties' => 'array',
+        'properties'    => 'array',
+        'before_values' => 'array',
+        'after_values'  => 'array',
     ];
 
     public function user(): BelongsTo
@@ -39,18 +44,30 @@ class Activity extends Model
         return null;
     }
 
-    public static function log(string $type, string $action, string $description, array $properties = [], $model = null): self
-    {
+    public static function log(
+        string $type, 
+        string $action, 
+        string $description, 
+        array $properties = [], 
+        $model = null, 
+        string $severity = 'info',
+        array $before = null,
+        array $after = null
+    ): self {
         return self::create([
-            'user_id'    => auth()->id(),
-            'type'       => $type,
-            'action'     => $action,
-            'description' => $description,
-            'properties' => $properties,
-            'model_type' => $model ? get_class($model) : null,
-            'model_id'   => $model?->id,
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent(),
+            'user_id'       => auth()->id(),
+            'tenant_id'     => app(\App\Services\TenantManager::class)->getCurrentId(),
+            'type'          => $type,
+            'action'        => $action,
+            'description'   => $description,
+            'severity'      => $severity,
+            'properties'    => $properties,
+            'before_values' => $before,
+            'after_values'  => $after,
+            'model_type'    => $model ? get_class($model) : null,
+            'model_id'      => $model?->id,
+            'ip_address'    => request()->ip(),
+            'user_agent'    => request()->userAgent(),
         ]);
     }
 

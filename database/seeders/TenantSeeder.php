@@ -35,8 +35,15 @@ class TenantSeeder extends Seeder
             ],
         ];
 
-        foreach ($tenants as $tenant) {
-            Tenant::firstOrCreate(['slug' => $tenant['slug']], $tenant);
+        $tenantService = app(\App\Services\TenantService::class);
+        $plan = \App\Models\Plan::where('slug', 'premium')->first();
+
+        foreach ($tenants as $tenantData) {
+            $tenant = Tenant::updateOrCreate(['slug' => $tenantData['slug']], $tenantData);
+            if ($plan) {
+                $tenantService->assignPlan($tenant, $plan);
+            }
+            $tenantService->initializeUsageTracking($tenant);
         }
     }
 }

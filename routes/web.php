@@ -65,14 +65,20 @@ Route::middleware('auth')->group(function () {
     // Admin — Tenant Management
     Route::resource('tenants', TenantController::class);
     Route::post('tenants/{tenant}/toggle', [TenantController::class, 'toggleStatus'])->name('tenants.toggle');
+    Route::post('tenants/{tenant}/suspend', [TenantController::class, 'suspend'])->name('tenants.suspend');
+    Route::post('tenants/{tenant}/activate', [TenantController::class, 'activate'])->name('tenants.activate');
+    Route::post('tenants/{tenant}/upgrade-plan', [TenantController::class, 'upgradePlan'])->name('tenants.upgrade-plan');
+    Route::post('tenants/{tenant}/login-as', [TenantController::class, 'loginAs'])->name('tenants.login-as');
+    Route::post('tenants/{tenant}/sync-usage', [TenantController::class, 'syncUsage'])->name('tenants.sync-usage');
+    Route::patch('tenants/{tenant}/settings', [TenantController::class, 'updateSettings'])->name('tenants.settings');
 
     // Admin — Settings
-    Route::get('/admin/settings', SettingsController::class)->name('admin.settings');
-    Route::post('/admin/settings', SettingsController::class)->name('admin.settings.store');
+    Route::get('/admin/settings', [SettingsController::class, 'index'])->name('admin.settings');
+    Route::post('/admin/settings', [SettingsController::class, 'store'])->name('admin.settings.store');
 
     // Admin — Activity Log
     Route::get('/admin/activity', [ActivityLogController::class, 'index'])->name('admin.activity.index');
-    Route::get('/admin/activity/user/{userId}', [ActivityLogController::class, 'userActivity'])->name('admin.activity.user');
+    Route::get('/admin/activity/{activity}', [ActivityLogController::class, 'show'])->name('admin.activity.show');
 
     // Reports
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');

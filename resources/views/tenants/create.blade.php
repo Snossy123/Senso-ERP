@@ -1,14 +1,26 @@
-@extends('layouts.app')
+@extends('layouts.master')
 @section('title', 'Create Tenant')
+
+@section('page-header')
+				<!-- breadcrumb -->
+				<div class="breadcrumb-header justify-content-between">
+					<div class="left-content">
+						<div>
+						  <h2 class="main-content-title tx-24 mg-b-1 mg-b-lg-1">Create New Tenant</h2>
+						  <p class="mg-b-0">Add a new organization to the system.</p>
+						</div>
+					</div>
+					<div class="main-dashboard-header-right">
+						<a href="{{ route('tenants.index') }}" class="btn btn-secondary">
+							<i class="fas fa-arrow-left"></i> Back
+						</a>
+					</div>
+				</div>
+				<!-- /breadcrumb -->
+@endsection
 
 @section('content')
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Create New Tenant</h1>
-        <a href="{{ route('tenants.index') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back
-        </a>
-    </div>
 
     <div class="card shadow">
         <div class="card-body">
@@ -31,13 +43,64 @@
                     </div>
                 </div>
 
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="plan_id" class="form-label">Initial Plan</label>
+                        <select class="form-select @error('plan_id') is-invalid @enderror" id="plan_id" name="plan_id">
+                            <option value="">-- No Plan --</option>
+                            @php $plans = \App\Models\Plan::where('is_active', true)->orderBy('sort_order')->get(); @endphp
+                            @foreach($plans as $plan)
+                                <option value="{{ $plan->id }}" {{ old('plan_id') == $plan->id ? 'selected' : '' }}>
+                                    {{ $plan->name }} (${{ number_format($plan->price, 2) }})
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('plan_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="trial_days" class="form-label">Trial Period (days)</label>
+                        <input type="number" class="form-control @error('trial_days') is-invalid @enderror" id="trial_days" name="trial_days" value="{{ old('trial_days', 14) }}" min="0" max="60">
+                        @error('trial_days')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="currency" class="form-label">Currency</label>
+                        <input type="text" class="form-control @error('currency') is-invalid @enderror" id="currency" name="currency" value="{{ old('currency', 'USD') }}" maxlength="3">
+                        @error('currency')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="language" class="form-label">Language</label>
+                        <select class="form-select @error('language') is-invalid @enderror" id="language" name="language">
+                            <option value="en" {{ old('language') == 'en' ? 'selected' : '' }}>English</option>
+                            <option value="es" {{ old('language') == 'es' ? 'selected' : '' }}>Spanish</option>
+                            <option value="fr" {{ old('language') == 'fr' ? 'selected' : '' }}>French</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="timezone" class="form-label">Timezone</label>
+                        <select class="form-select @error('timezone') is-invalid @enderror" id="timezone" name="timezone">
+                            <option value="UTC" {{ old('timezone') == 'UTC' ? 'selected' : '' }}>UTC</option>
+                            <option value="America/New_York" {{ old('timezone') == 'America/New_York' ? 'selected' : '' }}>EST/EDT</option>
+                            <option value="Asia/Tokyo" {{ old('timezone') == 'Asia/Tokyo' ? 'selected' : '' }}>JST</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="mb-3">
-                    <label for="settings" class="form-label">Settings (JSON)</label>
-                    <textarea class="form-control @error('settings') is-invalid @enderror" id="settings" name="settings" rows="3">{{ old('settings', '{}') }}</textarea>
+                    <label for="settings" class="form-label">Initial Settings (Optional Metadata)</label>
+                    <textarea class="form-control @error('settings') is-invalid @enderror" id="settings" name="settings" rows="2" placeholder='{"key": "value"}'>{{ old('settings') }}</textarea>
+                    <small class="text-muted">Enter valid JSON or leave blank.</small>
                     @error('settings')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
-                    <small class="text-muted">Enter as JSON object, e.g., {"plan": "premium", "max_users": 10}</small>
                 </div>
 
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end">

@@ -9,9 +9,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
+use App\Traits\Loggable;
+
 class Product extends Model
 {
-    use SoftDeletes, BelongsToTenant;
+    use SoftDeletes, BelongsToTenant, Loggable;
 
     protected $fillable = [
         'sku', 'name', 'slug', 'description', 'category_id', 'supplier_id', 'warehouse_id',

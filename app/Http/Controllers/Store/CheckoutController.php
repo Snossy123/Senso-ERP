@@ -68,6 +68,12 @@ class CheckoutController extends Controller
         $order = null;
         $lowStockProducts = [];
 
+        $tenant = app(\App\Services\TenantManager::class)->getCurrent();
+        $usage = $tenant?->getOrdersUsage();
+        if ($tenant && $usage && $usage->isAtLimit()) {
+            return redirect()->back()->with('error', 'Monthly order limit reached for this store. Please contact support.');
+        }
+
         DB::transaction(function () use ($cart, $data, $customer, &$orderNumber, &$order, &$lowStockProducts) {
             $subtotal = 0;
             $lines    = [];
@@ -136,7 +142,7 @@ class CheckoutController extends Controller
         }
 
         foreach ($lowStockProducts as $product) {
-            $admins = User::where('role', 'admin')->get();
+            $admins = User::whereHas('role', fn($q) => $q->where('slug', 'admin'))->get();
             foreach ($admins as $admin) {
                 $admin->notify(new LowStockAlertNotification($product));
             }

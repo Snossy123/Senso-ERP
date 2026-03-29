@@ -1,14 +1,24 @@
-@extends('layouts.app')
+@extends('layouts.master')
 @section('title', 'Tenant Management')
+
+@section('page-header')
+    <div class="breadcrumb-header justify-content-between">
+        <div class="left-content">
+            <div>
+                <h2 class="main-content-title tx-24 mg-b-1 mg-b-lg-1">Tenant Management</h2>
+                <p class="mg-b-0">Manage system tenants and subscriptions.</p>
+            </div>
+        </div>
+        <div class="main-dashboard-header-right">
+            <a href="{{ route('tenants.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Tenant
+            </a>
+        </div>
+    </div>
+@endsection
 
 @section('content')
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Tenant Management</h1>
-        <a href="{{ route('tenants.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Add Tenant
-        </a>
-    </div>
 
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
@@ -24,33 +34,58 @@
                     <thead>
                         <tr>
                             <th>Name</th>
-                            <th>Slug</th>
                             <th>Domain</th>
+                            <th>Plan</th>
                             <th>Status</th>
+                            <th>Billing</th>
                             <th>Users</th>
-                            <th>Trial Ends</th>
-                            <th>Subscription Ends</th>
+                            <th>Expires</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($tenants as $tenant)
                             <tr>
-                                <td>{{ $tenant->name }}</td>
-                                <td>{{ $tenant->slug }}</td>
+                                <td>
+                                    <a href="{{ route('tenants.show', $tenant) }}">{{ $tenant->name }}</a>
+                                    <br><small class="text-muted">{{ $tenant->slug }}</small>
+                                </td>
                                 <td>{{ $tenant->domain ?? '-' }}</td>
                                 <td>
-                                    @if($tenant->isActive())
-                                        <span class="badge bg-success">Active</span>
-                                    @elseif($tenant->isOnTrial())
-                                        <span class="badge bg-warning">Trial</span>
+                                    @if($tenant->plan)
+                                        <span class="badge bg-primary">{{ $tenant->plan->name }}</span>
                                     @else
-                                        <span class="badge bg-secondary">Inactive</span>
+                                        <span class="badge bg-secondary">No Plan</span>
                                     @endif
                                 </td>
-                                <td>{{ $tenant->users()->count() }}</td>
-                                <td>{{ $tenant->trial_ends_at?->format('M d, Y') ?? '-' }}</td>
-                                <td>{{ $tenant->subscription_ends_at?->format('M d, Y') ?? '-' }}</td>
+                                <td>
+                                    <span class="badge bg-{{ $tenant->status_color }}">{{ $tenant->status_label }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ $tenant->payment_status === 'paid' ? 'success' : ($tenant->payment_status === 'failed' ? 'danger' : 'warning') }}">
+                                        {{ ucfirst($tenant->payment_status) }}
+                                    </span>
+                                    @if($tenant->price > 0)
+                                        <br><small class="text-muted">${{ number_format($tenant->price, 2) }}/{{ $tenant->billing_cycle }}</small>
+                                    @endif
+                                </td>
+                                <td>
+                                    {{ $tenant->users()->count() }}
+                                    @if($tenant->plan)
+                                        <small class="text-muted">/ {{ $tenant->plan->max_users }}</small>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($tenant->isOnTrial() && $tenant->trial_ends_at)
+                                        <span class="text-warning">Trial: {{ $tenant->trial_ends_at->format('M d') }}</span>
+                                    @elseif($tenant->subscription_ends_at)
+                                        <span class="{{ $tenant->subscription_ends_at->isPast() ? 'text-danger' : '' }}">
+                                            {{ $tenant->subscription_ends_at->format('M d, Y') }}
+                                        </span>
+                                    @else
+                                        -
+                                    @endif
+                                </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
                                         <a href="{{ route('tenants.show', $tenant) }}" class="btn btn-info" title="View">
