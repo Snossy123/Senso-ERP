@@ -12,9 +12,10 @@ class Sale extends Model
     use BelongsToTenant;
 
     protected $fillable = [
-        'sale_number', 'customer_id', 'user_id',
+        'sale_number', 'customer_id', 'customer_name', 'customer_email', 'user_id', 'shift_id',
         'subtotal', 'discount_amount', 'tax_amount', 'total',
-        'payment_method', 'payment_status', 'notes',
+        'payment_method', 'payment_status', 'amount_tendered', 'change_due',
+        'status', 'notes', 'void_reason', 'voided_by', 'voided_at',
     ];
 
     protected $casts = [
@@ -22,6 +23,9 @@ class Sale extends Model
         'discount_amount' => 'decimal:2',
         'tax_amount'      => 'decimal:2',
         'total'           => 'decimal:2',
+        'amount_tendered' => 'decimal:2',
+        'change_due'      => 'decimal:2',
+        'voided_at'       => 'datetime',
     ];
 
     public function customer(): BelongsTo
@@ -34,9 +38,44 @@ class Sale extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function voidedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'voided_by');
+    }
+
+    public function shift(): BelongsTo
+    {
+        return $this->belongsTo(PosShift::class, 'shift_id');
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(SaleItem::class);
+    }
+
+    public function refunds(): HasMany
+    {
+        return $this->hasMany(SaleRefund::class);
+    }
+
+    public function void(string $reason, int $userId): void
+    {
+        $this->update([
+            'status'      => 'voided',
+            'void_reason' => $reason,
+            'voided_by'   => $userId,
+            'voided_at'   => now(),
+        ]);
+    }
+
+    public function isVoided(): bool
+    {
+        return $this->status === 'voided';
+    }
+
+    public function isRefunded(): bool
+    {
+        return $this->status === 'refunded';
     }
 
     public static function generateSaleNumber(): string

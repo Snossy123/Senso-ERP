@@ -16,7 +16,7 @@ class StockMovementController extends Controller
 
     public function index()
     {
-        $movements = StockMovement::with('product', 'warehouse', 'user')->latest()->get();
+        $movements = StockMovement::with('product', 'variant', 'warehouse', 'user')->latest()->get();
         return view('inventory.stock-movements.index', compact('movements'));
     }
 

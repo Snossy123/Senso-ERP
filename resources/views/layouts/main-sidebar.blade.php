@@ -84,7 +84,19 @@
 						<ul class="slide-menu">
 							<li><a class="slide-item" href="{{ route('inventory.products.index') }}">Products</a></li>
 							<li><a class="slide-item" href="{{ route('inventory.categories.index') }}">Categories</a></li>
+							<li><a class="slide-item" href="{{ route('inventory.units.index') }}">Units of Measure</a></li>
 							<li><a class="slide-item" href="{{ route('inventory.movements.index') }}">Stock Movements</a></li>
+						</ul>
+					</li>
+					<li class="slide">
+						<a class="side-menu__item" data-toggle="slide" href="#">
+							<i class="side-menu__icon fe fe-truck"></i>
+							<span class="side-menu__label">Operations</span>
+							<i class="angle fe fe-chevron-down"></i>
+						</a>
+						<ul class="slide-menu">
+							<li><a class="slide-item" href="{{ route('inventory.purchase-orders.index') }}">Purchase Orders</a></li>
+							<li><a class="slide-item" href="{{ route('inventory.transfers.index') }}">Stock Transfers</a></li>
 						</ul>
 					</li>
 					<li class="slide">
