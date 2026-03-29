@@ -10,6 +10,9 @@ use App\Http\Controllers\Inventory\CategoryController;
 use App\Http\Controllers\Inventory\SupplierController;
 use App\Http\Controllers\Inventory\WarehouseController;
 use App\Http\Controllers\Inventory\StockMovementController;
+use App\Http\Controllers\Inventory\PurchaseOrderController;
+use App\Http\Controllers\Inventory\StockTransferController;
+use App\Http\Controllers\Inventory\UnitController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 
 use App\Http\Controllers\Store\AuthController as StoreAuthController;
@@ -38,6 +41,18 @@ Route::middleware('auth')->group(function () {
     Route::post('/pos/sale', [SaleController::class, 'store'])->name('pos.sale.store');
     Route::get('/pos/sales', [SaleController::class, 'index'])->name('pos.sales.index');
     Route::get('/pos/sales/{sale}', [SaleController::class, 'show'])->name('pos.sales.show');
+    Route::post('/pos/sales/{sale}/void', [SaleController::class, 'void'])->name('pos.sales.void');
+    Route::post('/pos/sales/{sale}/refund', [SaleController::class, 'refund'])->name('pos.sales.refund');
+    // POS Shift Management
+    Route::post('/pos/shift/open', [POSController::class, 'openShift'])->name('pos.shift.open');
+    Route::post('/pos/shift/{shift}/close', [POSController::class, 'closeShift'])->name('pos.shift.close');
+    // POS Held Orders
+    Route::post('/pos/hold', [POSController::class, 'holdOrder'])->name('pos.hold');
+    Route::get('/pos/held', [POSController::class, 'getHeldOrders'])->name('pos.held');
+    Route::post('/pos/held/{held}/resume', [POSController::class, 'resumeHeldOrder'])->name('pos.held.resume');
+    // POS Product Search / Barcode
+    Route::get('/pos/search', [POSController::class, 'searchProduct'])->name('pos.search');
+    Route::post('/pos/customer/quick-store', [POSController::class, 'quickStoreCustomer'])->name('pos.customer.quick-store');
 
     // Inventory
     Route::resource('inventory/products', ProductController::class)->names('inventory.products');
@@ -45,6 +60,10 @@ Route::middleware('auth')->group(function () {
     Route::resource('inventory/suppliers', SupplierController::class)->names('inventory.suppliers');
     Route::resource('inventory/warehouses', WarehouseController::class)->names('inventory.warehouses');
     Route::resource('inventory/stock-movements', StockMovementController::class)->names('inventory.movements');
+    Route::resource('inventory/purchase-orders', PurchaseOrderController::class)->names('inventory.purchase-orders');
+    Route::post('inventory/purchase-orders/{order}/receive', [PurchaseOrderController::class, 'receive'])->name('inventory.purchase-orders.receive');
+    Route::resource('inventory/stock-transfers', StockTransferController::class)->names('inventory.transfers');
+    Route::resource('inventory/units', UnitController::class)->names('inventory.units')->only(['index', 'store', 'destroy']);
 
     // Admin — Ecommerce order management
     Route::get('/admin/orders', [AdminOrderController::class, 'index'])->name('admin.orders.index');

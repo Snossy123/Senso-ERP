@@ -10,6 +10,8 @@ use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use App\Models\Unit;
 
 class ProductController extends Controller
 {
@@ -26,26 +28,32 @@ class ProductController extends Controller
         $categories = Category::where('is_active', true)->get();
         $suppliers  = Supplier::where('is_active', true)->get();
         $warehouses = Warehouse::where('is_active', true)->get();
-        return view('inventory.products.create', compact('categories', 'suppliers', 'warehouses'));
+        $units      = Unit::all();
+        return view('inventory.products.create', compact('categories', 'suppliers', 'warehouses', 'units'));
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'sku'             => 'required|unique:products,sku',
-            'name'            => 'required|string|max:255',
-            'description'     => 'nullable|string',
-            'category_id'     => 'nullable|exists:categories,id',
-            'supplier_id'     => 'nullable|exists:suppliers,id',
-            'warehouse_id'    => 'nullable|exists:warehouses,id',
-            'purchase_price'  => 'required|numeric|min:0',
-            'selling_price'   => 'required|numeric|min:0',
-            'min_stock_alert' => 'integer|min:0',
-            'weight'          => 'nullable|numeric',
-            'unit'            => 'required|string|max:50',
-            'barcode'         => 'nullable|string|max:100',
-            'image'           => 'nullable|image|max:2048',
-            'is_ecommerce'    => 'boolean',
+            'sku'              => 'required|unique:products,sku',
+            'name'             => 'required|string|max:255',
+            'description'      => 'nullable|string',
+            'category_id'      => 'nullable|exists:categories,id',
+            'supplier_id'      => 'nullable|exists:suppliers,id',
+            'warehouse_id'     => 'nullable|exists:warehouses,id',
+            'unit_id'          => 'nullable|exists:units,id',
+            'purchase_price'   => 'required|numeric|min:0',
+            'selling_price'    => 'required|numeric|min:0',
+            'min_stock_alert'  => 'integer|min:0',
+            'weight'           => 'nullable|numeric',
+            'barcode'          => 'nullable|string|max:100',
+            'image'            => 'nullable|image|max:2048',
+            'is_ecommerce'     => 'boolean',
+            'has_variants'     => 'boolean',
+            'valuation_method' => 'required|in:fifo,average',
+            'variants'         => 'nullable|array',
+            'variants.*.name'  => 'required_with:variants|string|max:100',
+            'variants.*.sku'   => 'required_with:variants|unique:product_variants,sku',
         ]);
 
         if ($request->hasFile('image')) {
@@ -55,19 +63,29 @@ class ProductController extends Controller
         $data['slug']         = Str::slug($data['name']);
         $data['is_active']    = $request->boolean('is_active', true);
         $data['is_ecommerce'] = $request->boolean('is_ecommerce');
+        $data['has_variants'] = $request->boolean('has_variants');
 
         $tenant = app(\App\Services\TenantManager::class)->getCurrent();
         if ($tenant && !$tenant->canAddProduct()) {
-            return redirect()->back()->with('error', 'You have reached your product limit of ' . $tenant->getProductsUsage()?->capacity_limit . '. Please upgrade your plan.');
+            return redirect()->back()->with('error', 'You have reached your product limit.');
         }
 
-        Product::create($data);
+        DB::transaction(function () use ($data, $request) {
+            $product = Product::create($data);
+
+            if ($product->has_variants && $request->has('variants')) {
+                foreach ($request->variants as $vData) {
+                    $product->variants()->create($vData);
+                }
+            }
+        });
+
         return redirect()->route('inventory.products.index')->with('success', 'Product created.');
     }
 
     public function show(Product $product)
     {
-        $movements = $product->stockMovements()->with('user', 'warehouse')->latest()->get();
+        $movements = $product->stockMovements()->with(['user', 'warehouse', 'variant'])->latest()->get();
         return view('inventory.products.show', compact('product', 'movements'));
     }
 
@@ -76,26 +94,29 @@ class ProductController extends Controller
         $categories = Category::where('is_active', true)->get();
         $suppliers  = Supplier::where('is_active', true)->get();
         $warehouses = Warehouse::where('is_active', true)->get();
-        return view('inventory.products.edit', compact('product', 'categories', 'suppliers', 'warehouses'));
+        $units      = Unit::all();
+        return view('inventory.products.edit', compact('product', 'categories', 'suppliers', 'warehouses', 'units'));
     }
 
     public function update(Request $request, Product $product)
     {
         $data = $request->validate([
-            'sku'             => "required|unique:products,sku,{$product->id}",
-            'name'            => 'required|string|max:255',
-            'description'     => 'nullable|string',
-            'category_id'     => 'nullable|exists:categories,id',
-            'supplier_id'     => 'nullable|exists:suppliers,id',
-            'warehouse_id'    => 'nullable|exists:warehouses,id',
-            'purchase_price'  => 'required|numeric|min:0',
-            'selling_price'   => 'required|numeric|min:0',
-            'min_stock_alert' => 'integer|min:0',
-            'weight'          => 'nullable|numeric',
-            'unit'            => 'required|string|max:50',
-            'barcode'         => 'nullable|string|max:100',
-            'image'           => 'nullable|image|max:2048',
-            'is_ecommerce'    => 'boolean',
+            'sku'              => "required|unique:products,sku,{$product->id}",
+            'name'             => 'required|string|max:255',
+            'description'      => 'nullable|string',
+            'category_id'      => 'nullable|exists:categories,id',
+            'supplier_id'      => 'nullable|exists:suppliers,id',
+            'warehouse_id'     => 'nullable|exists:warehouses,id',
+            'unit_id'          => 'nullable|exists:units,id',
+            'purchase_price'   => 'required|numeric|min:0',
+            'selling_price'    => 'required|numeric|min:0',
+            'min_stock_alert'  => 'integer|min:0',
+            'weight'           => 'nullable|numeric',
+            'barcode'          => 'nullable|string|max:100',
+            'image'            => 'nullable|image|max:2048',
+            'is_ecommerce'     => 'boolean',
+            'has_variants'     => 'boolean',
+            'valuation_method' => 'required|in:fifo,average',
         ]);
 
         if ($request->hasFile('image')) {
@@ -106,6 +127,7 @@ class ProductController extends Controller
         $data['slug']         = Str::slug($data['name']);
         $data['is_active']    = $request->boolean('is_active');
         $data['is_ecommerce'] = $request->boolean('is_ecommerce');
+        $data['has_variants'] = $request->boolean('has_variants');
 
         $product->update($data);
         return redirect()->route('inventory.products.index')->with('success', 'Product updated.');
