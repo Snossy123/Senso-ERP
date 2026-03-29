@@ -115,6 +115,19 @@ Route::middleware('auth')->group(function () {
     Route::get('/exports/customers/excel', [ExportController::class, 'customersExcel'])->name('exports.customers.excel');
     Route::get('/exports/receipt/{sale}/pdf', [ExportController::class, 'receiptPdf'])->name('exports.receipt.pdf');
     Route::get('/exports/invoice/{order}/pdf', [ExportController::class, 'invoicePdf'])->name('exports.invoice.pdf');
+    // Accounting Web
+    Route::prefix('accounting')->name('accounting.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'dashboard'])->name('dashboard');
+        
+        Route::get('/accounts', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'accounts'])->name('accounts');
+        Route::post('/accounts', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'storeAccount'])->name('accounts.store');
+        
+        Route::get('/journal-entries', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'journalEntries'])->name('journal-entries');
+        Route::get('/journal-entries/create', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'createJournalEntry'])->name('journal-entries.create');
+        Route::post('/journal-entries', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'storeJournalEntry'])->name('journal-entries.store');
+        
+        Route::get('/reports', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'reports'])->name('reports');
+    });
 });
 
 // ── USER PORTAL — Store (prefix: /store) ────────────────────

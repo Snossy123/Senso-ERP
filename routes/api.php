@@ -32,3 +32,20 @@ Route::middleware('auth:sanctum')->prefix('plans')->group(function () {
 Route::middleware('auth:sanctum')->prefix('usage')->group(function () {
     Route::post('/check', [TenantApiController::class, 'checkLimits']);
 });
+
+Route::middleware(['auth:sanctum', 'tenant'])->prefix('accounting')->group(function () {
+    // Chart of Accounts
+    Route::get('/accounts', [\App\Http\Controllers\Accounting\AccountController::class, 'index']);
+    Route::post('/accounts', [\App\Http\Controllers\Accounting\AccountController::class, 'store']);
+
+    // Journal Entries
+    Route::get('/journal-entries', [\App\Http\Controllers\Accounting\JournalEntryController::class, 'index']);
+    Route::post('/journal-entries', [\App\Http\Controllers\Accounting\JournalEntryController::class, 'store']);
+    Route::get('/journal-entries/{id}', [\App\Http\Controllers\Accounting\JournalEntryController::class, 'show']);
+
+    // Reports
+    Route::get('/reports/trial-balance', [\App\Http\Controllers\Accounting\ReportController::class, 'trialBalance']);
+    Route::get('/reports/income-statement', [\App\Http\Controllers\Accounting\ReportController::class, 'incomeStatement']);
+    Route::get('/reports/balance-sheet', [\App\Http\Controllers\Accounting\ReportController::class, 'balanceSheet']);
+    Route::get('/reports/general-ledger', [\App\Http\Controllers\Accounting\ReportController::class, 'generalLedger']);
+});

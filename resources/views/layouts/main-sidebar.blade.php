@@ -144,6 +144,22 @@
 						</ul>
 					</li>
 
+
+					<li class="side-item side-item-category">Financials & Accounting</li>
+					<li class="slide">
+						<a class="side-menu__item" data-toggle="slide" href="#">
+							<i class="side-menu__icon fe fe-dollar-sign"></i>
+							<span class="side-menu__label">Accounting</span>
+							<i class="angle fe fe-chevron-down"></i>
+						</a>
+						<ul class="slide-menu">
+							<li><a class="slide-item" href="{{ route('accounting.dashboard') }}">Financial Dashboard</a></li>
+							<li><a class="slide-item" href="{{ route('accounting.accounts') }}">Chart of Accounts</a></li>
+							<li><a class="slide-item" href="{{ route('accounting.journal-entries') }}">Journal Entries</a></li>
+							<li><a class="slide-item" href="{{ route('accounting.reports') }}">Financial Reports</a></li>
+						</ul>
+					</li>
+
 					<li class="side-item side-item-category">External</li>
 					<li class="slide">
 						<a class="side-menu__item" href="{{ route('store.index') }}" target="_blank">
@@ -151,6 +167,7 @@
 							<span class="side-menu__label">View Storefront</span>
 						</a>
 					</li>
+					<div style="height: 100px;"></div>
 				</ul>
 			</div>
 		</aside>

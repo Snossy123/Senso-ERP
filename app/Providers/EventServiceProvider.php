@@ -29,6 +29,7 @@ class EventServiceProvider extends ServiceProvider
     {
         parent::boot();
 
-        //
+        \App\Models\Sale::observe(\App\Observers\AccountingObserver::class);
+        \App\Models\PurchaseOrder::observe(\App\Observers\AccountingObserver::class);
     }
 }

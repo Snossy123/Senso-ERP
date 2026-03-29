@@ -28,6 +28,10 @@
 			slideMenu.find("[data-toggle='slide']").parent().removeClass('is-expanded');
 		}
 		$(this).parent().toggleClass('is-expanded');
+        // Update scrollbar when menu expands/collapses
+        setTimeout(function() {
+            $(".main-sidemenu").mCustomScrollbar("update");
+        }, 300);
 	});
 	
 	$("[data-toggle='sub-slide']").click(function(event) {
@@ -37,6 +41,9 @@
 		}
 		$(this).parent().toggleClass('is-expanded');
 		$('.slide.active').addClass('is-expanded');
+        setTimeout(function() {
+            $(".main-sidemenu").mCustomScrollbar("update");
+        }, 300);
 	});
 	
 	// Set initial active toggle
