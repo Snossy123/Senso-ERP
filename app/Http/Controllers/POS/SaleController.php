@@ -61,22 +61,28 @@ class SaleController extends Controller
             'amount_tendered'         => 'nullable|numeric|min:0',
             'customer_id'             => 'nullable|exists:customers,id',
             'customer_name'           => 'nullable|string|max:120',
+            'shift_id'                => 'required|exists:pos_shifts,id',
         ]);
 
-        // Tenant plan checks
-        $tenant = app(\App\Services\TenantManager::class)->getCurrent();
-        if ($tenant && !$tenant->hasFeature('pos')) {
+        // Resolve Tenant
+        $tenant = app(\App\Services\TenantManager::class)->getCurrent() ?? Auth::user()->tenant;
+        
+        if (!$tenant) {
+            return response()->json(['success' => false, 'error' => 'Tenant context not found.'], 403);
+        }
+
+        if (!$tenant->hasFeature('pos')) {
             return response()->json(['success' => false, 'error' => 'POS feature is not enabled for your plan.'], 403);
         }
-        $usage = $tenant?->getOrdersUsage();
-        if ($tenant && $usage && $usage->isAtLimit()) {
+        $usage = $tenant->getOrdersUsage();
+        if ($usage && $usage->isAtLimit()) {
             return response()->json(['success' => false, 'error' => 'Monthly order limit reached. Please upgrade your plan.'], 403);
         }
 
         $lowStockProducts = [];
         $saleId = null;
 
-        DB::transaction(function () use ($request, &$lowStockProducts, &$saleId) {
+        DB::transaction(function () use ($request, &$lowStockProducts, &$saleId, $tenant) {
             $items       = $request->input('items');
             $discountAmt = (float) $request->input('discount', 0);
             $taxRate     = (float) $request->input('tax_rate', 0);
@@ -92,16 +98,37 @@ class SaleController extends Controller
 
             // Calculate totals
             foreach ($items as $item) {
-                $itemDiscount = isset($item['discount_pct']) ? ($item['price'] * $item['qty'] * $item['discount_pct'] / 100) : 0;
+                $itemDiscountPct = (float) ($item['discount_pct'] ?? 0);
+                
+                // Item-level discount permission check
+                if ($itemDiscountPct > 0 && !Auth::user()->hasPermission('pos.discount')) {
+                    $maxItemDisc = (float) \App\Models\Setting::get('pos_max_discount_no_perm', 0, $tenant->id);
+                    if ($itemDiscountPct > $maxItemDisc) {
+                        throw new \Exception("You do not have permission to apply {$itemDiscountPct}% discount on {$product->name}. Max allowed: {$maxItemDisc}%");
+                    }
+                }
+
+                $itemDiscount = ($item['price'] * $item['qty'] * $itemDiscountPct / 100);
                 $subtotal += ($item['price'] * $item['qty']) - $itemDiscount;
             }
 
             $taxAmount      = round(($subtotal - $discountAmt) * $taxRate / 100, 2);
             $total          = round($subtotal - $discountAmt + $taxAmount, 2);
+
+            // Order-level discount permission check
+            if ($discountAmt > 0 && !Auth::user()->hasPermission('pos.discount')) {
+                $maxOrderDiscPct = (float) \App\Models\Setting::get('pos_max_order_discount_pct_no_perm', 5, $tenant->id);
+                $orderDiscPct = ($discountAmt / $subtotal) * 100;
+                if ($orderDiscPct > $maxOrderDiscPct) {
+                    throw new \Exception("Order discount exceeds your limit of {$maxOrderDiscPct}%");
+                }
+            }
+
             $amountTendered = (float) $request->input('amount_tendered', $total);
             $changeDue      = max(0, $amountTendered - $total);
 
             $sale = Sale::create([
+                'tenant_id'       => $tenant->id,
                 'sale_number'     => Sale::generateSaleNumber(),
                 'customer_id'     => $request->input('customer_id'),
                 'customer_name'   => $request->input('customer_name'),
@@ -129,6 +156,7 @@ class SaleController extends Controller
                 $lineDisc    = $lineTotal * $discountPct / 100;
 
                 SaleItem::create([
+                    'tenant_id'          => $tenant->id,
                     'sale_id'            => $sale->id,
                     'product_id'         => $product->id,
                     'product_variant_id' => $variantId,
@@ -163,6 +191,7 @@ class SaleController extends Controller
                 $beforeQty = $product->stock_quantity + $item['qty'];
 
                 StockMovement::create([
+                    'tenant_id'          => $tenant->id,
                     'product_id'         => $product->id,
                     'product_variant_id' => $variantId,
                     'warehouse_id'       => $shift?->warehouse_id,
@@ -175,10 +204,27 @@ class SaleController extends Controller
                     'reference'          => $sale->sale_number,
                     'notes'              => 'POS Sale',
                     'user_id'            => Auth::id(),
+                    'tenant_id'          => $tenant->id,
                 ]);
             }
 
             $saleId = $sale->id;
+
+            // ── Create Journal Entry ─────────────────────────────────────
+            try {
+                $generator = \App\Services\Accounting\JournalEntryFactory::getGenerator($sale);
+                $jeData = $generator->generate($sale);
+                
+                app(\App\Services\AccountingService::class)->createJournalEntry(
+                    $jeData['header'],
+                    $jeData['lines']
+                );
+            } catch (\Exception $e) {
+                // If accounting fails, we might still want to record the sale, 
+                // but usually in ERPs this should be atomic. 
+                // For now, we'll throw to rollback and ensure data integrity.
+                throw new \Exception("Accounting integration failed: " . $e->getMessage());
+            }
         });
 
         // Post-transaction: notifications
@@ -189,12 +235,14 @@ class SaleController extends Controller
             }
         }
 
-        \App\Models\Activity::logSale(Sale::find($saleId));
+        $sale = Sale::find($saleId);
+        \App\Models\Activity::logSale($sale);
 
         return response()->json([
             'success'    => true,
             'sale_id'    => $saleId,
-            'change_due' => Sale::find($saleId)?->change_due,
+            'change_due' => $sale?->change_due,
+            'sale_number' => $sale?->sale_number,
         ]);
     }
 
@@ -219,6 +267,7 @@ class SaleController extends Controller
             foreach ($sale->items as $item) {
                 $item->product->increment('stock_quantity', $item->quantity);
                 StockMovement::create([
+                    'tenant_id'  => $sale->tenant_id,
                     'product_id' => $item->product_id,
                     'type'       => 'in',
                     'quantity'   => $item->quantity,
@@ -229,6 +278,15 @@ class SaleController extends Controller
             }
 
             $sale->void($request->reason, Auth::id());
+
+            \App\Models\Activity::log(
+                'pos',
+                'void',
+                "Voided Sale #{$sale->sale_number}. Reason: {$request->reason}",
+                ['sale_id' => $sale->id],
+                $sale,
+                'danger'
+            );
         });
 
         return response()->json(['success' => true]);
@@ -239,17 +297,26 @@ class SaleController extends Controller
     public function refund(Request $request, Sale $sale)
     {
         $request->validate([
-            'amount' => 'required|numeric|min:0.01|max:' . $sale->total,
-            'reason' => 'required|string|max:255',
-            'method' => 'required|in:original,cash,credit',
+            'amount'   => 'required|numeric|min:0.01|max:' . $sale->total,
+            'reason'   => 'required|string|max:255',
+            'method'   => 'required|in:original,cash,credit',
+            'restock'  => 'nullable|boolean',
         ]);
+
+        if (!Auth::user()->hasPermission('pos.refund')) {
+            return response()->json(['error' => 'You do not have permission to process refunds.'], 403);
+        }
 
         if ($sale->isVoided()) {
             return response()->json(['error' => 'Cannot refund a voided sale.'], 422);
         }
 
-        DB::transaction(function () use ($sale, $request) {
-            SaleRefund::create([
+        $tenant = app(\App\Services\TenantManager::class)->getCurrent() ?? Auth::user()->tenant;
+        $restock = (bool) $request->input('restock', true);
+
+        DB::transaction(function () use ($sale, $request, $tenant, $restock) {
+            $refund = SaleRefund::create([
+                'tenant_id'     => $tenant?->id ?? $sale->tenant_id,
                 'sale_id'       => $sale->id,
                 'user_id'       => Auth::id(),
                 'refund_number' => SaleRefund::generateRefundNumber(),
@@ -258,11 +325,61 @@ class SaleController extends Controller
                 'method'        => $request->method,
             ]);
 
+            // Restore stock pro-rated by refund amount ratio
+            if ($restock && $sale->total > 0) {
+                $ratio = $request->amount / $sale->total;
+                foreach ($sale->items as $saleItem) {
+                    $restoreQty = (int) round($saleItem->quantity * $ratio);
+                    if ($restoreQty <= 0) continue;
+
+                    $product = Product::find($saleItem->product_id);
+                    if (!$product) continue;
+
+                    $before = $product->stock_quantity;
+                    $product->increment('stock_quantity', $restoreQty);
+
+                    StockMovement::create([
+                        'tenant_id'          => $tenant?->id ?? $sale->tenant_id,
+                        'product_id'         => $saleItem->product_id,
+                        'product_variant_id' => $saleItem->product_variant_id,
+                        'type'               => 'in',
+                        'quantity'           => $restoreQty,
+                        'before_quantity'    => $before,
+                        'after_quantity'     => $before + $restoreQty,
+                        'reference'          => 'REF-' . $refund->refund_number,
+                        'notes'              => 'Refund: ' . $request->reason,
+                        'user_id'            => Auth::id(),
+                    ]);
+                }
+            }
+
             // If full refund, mark the sale
             $totalRefunded = $sale->refunds()->sum('amount') + $request->amount;
             if ($totalRefunded >= $sale->total) {
                 $sale->update(['status' => 'refunded']);
             }
+
+            // ── Create Journal Entry ─────────────────────────────────────
+            try {
+                $generator = \App\Services\Accounting\JournalEntryFactory::getGenerator($refund);
+                $jeData = $generator->generate($refund);
+                
+                app(\App\Services\AccountingService::class)->createJournalEntry(
+                    $jeData['header'],
+                    $jeData['lines']
+                );
+            } catch (\Exception $e) {
+                throw new \Exception("Accounting integration failed for refund: " . $e->getMessage());
+            }
+
+            \App\Models\Activity::log(
+                'pos',
+                'refund',
+                "Refund #{$refund->refund_number} of {$request->amount} for Sale #{$sale->sale_number}",
+                ['refund_id' => $refund->id, 'amount' => $request->amount],
+                $refund,
+                'warning'
+            );
         });
 
         return response()->json(['success' => true]);

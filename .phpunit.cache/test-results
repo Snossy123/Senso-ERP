@@ -1,1 +1,1 @@
-{"version":2,"defects":[],"times":{"Tests\\Unit\\ExampleTest::testBasicTest":0.009,"Tests\\Feature\\ExampleTest::testBasicTest":3.35}}
+{"version":2,"defects":{"Tests\\Feature\\POSTest::a_user_can_open_a_pos_shift":8,"Tests\\Feature\\POSTest::a_sale_requires_an_active_shift":8,"Tests\\Feature\\POSTest::a_user_can_process_a_sale_with_an_active_shift":8,"Tests\\Feature\\POSTest::a_user_can_refund_a_sale_and_restore_stock":8},"times":{"Tests\\Unit\\ExampleTest::testBasicTest":0.009,"Tests\\Feature\\ExampleTest::testBasicTest":3.35}}

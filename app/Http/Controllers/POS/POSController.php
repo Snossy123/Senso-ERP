@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Customer;
 use App\Models\PosShift;
 use App\Models\HeldOrder;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -75,6 +76,7 @@ class POSController extends Controller
         }
 
         $shift = PosShift::create([
+            'tenant_id'     => Auth::user()->tenant_id,
             'user_id'       => Auth::id(),
             'opening_float' => $request->opening_float,
             'terminal_id'   => $request->terminal_id ?? 'POS-1',
@@ -101,6 +103,35 @@ class POSController extends Controller
             'expected_cash' => $shift->expected_cash,
             'total_sales'   => $shift->totalSales(),
         ]);
+    }
+
+    public function shiftsIndex(Request $request)
+    {
+        $query = PosShift::with('user')->orderBy('created_at', 'desc');
+
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('from_date')) {
+            $query->whereDate('opened_at', '>=', $request->from_date);
+        }
+        if ($request->filled('to_date')) {
+            $query->whereDate('opened_at', '<=', $request->to_date);
+        }
+
+        $shifts = $query->paginate(20)->withQueryString();
+        $cashiers = User::pluck('name', 'id');
+
+        return view('pos.shifts.index', compact('shifts', 'cashiers'));
+    }
+
+    public function shiftShow(PosShift $shift)
+    {
+        $shift->load(['user', 'sales.items.product', 'sales.customer']);
+        return view('pos.shifts.show', compact('shift'));
     }
 
     // ── Held Orders ─────────────────────────────────────────────────────────────

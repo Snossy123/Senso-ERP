@@ -104,6 +104,6 @@ class Product extends Model
     {
         return $this->image
             ? asset('storage/' . $this->image)
-            : asset('assets/images/placeholder-product.png');
+            : 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="#f4f5f8"/><path d="M70 70 L130 130 M130 70 L70 130" stroke="#d0d0d0" stroke-width="2"/><text x="100" y="150" font-family="sans-serif" font-size="14" fill="#a0a0a0" text-anchor="middle">No Image</text></svg>');
     }
 }
