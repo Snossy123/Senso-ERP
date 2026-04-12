@@ -96,5 +96,52 @@ class AccountingController extends Controller
         
         return redirect()->route('accounting.accounts')->with('success', 'Account created successfully.');
     }
+
+    public function settings()
+    {
+        $tenantId = auth()->user()->tenant_id;
+        $accounts = Account::where('tenant_id', $tenantId)->orderBy('code')->get();
+        $settings = \App\Models\AccountSetting::where('tenant_id', $tenantId)->get()->pluck('account_id', 'key');
+        
+        $mappingKeys = [
+            'pos_cash'            => 'POS Cash Drawer',
+            'pos_card'            => 'POS Card Clearing (Bank)',
+            'pos_bank'            => 'POS Bank Transfer Account',
+            'pos_variance'        => 'POS Cash Variance Account',
+            'bank_payment'        => 'Supplier Bank Payment Account',
+            'sales_revenue'       => 'Sales Revenue Account',
+            'sales_discount'      => 'Discounts Allowed Account',
+            'tax_payable'         => 'Tax (VAT/GST) Account',
+            'cogs_account'        => 'Cost of Goods Sold Account',
+            'inventory_account'   => 'Inventory Asset Account',
+            'supplier_payable'    => 'Accounts Payable (Suppliers)',
+            'customer_receivable' => 'Accounts Receivable (Customers)',
+            'cash_customer'       => 'General Cash Account',
+            'refund_account'      => 'Refunds/Returns Account',
+            'payment_fees'        => 'Payment Processing Fees Account',
+        ];
+
+        return view('accounting.settings', compact('accounts', 'settings', 'mappingKeys'));
+    }
+
+    public function updateSettings(Request $request)
+    {
+        $tenantId = auth()->user()->tenant_id;
+        $validated = $request->validate([
+            'mappings' => 'required|array',
+            'mappings.*' => 'nullable|exists:accounts,id',
+        ]);
+
+        foreach ($validated['mappings'] as $key => $accountId) {
+            if ($accountId) {
+                \App\Models\AccountSetting::updateOrCreate(
+                    ['tenant_id' => $tenantId, 'key' => $key],
+                    ['account_id' => $accountId]
+                );
+            }
+        }
+
+        return redirect()->route('accounting.settings')->with('success', 'Accounting maps updated successfully.');
+    }
 }
 

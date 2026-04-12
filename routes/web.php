@@ -53,6 +53,9 @@ Route::middleware('auth')->group(function () {
     // POS Product Search / Barcode
     Route::get('/pos/search', [POSController::class, 'searchProduct'])->name('pos.search');
     Route::post('/pos/customer/quick-store', [POSController::class, 'quickStoreCustomer'])->name('pos.customer.quick-store');
+    // POS Shift Reports
+    Route::get('/pos/shifts', [POSController::class, 'shiftsIndex'])->name('pos.shifts.index');
+    Route::get('/pos/shifts/{shift}', [POSController::class, 'shiftShow'])->name('pos.shifts.show');
 
     // Inventory
     Route::resource('inventory/products', ProductController::class)->names('inventory.products');
@@ -127,6 +130,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/journal-entries', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'storeJournalEntry'])->name('journal-entries.store');
         
         Route::get('/reports', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'reports'])->name('reports');
+        Route::get('/settings', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'settings'])->name('settings');
+        Route::post('/settings', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'updateSettings'])->name('settings.update');
     });
 });
 

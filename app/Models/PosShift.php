@@ -67,5 +67,21 @@ class PosShift extends Model
             'variance' => $closingFloat - $expectedCash,
             'notes' => $notes,
         ]);
+
+        // Record variance in accounting if non-zero
+        if (abs($this->variance) >= 0.01) {
+            try {
+                $generator = \App\Services\Accounting\JournalEntryFactory::getGenerator($this);
+                $jeData = $generator->generate($this);
+                
+                app(\App\Services\AccountingService::class)->createJournalEntry(
+                    $jeData['header'],
+                    $jeData['lines']
+                );
+            } catch (\Exception $e) {
+                // Log error but allow shift to close
+                \Illuminate\Support\Facades\Log::error("Failed to create journal entry for shift variance: " . $e->getMessage());
+            }
+        }
     }
 }

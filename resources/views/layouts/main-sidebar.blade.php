@@ -73,6 +73,12 @@
 							<span class="side-menu__label">Sales History</span>
 						</a>
 					</li>
+					<li class="slide">
+						<a class="side-menu__item" href="{{ route('pos.shifts.index') }}">
+							<i class="side-menu__icon fe fe-clock"></i>
+							<span class="side-menu__label">Shift Management</span>
+						</a>
+					</li>
 
 					<li class="side-item side-item-category">Inventory Management</li>
 					<li class="slide">
@@ -157,6 +163,7 @@
 							<li><a class="slide-item" href="{{ route('accounting.accounts') }}">Chart of Accounts</a></li>
 							<li><a class="slide-item" href="{{ route('accounting.journal-entries') }}">Journal Entries</a></li>
 							<li><a class="slide-item" href="{{ route('accounting.reports') }}">Financial Reports</a></li>
+							<li><a class="slide-item" href="{{ route('accounting.settings') }}">Accounting Setup</a></li>
 						</ul>
 					</li>
 

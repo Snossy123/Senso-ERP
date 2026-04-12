@@ -47,7 +47,7 @@ class AccountingService
                 'date'        => $data['date'] ?? now()->toDateString(),
                 'description' => $data['description'],
                 'status'      => 'posted', // Auto-post for automated entries
-                'created_by'  => request()->id() ?? auth()->id(),
+                'created_by'  => auth()->id(),
                 'source_type' => $data['source_type'] ?? null,
                 'source_id'   => $data['source_id'] ?? null,
             ]);
