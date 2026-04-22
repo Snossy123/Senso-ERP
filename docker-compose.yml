@@ -1,0 +1,37 @@
+# Frontend (Laravel Mix / React studio bundle): no host npm required.
+#   docker compose --profile assets run --rm node-assets npm install
+#   docker compose --profile assets run --rm node-assets npm run production
+#   docker compose --profile assets run --rm node-assets npm run watch
+services:
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: dashboard-app
+    restart: unless-stopped
+    working_dir: /var/www/html/dashboard
+    volumes:
+      - ./:/var/www/html/dashboard
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8000
+    command: ["/usr/local/bin/entrypoint-dashboard.sh"]
+    networks:
+      - default
+      - shared_mysql_network
+
+  node-assets:
+    image: node:20-bookworm
+    container_name: dashboard-node-assets
+    working_dir: /var/www/html/dashboard
+    volumes:
+      - ./:/var/www/html/dashboard
+    profiles:
+      - assets
+
+networks:
+  shared_mysql_network:
+    external: true

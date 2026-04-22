@@ -11,12 +11,17 @@ use App\Models\User;
 use App\Models\Activity;
 use App\Notifications\OrderPlacedNotification;
 use App\Notifications\LowStockAlertNotification;
+use App\Modules\StorefrontBuilder\Services\StorefrontRenderer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class CheckoutController extends Controller
 {
+    public function __construct(private readonly StorefrontRenderer $storefrontRenderer)
+    {
+    }
+
     private function getCart(): array
     {
         return session('cart', []);
@@ -42,7 +47,8 @@ class CheckoutController extends Controller
             }
         }
 
-        return view('store.checkout.index', compact('items', 'subtotal', 'customer'));
+        $storefrontRender = $this->storefrontRenderer->forPage('checkout');
+        return view('store.checkout.index', compact('items', 'subtotal', 'customer', 'storefrontRender'));
     }
 
     public function placeOrder(Request $request)
@@ -160,6 +166,7 @@ class CheckoutController extends Controller
         if (!$orderNumber) {
             return redirect()->route('store.index');
         }
-        return view('store.checkout.success', compact('orderNumber'));
+        $storefrontRender = $this->storefrontRenderer->forPage('checkout');
+        return view('store.checkout.success', compact('orderNumber', 'storefrontRender'));
     }
 }

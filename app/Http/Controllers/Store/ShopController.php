@@ -5,10 +5,15 @@ namespace App\Http\Controllers\Store;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Category;
+use App\Modules\StorefrontBuilder\Services\StorefrontRenderer;
 use Illuminate\Http\Request;
 
 class ShopController extends Controller
 {
+    public function __construct(private readonly StorefrontRenderer $storefrontRenderer)
+    {
+    }
+
     public function index(Request $request)
     {
         $query = Product::where('is_ecommerce', true)->where('is_active', true)->with('category');
@@ -23,7 +28,9 @@ class ShopController extends Controller
         $products   = $query->latest()->paginate(12)->withQueryString();
         $categories = Category::whereHas('products', fn($q) => $q->where('is_ecommerce', true))->get();
 
-        return view('store.shop.index', compact('products', 'categories'));
+        $storefrontRender = $this->storefrontRenderer->forPage('shop');
+
+        return view('store.shop.index', compact('products', 'categories', 'storefrontRender'));
     }
 
     public function show(Product $product)
@@ -34,6 +41,8 @@ class ShopController extends Controller
             ->where('id', '!=', $product->id)
             ->limit(4)
             ->get();
-        return view('store.shop.show', compact('product', 'related'));
+        $storefrontRender = $this->storefrontRenderer->forPage('product');
+
+        return view('store.shop.show', compact('product', 'related', 'storefrontRender'));
     }
 }

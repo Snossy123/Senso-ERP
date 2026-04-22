@@ -20,6 +20,8 @@ use App\Http\Controllers\Store\ShopController;
 use App\Http\Controllers\Store\CartController;
 use App\Http\Controllers\Store\CheckoutController;
 use App\Http\Controllers\Store\AccountController;
+use App\Modules\StorefrontBuilder\Http\Controllers\StorefrontBuilderController;
+use App\Modules\StorefrontBuilder\Http\Controllers\StorefrontStudioController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SettingsController;
@@ -27,11 +29,17 @@ use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\UomoAssetController;
 
 // ── ADMIN ERP AUTH (staff) ──────────────────────────────────
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+// Local Uomo static previews (served from /uomo on disk, not necessarily from /public)
+Route::get('/__uomo/{path}', [UomoAssetController::class, 'show'])
+    ->where('path', '.*')
+    ->name('uomo.asset');
 
 Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
@@ -97,6 +105,36 @@ Route::middleware('auth')->group(function () {
     // Admin — Settings
     Route::get('/admin/settings', [SettingsController::class, 'index'])->name('admin.settings');
     Route::post('/admin/settings', [SettingsController::class, 'store'])->name('admin.settings.store');
+
+    // Admin — Ecommerce Builder
+    Route::prefix('/admin/storefront-builder')->name('admin.storefront-builder.')->group(function () {
+        Route::get('/', [StorefrontBuilderController::class, 'index'])->name('index');
+        Route::patch('/settings', [StorefrontBuilderController::class, 'update'])->name('update');
+        Route::patch('/sections', [StorefrontBuilderController::class, 'updateSections'])->name('sections.update');
+        Route::post('/publish', [StorefrontBuilderController::class, 'publish'])->name('publish');
+        Route::post('/rollback', [StorefrontBuilderController::class, 'rollback'])->name('rollback');
+        Route::get('/preview', [StorefrontBuilderController::class, 'preview'])->name('preview');
+    });
+
+    Route::prefix('/admin/storefront-studio')->name('admin.storefront-studio.')->group(function () {
+        Route::get('/', [StorefrontStudioController::class, 'index'])->name('index');
+        Route::get('/pages/{pageType}/layout', [StorefrontStudioController::class, 'showPageLayout'])
+            ->where('pageType', '[a-z0-9-]+')
+            ->name('pages.layout.show');
+        Route::put('/pages/{pageType}/layout', [StorefrontStudioController::class, 'updatePageLayout'])
+            ->where('pageType', '[a-z0-9-]+')
+            ->name('pages.layout.update');
+        Route::get('/catalog/products', [StorefrontStudioController::class, 'catalogProducts'])->name('catalog.products');
+        Route::get('/catalog/categories', [StorefrontStudioController::class, 'catalogCategories'])->name('catalog.categories');
+        Route::get('/catalog/cart-summary', [StorefrontStudioController::class, 'catalogCartSummary'])->name('catalog.cart-summary');
+        Route::get('/presets/uomo', [StorefrontStudioController::class, 'uomoPresets'])->name('presets.uomo');
+        Route::get('/pages/{pageType}/layout/diff', [StorefrontStudioController::class, 'pageLayoutDiff'])
+            ->where('pageType', '[a-z0-9-]+')
+            ->name('pages.layout.diff');
+        Route::post('/pages/{pageType}/layout/import', [StorefrontStudioController::class, 'importPageLayout'])
+            ->where('pageType', '[a-z0-9-]+')
+            ->name('pages.layout.import');
+    });
 
     // Admin — Activity Log
     Route::get('/admin/activity', [ActivityLogController::class, 'index'])->name('admin.activity.index');

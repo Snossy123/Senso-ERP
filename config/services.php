@@ -34,4 +34,9 @@ return [
         'token' => env('MAPBOX_TOKEN'),
     ],
 
+    'storefront' => [
+        // Used by public-ish storefront boot endpoints (split-frontend readiness).
+        'boot_token' => env('STOREFRONT_BOOT_TOKEN'),
+    ],
+
 ];

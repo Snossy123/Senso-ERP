@@ -50,46 +50,66 @@
     </style>
     @yield('css')
 </head>
-<body x-data="{ cartCount: {{ count(session('cart', [])) }} }">
-    <header class="store-header py-3">
-        <nav class="navbar navbar-expand-lg navbar-light container">
-            <a class="navbar-brand" href="{{ route('store.index') }}">Senso<span>Store</span></a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto align-items-center">
-                    <li class="nav-item mx-2"><a class="nav-link" href="{{ route('store.index') }}">Shop</a></li>
-                    
-                    @auth('customer')
-                        <li class="nav-item mx-2 dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown">
-                                Hi, {{ Auth::guard('customer')->user()->name }}
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-2">
-                                <li><a class="dropdown-item p-2 rounded" href="{{ route('store.account.dashboard') }}"><i class="fa fa-tachometer-alt me-2"></i>Dashboard</a></li>
-                                <li><a class="dropdown-item p-2 rounded text-danger" href="#" onclick="event.preventDefault(); document.getElementById('logout-customer').submit();"><i class="fa fa-sign-out-alt me-2"></i>Sign Out</a></li>
-                            </ul>
-                            <form id="logout-customer" action="{{ route('store.logout') }}" method="POST" class="d-none">@csrf</form>
-                        </li>
-                    @else
-                        <li class="nav-item mx-2"><a class="nav-link" href="{{ route('store.login') }}">Login</a></li>
-                    @endauth
+@php
+    $builderSections = collect($storefrontRender['sections'] ?? []);
+    $heroSection = $builderSections->firstWhere('section_type', 'hero');
+    $heroPayload = $heroSection['payload'] ?? [];
+    $ctaSection = $builderSections->firstWhere('section_type', 'cta');
+    $ctaPayload = $ctaSection['payload'] ?? [];
 
-                    <li class="nav-item ms-3">
-                        <a href="{{ route('store.cart.index') }}" class="btn position-relative">
-                            <i class="fa fa-shopping-cart fa-lg"></i>
-                            <template x-if="cartCount > 0">
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" x-text="cartCount"></span>
-                            </template>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </nav>
-    </header>
+    $storefrontModel = $storefrontRender['storefront'] ?? null;
+    $pageType = $storefrontRender['page_type'] ?? null;
+    $builderSettings = $storefrontRender['builder_settings'] ?? (is_object($storefrontModel) ? ($storefrontModel->settings ?? []) : []);
+    $layoutSlots = app(\App\Modules\StorefrontBuilder\Services\LayoutSlotService::class);
+    $uomoNavbarKey = $layoutSlots->globalNavbarKey($builderSettings);
+    $useHomeVisualSlots = in_array($pageType, ['home', 'shop'], true);
+    $uomoHomeHeroKey = $useHomeVisualSlots ? $layoutSlots->pageSlot($builderSettings, 'home', 'hero') : null;
+    $uomoHomeFooterKey = $useHomeVisualSlots ? $layoutSlots->pageSlot($builderSettings, 'home', 'footer') : null;
 
-    @yield('hero')
+    $uomoNavbarMeta = $uomoNavbarKey ? app(\App\Modules\StorefrontBuilder\Services\TemplateRegistryService::class)->findTemplate($uomoNavbarKey) : null;
+    $uomoNavbarUrl = $uomoNavbarMeta ? url($uomoNavbarMeta['preview']) : '';
+
+    $uomoHeroMeta = $uomoHomeHeroKey ? app(\App\Modules\StorefrontBuilder\Services\TemplateRegistryService::class)->findTemplate($uomoHomeHeroKey) : null;
+    $uomoHeroUrl = $uomoHeroMeta ? url($uomoHeroMeta['preview']) : '';
+
+    $uomoFooterMeta = $uomoHomeFooterKey ? app(\App\Modules\StorefrontBuilder\Services\TemplateRegistryService::class)->findTemplate($uomoHomeFooterKey) : null;
+    $uomoFooterUrl = $uomoFooterMeta ? url($uomoFooterMeta['preview']) : '';
+
+    $uomoNavbarFragmentHtml = $uomoNavbarKey
+        ? app(\App\Modules\StorefrontBuilder\Services\UomoFragmentService::class)->navbarHtml($uomoNavbarKey)
+        : null;
+
+    $settings = is_object($storefrontModel) ? ($storefrontModel->settings ?? []) : [];
+    $navbarVariant = (string) data_get($settings, 'navbar_variant', 'glass_sticky');
+    $heroVariant = (string) data_get($settings, 'hero_variant', 'gradient_split');
+
+    $navbarPartial = 'store.partials.navbar-' . $navbarVariant;
+    $heroPartial = 'store.partials.hero-' . $heroVariant;
+    if (!view()->exists($navbarPartial)) {
+        $navbarPartial = 'store.partials.navbar-glass_sticky';
+    }
+    if (!view()->exists($heroPartial)) {
+        $heroPartial = 'store.partials.hero-gradient_split';
+    }
+@endphp
+<body x-data="{ cartCount: {{ count(session('cart', [])) }} }" data-template-key="{{ $storefrontRender['template_key'] ?? 'legacy' }}" data-page-type="{{ $pageType ?? '' }}">
+    @if($uomoNavbarFragmentHtml)
+        <div class="store-uomo-navbar-fragment border-bottom">{!! $uomoNavbarFragmentHtml !!}</div>
+    @elseif($uomoNavbarUrl !== '')
+        @include('store.partials.uomo-slot-clip', ['url' => $uomoNavbarUrl, 'clipHeight' => 200, 'iframeHeight' => 780])
+    @else
+        @include($navbarPartial)
+    @endif
+
+    @if($heroSection)
+        @if($uomoHeroUrl !== '')
+            @include('store.partials.uomo-slot-clip', ['url' => $uomoHeroUrl, 'clipHeight' => 460, 'iframeHeight' => 1100])
+        @else
+            @include($heroPartial)
+        @endif
+    @else
+        @yield('hero')
+    @endif
 
     <main class="container py-5">
         @if(session('success'))
@@ -101,6 +121,9 @@
         @yield('content')
     </main>
 
+    @if($uomoFooterUrl !== '')
+        @include('store.partials.uomo-footer-slot', ['url' => $uomoFooterUrl, 'clipHeight' => 360, 'iframeHeight' => 1600])
+    @else
     <footer>
         <div class="container">
             <div class="row">
@@ -143,6 +166,7 @@
             </div>
         </div>
     </footer>
+    @endif
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

@@ -128,6 +128,18 @@
 							@endif
 						</a>
 					</li>
+					<li class="slide">
+						<a class="side-menu__item" href="{{ route('admin.storefront-builder.index') }}">
+							<i class="side-menu__icon fe fe-layout"></i>
+							<span class="side-menu__label">Storefront Builder</span>
+						</a>
+					</li>
+					<li class="slide">
+						<a class="side-menu__item" href="{{ route('admin.storefront-studio.index') }}">
+							<i class="side-menu__icon fe fe-monitor"></i>
+							<span class="side-menu__label">Visual Store Studio</span>
+						</a>
+					</li>
 
 					<li class="side-item side-item-category">Reports</li>
 					<li class="slide">
