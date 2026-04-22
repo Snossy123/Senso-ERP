@@ -79,7 +79,7 @@
         ? app(\App\Modules\StorefrontBuilder\Services\UomoFragmentService::class)->navbarHtml($uomoNavbarKey)
         : null;
 
-    $settings = is_object($storefrontModel) ? ($storefrontModel->settings ?? []) : [];
+    $settings = is_array($builderSettings) ? $builderSettings : [];
     $navbarVariant = (string) data_get($settings, 'navbar_variant', 'glass_sticky');
     $heroVariant = (string) data_get($settings, 'hero_variant', 'gradient_split');
 

@@ -23,7 +23,10 @@ class StorefrontRenderer
         }
 
         $storefront = $this->builderService->getOrCreateDefaultStorefront();
-        $cacheKey = "storefront-render:{$storefront->tenant_id}:{$storefront->id}:{$storefront->published_version_id}:{$pageType}";
+        $tenantId = (int) $storefront->tenant_id;
+        $storefrontId = (int) $storefront->id;
+        $publishedVersionId = (int) ($storefront->published_version_id ?? 0);
+        $cacheKey = "storefront-render:{$tenantId}:{$storefrontId}:{$publishedVersionId}:{$pageType}";
 
         return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($storefront, $pageType) {
             $published = null;

@@ -55,6 +55,8 @@ class UomoFragmentService
         'data-bs-toggle' => true,
         'data-target' => true,
         'data-toggle' => true,
+        'formaction' => true,
+        'href' => true,
         'height' => true,
         'id' => true,
         'name' => true,
@@ -152,10 +154,8 @@ class UomoFragmentService
                 $tagName = strtolower($el->tagName);
 
                 if (!isset(self::ALLOWED_GLOBAL_ATTRIBUTES[$name])) {
-                    if (!(str_starts_with($name, 'data-') || str_starts_with($name, 'aria-'))) {
-                        $removeAttrs[] = $attr->nodeName;
-                        continue;
-                    }
+                    $removeAttrs[] = $attr->nodeName;
+                    continue;
                 }
 
                 if (str_starts_with($name, 'on')) {
