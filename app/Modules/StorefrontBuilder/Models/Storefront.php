@@ -8,6 +8,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property int $tenant_id
+ * @property string $name
+ * @property string $slug
+ * @property string $status
+ * @property string|null $active_template_key
+ * @property int|null $published_version_id
+ * @property array<string, mixed>|null $settings
+ */
 class Storefront extends Model
 {
     use BelongsToTenant;
