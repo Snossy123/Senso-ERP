@@ -55,8 +55,19 @@ class ExtractUomoNavbarFragments extends Command
             return trim($m[0]);
         }
 
-        if (preg_match('/<div[^>]+class="[^"]*(?:header-desktop|apus-header|site-header)[^"]*"[^>]*>.*?<\/div>/is', $html, $m)) {
-            return trim($m[0]);
+        $dom = new \DOMDocument();
+        libxml_use_internal_errors(true);
+        $loaded = $dom->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        libxml_clear_errors();
+        if ($loaded) {
+            $xpath = new \DOMXPath($dom);
+            $query = '//*[contains(concat(" ", normalize-space(@class), " "), " header-desktop ")'
+                . ' or contains(concat(" ", normalize-space(@class), " "), " apus-header ")'
+                . ' or contains(concat(" ", normalize-space(@class), " "), " site-header ")]';
+            $node = $xpath->query($query)?->item(0);
+            if ($node instanceof \DOMNode) {
+                return trim((string) $dom->saveHTML($node));
+            }
         }
 
         return "<!-- storefront:extract-uomo-navbar-fragments: no <header> match; refine selectors for this file -->\n";

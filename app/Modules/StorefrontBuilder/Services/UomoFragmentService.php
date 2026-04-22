@@ -54,6 +54,52 @@ class UomoFragmentService
             return null;
         }
 
-        return $html;
+        return $this->sanitizeHtml($html);
+    }
+
+    private function sanitizeHtml(string $html): ?string
+    {
+        $dom = new \DOMDocument();
+        libxml_use_internal_errors(true);
+        $loaded = $dom->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        libxml_clear_errors();
+        if (!$loaded) {
+            return null;
+        }
+
+        $xpath = new \DOMXPath($dom);
+
+        foreach ($xpath->query('//script | //iframe | //object | //embed | //link[translate(@rel, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")="import"]') ?: [] as $node) {
+            $node->parentNode?->removeChild($node);
+        }
+
+        foreach ($xpath->query('//*') ?: [] as $el) {
+            if (!$el instanceof \DOMElement) {
+                continue;
+            }
+            $removeAttrs = [];
+            foreach ($el->attributes ?? [] as $attr) {
+                $name = strtolower((string) $attr->nodeName);
+                $value = trim((string) $attr->nodeValue);
+                if (str_starts_with($name, 'on')) {
+                    $removeAttrs[] = $attr->nodeName;
+                    continue;
+                }
+                if (in_array($name, ['src', 'href', 'xlink:href', 'formaction'], true) && preg_match('/^\s*javascript:/i', $value)) {
+                    $removeAttrs[] = $attr->nodeName;
+                    continue;
+                }
+                if ($name === 'style' && preg_match('/expression\s*\(|url\s*\(\s*["\']?\s*javascript:/i', $value)) {
+                    $removeAttrs[] = $attr->nodeName;
+                }
+            }
+            foreach ($removeAttrs as $attrName) {
+                $el->removeAttribute($attrName);
+            }
+        }
+
+        $clean = trim((string) $dom->saveHTML());
+
+        return $clean !== '' ? $clean : null;
     }
 }

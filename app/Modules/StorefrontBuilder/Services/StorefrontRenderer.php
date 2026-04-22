@@ -55,7 +55,8 @@ class StorefrontRenderer
                         ->all();
 
                     return [
-                        'storefront' => $storefront,
+                        // Avoid caching hydrated Eloquent models in render payloads.
+                        'storefront' => null,
                         'template_key' => data_get($published->snapshot, 'storefront.active_template_key', $storefront->active_template_key),
                         'page_type' => $pageType,
                         'title' => $snapshotPage['title'] ?? null,
@@ -88,7 +89,8 @@ class StorefrontRenderer
                 ->all();
 
             return [
-                'storefront' => $storefront,
+                // Avoid caching hydrated Eloquent models in render payloads.
+                'storefront' => null,
                 'template_key' => $storefront->active_template_key,
                 'page_type' => $pageType,
                 'title' => $page->title,
@@ -127,6 +129,7 @@ class StorefrontRenderer
             'layout_schema' => null,
             'studio_meta' => null,
             'published_version_id' => null,
+            'source' => 'fallback',
             'builder_settings' => $builderSettings,
         ];
     }
