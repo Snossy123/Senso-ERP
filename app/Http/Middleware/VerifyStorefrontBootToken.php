@@ -17,8 +17,7 @@ class VerifyStorefrontBootToken
 
         $provided =
             (string) $request->bearerToken()
-            ?: (string) $request->header('X-Storefront-Boot-Token', '')
-            ?: (string) $request->query('token', '');
+            ?: (string) $request->header('X-Storefront-Boot-Token', '');
 
         if (!hash_equals($expected, $provided)) {
             abort(401, 'Invalid storefront boot token.');

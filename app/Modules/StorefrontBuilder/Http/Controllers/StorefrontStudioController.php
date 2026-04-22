@@ -73,7 +73,8 @@ class StorefrontStudioController extends Controller
         $perPage = min(100, max(1, (int) $request->query('per_page', 24)));
         $tenantId = (int) app(TenantManager::class)->getCurrentId();
         $page = max(1, (int) $request->query('page', 1));
-        $cacheKey = "storefront-studio:catalog:products:{$tenantId}:{$perPage}:{$page}";
+        $version = $this->catalogCacheVersion($tenantId);
+        $cacheKey = "storefront-studio:catalog:products:v{$version}:{$tenantId}:{$perPage}:{$page}";
 
         $payload = Cache::remember($cacheKey, 45, function () use ($perPage, $page) {
             $paginator = Product::query()
@@ -108,7 +109,8 @@ class StorefrontStudioController extends Controller
     public function catalogCategories(): JsonResponse
     {
         $tenantId = (int) app(TenantManager::class)->getCurrentId();
-        $cacheKey = "storefront-studio:catalog:categories:{$tenantId}";
+        $version = $this->catalogCacheVersion($tenantId);
+        $cacheKey = "storefront-studio:catalog:categories:v{$version}:{$tenantId}";
 
         $categories = Cache::remember($cacheKey, 120, function () {
             return Category::query()
@@ -199,11 +201,25 @@ class StorefrontStudioController extends Controller
 
     private function forgetStudioCatalogCache(int $tenantId): void
     {
-        foreach ([8, 12, 24, 48, 100] as $perPage) {
-            for ($page = 1; $page <= 20; $page++) {
-                Cache::forget("storefront-studio:catalog:products:{$tenantId}:{$perPage}:{$page}");
-            }
+        $this->bumpCatalogCacheVersion($tenantId);
+    }
+
+    private function catalogCacheVersion(int $tenantId): int
+    {
+        $key = "storefront-studio:catalog:version:{$tenantId}";
+        $version = (int) Cache::get($key, 1);
+        if ($version < 1) {
+            $version = 1;
+            Cache::forever($key, $version);
         }
-        Cache::forget("storefront-studio:catalog:categories:{$tenantId}");
+
+        return $version;
+    }
+
+    private function bumpCatalogCacheVersion(int $tenantId): void
+    {
+        $key = "storefront-studio:catalog:version:{$tenantId}";
+        $current = (int) Cache::get($key, 1);
+        Cache::forever($key, $current + 1);
     }
 }
