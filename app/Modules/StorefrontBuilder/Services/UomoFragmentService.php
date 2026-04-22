@@ -9,6 +9,67 @@ namespace App\Modules\StorefrontBuilder\Services;
 class UomoFragmentService
 {
     /**
+     * Restrict fragment rendering to structural navbar markup only.
+     *
+     * @var array<string, true>
+     */
+    private const ALLOWED_TAGS = [
+        'a' => true,
+        'button' => true,
+        'div' => true,
+        'form' => true,
+        'header' => true,
+        'i' => true,
+        'img' => true,
+        'input' => true,
+        'label' => true,
+        'li' => true,
+        'nav' => true,
+        'ol' => true,
+        'option' => true,
+        'p' => true,
+        'section' => true,
+        'select' => true,
+        'small' => true,
+        'span' => true,
+        'strong' => true,
+        'ul' => true,
+    ];
+
+    /**
+     * Attributes accepted globally on allowed tags.
+     *
+     * @var array<string, true>
+     */
+    private const ALLOWED_GLOBAL_ATTRIBUTES = [
+        'alt' => true,
+        'aria-current' => true,
+        'aria-expanded' => true,
+        'aria-hidden' => true,
+        'aria-label' => true,
+        'aria-labelledby' => true,
+        'aria-selected' => true,
+        'class' => true,
+        'data-bs-dismiss' => true,
+        'data-bs-target' => true,
+        'data-bs-toggle' => true,
+        'data-target' => true,
+        'data-toggle' => true,
+        'height' => true,
+        'id' => true,
+        'name' => true,
+        'placeholder' => true,
+        'rel' => true,
+        'role' => true,
+        'src' => true,
+        'tabindex' => true,
+        'title' => true,
+        'type' => true,
+        'value' => true,
+        'width' => true,
+    ];
+
+    /**
      * Navbar HTML files available for the active template (studio presets / portal).
      *
      * @return list<array{key: string, fragment_file: string, has_html: bool}>
@@ -69,8 +130,15 @@ class UomoFragmentService
 
         $xpath = new \DOMXPath($dom);
 
-        foreach ($xpath->query('//script | //iframe | //object | //embed | //link[translate(@rel, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")="import"]') ?: [] as $node) {
-            $node->parentNode?->removeChild($node);
+        foreach ($xpath->query('//*') ?: [] as $node) {
+            if (!$node instanceof \DOMElement) {
+                continue;
+            }
+
+            $tagName = strtolower($node->tagName);
+            if (!isset(self::ALLOWED_TAGS[$tagName])) {
+                $node->parentNode?->removeChild($node);
+            }
         }
 
         foreach ($xpath->query('//*') ?: [] as $el) {
@@ -81,16 +149,26 @@ class UomoFragmentService
             foreach ($el->attributes ?? [] as $attr) {
                 $name = strtolower((string) $attr->nodeName);
                 $value = trim((string) $attr->nodeValue);
+                $tagName = strtolower($el->tagName);
+
+                if (!isset(self::ALLOWED_GLOBAL_ATTRIBUTES[$name])) {
+                    if (!(str_starts_with($name, 'data-') || str_starts_with($name, 'aria-'))) {
+                        $removeAttrs[] = $attr->nodeName;
+                        continue;
+                    }
+                }
+
                 if (str_starts_with($name, 'on')) {
                     $removeAttrs[] = $attr->nodeName;
                     continue;
                 }
-                if (in_array($name, ['src', 'href', 'xlink:href', 'formaction'], true) && preg_match('/^\s*javascript:/i', $value)) {
+
+                if (
+                    in_array($name, ['href', 'src', 'action', 'formaction'], true)
+                    && !$this->isSafeUrl($value, $name, $tagName)
+                ) {
                     $removeAttrs[] = $attr->nodeName;
                     continue;
-                }
-                if ($name === 'style' && preg_match('/expression\s*\(|url\s*\(\s*["\']?\s*javascript:/i', $value)) {
-                    $removeAttrs[] = $attr->nodeName;
                 }
             }
             foreach ($removeAttrs as $attrName) {
@@ -101,5 +179,27 @@ class UomoFragmentService
         $clean = trim((string) $dom->saveHTML());
 
         return $clean !== '' ? $clean : null;
+    }
+
+    private function isSafeUrl(string $url, string $attribute, string $tagName): bool
+    {
+        $normalized = preg_replace('/[\x00-\x20]+/u', '', $url) ?? '';
+        if ($normalized === '') {
+            return true;
+        }
+
+        if (str_starts_with($normalized, '#') || str_starts_with($normalized, '/')) {
+            return true;
+        }
+
+        if (preg_match('/^(?:https?:|mailto:|tel:)/i', $normalized)) {
+            return true;
+        }
+
+        if ($tagName === 'img' && $attribute === 'src' && preg_match('/^data:image\//i', $normalized)) {
+            return true;
+        }
+
+        return false;
     }
 }
