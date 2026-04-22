@@ -1,0 +1,76 @@
+/**
+ * Styling begins
+ */
+.woocommerce, .woocommerce-page {
+  /**
+   * Quantity inputs
+   */ }
+  .woocommerce #quantity input::-webkit-outer-spin-button,
+  .woocommerce #quantity input::-webkit-inner-spin-button,
+  .woocommerce #content .quantity input::-webkit-outer-spin-button,
+  .woocommerce #content .quantity input::-webkit-inner-spin-button, .woocommerce-page #quantity input::-webkit-outer-spin-button,
+  .woocommerce-page #quantity input::-webkit-inner-spin-button,
+  .woocommerce-page #content .quantity input::-webkit-outer-spin-button,
+  .woocommerce-page #content .quantity input::-webkit-inner-spin-button {
+    display: none; }
+  .woocommerce .quantity, .woocommerce-page .quantity {
+    position: relative;
+    width: 120px;
+    display: flex;
+    display: -webkit-flex; /* Safari */
+    align-items: center;
+    -webkit-align-items: center;
+    zoom: 1;
+    border:2px solid #E4E4E4;
+    /* Hide buttons for opera */ }
+    .woocommerce .quantity input.qty, .woocommerce-page .quantity input.qty {
+      width: 36px;
+      height: 56px;
+      padding: 0 5px;
+      margin: 0;
+      text-align: center;
+      border: 0;
+      font-weight: 400;
+      font-size: 16px;
+      -moz-appearance: textfield;
+      background-color: transparent;
+      /* Hide buttons for Firefox 29 and later */ }
+    .woocommerce .quantity noindex:-o-prefocus, .woocommerce .quantity input[type=number], .woocommerce-page .quantity noindex:-o-prefocus, .woocommerce-page .quantity input[type=number] {
+      padding-right: 1.2em; }
+    .woocommerce .quantity .plus,
+    .woocommerce .quantity .minus, .woocommerce-page .quantity .plus,
+    .woocommerce-page .quantity .minus {
+      display: block;
+      padding: 0;
+      margin: 0;
+      border:0;
+      font-size: 16px;
+      text-align: center;
+      width: 40px;
+      height: 56px;
+      text-decoration: none;
+      overflow: visible;
+      text-decoration: none;
+      cursor: pointer;
+      color: #767676;
+      text-shadow: none;
+      background: transparent;
+      transition:all 0.2s ease-in-out 0s;
+      -o-transition:all 0.2s ease-in-out 0s;
+      -webkit-transition:all 0.2s ease-in-out 0s;
+       }
+      .woocommerce .quantity .plus:hover,
+      .woocommerce .quantity .minus:hover, .woocommerce-page .quantity .plus:hover,
+      .woocommerce-page .quantity .minus:hover {
+        
+        color: #C32929; }
+    .woocommerce .quantity .plus, .woocommerce-page .quantity .plus {
+
+    }
+    .woocommerce .quantity .minus, .woocommerce-page .quantity .minus {
+
+    }
+.woocommerce-page .quantity .plus:hover,
+.woocommerce-page .quantity .minus:hover{
+  color: #C32929;
+}

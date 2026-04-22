@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Api\TenantApiController;
+use App\Modules\StorefrontBuilder\Http\Controllers\StorefrontBuilderApiController;
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
@@ -31,6 +32,30 @@ Route::middleware('auth:sanctum')->prefix('plans')->group(function () {
 
 Route::middleware('auth:sanctum')->prefix('usage')->group(function () {
     Route::post('/check', [TenantApiController::class, 'checkLimits']);
+});
+
+Route::middleware(['auth:sanctum', 'tenant'])->prefix('storefront-builder')->group(function () {
+    Route::get('/storefront', [StorefrontBuilderApiController::class, 'show']);
+    Route::get('/published-payload', [StorefrontBuilderApiController::class, 'publishedPayload']);
+});
+
+Route::middleware(['auth:sanctum', 'tenant'])->prefix('storefront-builder/v2')->group(function () {
+    Route::get('/pages/{pageType}/layout', [\App\Modules\StorefrontBuilder\Http\Controllers\StorefrontStudioController::class, 'showPageLayout'])
+        ->where('pageType', '[a-z0-9-]+');
+    Route::put('/pages/{pageType}/layout', [\App\Modules\StorefrontBuilder\Http\Controllers\StorefrontStudioController::class, 'updatePageLayout'])
+        ->where('pageType', '[a-z0-9-]+');
+    Route::get('/catalog/products', [\App\Modules\StorefrontBuilder\Http\Controllers\StorefrontStudioController::class, 'catalogProducts']);
+    Route::get('/catalog/categories', [\App\Modules\StorefrontBuilder\Http\Controllers\StorefrontStudioController::class, 'catalogCategories']);
+    Route::get('/catalog/cart-summary', [\App\Modules\StorefrontBuilder\Http\Controllers\StorefrontStudioController::class, 'catalogCartSummary']);
+    Route::get('/presets/uomo', [\App\Modules\StorefrontBuilder\Http\Controllers\StorefrontStudioController::class, 'uomoPresets']);
+    Route::get('/pages/{pageType}/layout/diff', [\App\Modules\StorefrontBuilder\Http\Controllers\StorefrontStudioController::class, 'pageLayoutDiff'])
+        ->where('pageType', '[a-z0-9-]+');
+    Route::post('/pages/{pageType}/layout/import', [\App\Modules\StorefrontBuilder\Http\Controllers\StorefrontStudioController::class, 'importPageLayout'])
+        ->where('pageType', '[a-z0-9-]+');
+});
+
+Route::middleware(['storefront.boot', 'tenant'])->prefix('v1/storefront')->group(function () {
+    Route::get('/boot', [StorefrontBuilderApiController::class, 'boot']);
 });
 
 Route::middleware(['auth:sanctum', 'tenant'])->prefix('accounting')->group(function () {

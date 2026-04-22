@@ -4,10 +4,15 @@ namespace App\Http\Controllers\Store;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Modules\StorefrontBuilder\Services\StorefrontRenderer;
 use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
+    public function __construct(private readonly StorefrontRenderer $storefrontRenderer)
+    {
+    }
+
     private function getCart(): array
     {
         return session('cart', []);
@@ -37,7 +42,8 @@ class CartController extends Controller
             }
         }
 
-        return view('store.cart.index', compact('products', 'subtotal'));
+        $storefrontRender = $this->storefrontRenderer->forPage('cart');
+        return view('store.cart.index', compact('products', 'subtotal', 'storefrontRender'));
     }
 
     public function add(Request $request, Product $product)
