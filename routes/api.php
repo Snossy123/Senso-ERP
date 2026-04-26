@@ -74,3 +74,8 @@ Route::middleware(['auth:sanctum', 'tenant'])->prefix('accounting')->group(funct
     Route::get('/reports/balance-sheet', [\App\Http\Controllers\Accounting\ReportController::class, 'balanceSheet']);
     Route::get('/reports/general-ledger', [\App\Http\Controllers\Accounting\ReportController::class, 'generalLedger']);
 });
+
+Route::prefix('builder')->group(function () {
+    Route::get('/drafts/latest', [\App\Http\Controllers\Api\BuilderDraftController::class, 'latest']);
+    Route::post('/drafts', [\App\Http\Controllers\Api\BuilderDraftController::class, 'store']);
+});

@@ -1,0 +1,1781 @@
+Here's the NEXUS COMMERCE storefront — a fully interactive single-file ecommerce demo with GSAP animations, working cart, 3-step checkout, instant search, product variants, and mobile-responsive design.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXUS COMMERCE — Premium Retail Experience</title>
+<meta name="description" content="Discover curated collections of premium products. Free shipping on orders over $100.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { display: ['Space Grotesk', 'sans-serif'], body: ['DM Sans', 'sans-serif'] },
+      colors: {
+        brand: { 50:'#ECFDF5',100:'#D1FAE5',200:'#A7F3D0',300:'#6EE7B7',400:'#34D399',500:'#0D9668',600:'#0B7D56',700:'#096645',800:'#074F34',900:'#053823' },
+        warm: { 50:'#FFFBEB',100:'#FEF3C7',200:'#FDE68A',300:'#FCD34D',400:'#FBBF24',500:'#D97706',600:'#B45309' },
+        surface: { 0:'#FAFAF8',50:'#F3F2EF',100:'#E8E7E3',200:'#D4D3CF',300:'#B0AFA8' }
+      }
+    }
+  }
+}
+</script>
+<style>
+  :root {
+    --bg: #FAFAF8; --bg2: #F3F2EF; --fg: #1A1A1A; --fg-muted: #6B7280;
+    --accent: #0D9668; --accent-hover: #0B7D56; --accent-light: #ECFDF5;
+    --warm: #D97706; --warm-light: #FFFBEB; --card: #FFFFFF; --border: #E5E5E0;
+    --danger: #DC2626; --success: #059669;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--fg); margin: 0; overflow-x: hidden; }
+  h1,h2,h3,h4,h5,h6 { font-family: 'Space Grotesk', sans-serif; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* Skeleton shimmer */
+  @keyframes shimmer { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
+  .skeleton { background: linear-gradient(90deg,var(--bg2) 25%,#ececea 50%,var(--bg2) 75%); background-size:800px 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+    .gsap-hero-word, .gsap-stagger { opacity: 1 !important; transform: none !important; }
+  }
+
+  /* Cart drawer */
+  .cart-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:90;opacity:0;pointer-events:none;transition:opacity .3s; }
+  .cart-overlay.open { opacity:1;pointer-events:auto; }
+  .cart-panel { position:fixed;top:0;right:0;bottom:0;width:420px;max-width:100vw;background:var(--card);z-index:91;transform:translateX(100%);transition:transform .32s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column; }
+  .cart-panel.open { transform:translateX(0); }
+  @media(max-width:640px) { .cart-panel { width:100%; } }
+
+  /* Search modal */
+  .search-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(4px); }
+  .search-overlay.open { opacity:1;pointer-events:auto; }
+  .search-box { position:fixed;top:15%;left:50%;transform:translate(-50%,-20px);width:90%;max-width:640px;background:var(--card);border-radius:16px;z-index:101;opacity:0;pointer-events:none;transition:all .3s cubic-bezier(.4,0,.2,1);box-shadow:0 25px 60px rgba(0,0,0,0.2);max-height:70vh;display:flex;flex-direction:column; }
+  .search-box.open { opacity:1;pointer-events:auto;transform:translate(-50%,0); }
+
+  /* Toast */
+  .toast-container { position:fixed;top:20px;right:20px;z-index:200;display:flex;flex-direction:column;gap:8px;pointer-events:none; }
+  .toast { pointer-events:auto;padding:14px 20px;border-radius:10px;background:var(--fg);color:#fff;font-size:14px;font-weight:500;transform:translateX(120%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;gap:10px;max-width:360px;box-shadow:0 8px 24px rgba(0,0,0,0.15); }
+  .toast.show { transform:translateX(0); }
+  .toast.success { background:#059669; }
+  .toast.error { background:#DC2626; }
+  .toast.info { background:#1A1A1A; }
+
+  /* Filter bottom sheet (mobile) */
+  .filter-sheet { position:fixed;bottom:0;left:0;right:0;background:var(--card);border-radius:20px 20px 0 0;z-index:80;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);max-height:85vh;overflow-y:auto;padding:24px; }
+  .filter-sheet.open { transform:translateY(0); }
+  .filter-backdrop { position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:79;opacity:0;pointer-events:none;transition:opacity .3s; }
+  .filter-backdrop.open { opacity:1;pointer-events:auto; }
+
+  /* Auth modal */
+  .auth-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:110;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center; }
+  .auth-overlay.open { opacity:1;pointer-events:auto; }
+
+  /* Mega menu */
+  .mega-menu { position:absolute;top:100%;left:0;right:0;background:var(--card);border-top:1px solid var(--border);box-shadow:0 20px 40px rgba(0,0,0,0.08);opacity:0;pointer-events:none;transform:translateY(-8px);transition:all .25s cubic-bezier(.4,0,.2,1);z-index:50; }
+  .mega-trigger:hover .mega-menu { opacity:1;pointer-events:auto;transform:translateY(0); }
+
+  /* Page transitions */
+  #app { opacity: 1; transition: opacity .15s; }
+  #app.transitioning { opacity: 0; }
+
+  /* Badge bounce */
+  @keyframes badge-bounce { 0%{transform:scale(1)} 40%{transform:scale(1.35)} 100%{transform:scale(1)} }
+  .badge-bounce { animation: badge-bounce .25s ease; }
+
+  /* Success check */
+  @keyframes draw-check { 0%{stroke-dashoffset:40} 100%{stroke-dashoffset:0} }
+  @keyframes circle-pop { 0%{transform:scale(0);opacity:0} 60%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
+  .success-circle { animation: circle-pop .5s ease forwards; }
+  .success-check { stroke-dasharray:40;stroke-dashoffset:40;animation: draw-check .4s ease .3s forwards; }
+
+  /* Product card hover */
+  .product-card .card-img { transition: transform .4s cubic-bezier(.4,0,.2,1); }
+  .product-card:hover .card-img { transform: scale(1.05); }
+  .product-card .quick-add { transform:translateY(8px);opacity:0;transition:all .25s ease; }
+  .product-card:hover .quick-add { transform:translateY(0);opacity:1; }
+  @media(max-width:768px) { .product-card .quick-add { transform:translateY(0);opacity:1; } }
+
+  /* Progress bar fill */
+  @keyframes progress-fill { from{width:0} }
+  .progress-fill { animation: progress-fill .6s ease forwards; }
+
+  /* Swiper overrides */
+  .swiper-pagination-bullet { background: var(--fg-muted) !important; opacity: .4 !important; }
+  .swiper-pagination-bullet-active { background: var(--accent) !important; opacity: 1 !important; }
+
+  /* Focus visible */
+  *:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+  /* Bottom nav */
+  .bottom-nav { position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);z-index:70;padding:6px 0 env(safe-area-inset-bottom,6px); }
+  @media(min-width:769px) { .bottom-nav { display:none; } }
+
+  /* Checkout steps */
+  .step-connector { height:2px;flex:1;background:var(--border);transition:background .3s; }
+  .step-connector.active { background:var(--accent); }
+
+  /* Quantity stepper */
+  .qty-btn { width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:6px;background:var(--card);cursor:pointer;transition:all .15s;font-size:14px; }
+  .qty-btn:hover { background:var(--bg2); border-color:var(--fg-muted); }
+
+  /* Colour swatch */
+  .swatch { width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .15s;position:relative; }
+  .swatch.active { border-color:var(--fg);box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--fg); }
+  .swatch.disabled { opacity:.35;cursor:not-allowed; }
+  .swatch.disabled::after { content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(255,255,255,.5) 3px,rgba(255,255,255,.5) 6px);border-radius:50%; }
+
+  /* Size pill */
+  .size-pill { padding:8px 16px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:14px;font-weight:500;transition:all .15s;background:var(--card); }
+  .size-pill:hover { border-color:var(--fg-muted); }
+  .size-pill.active { border-color:var(--fg);background:var(--fg);color:#fff; }
+  .size-pill.disabled { opacity:.35;cursor:not-allowed;text-decoration:line-through; }
+
+  /* Subtle bg pattern */
+  .bg-dots { background-image: radial-gradient(circle, #d4d3cf 1px, transparent 1px); background-size: 24px 24px; }
+</style>
+</head>
+<body>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Cart overlay -->
+<div class="cart-overlay" id="cartOverlay" onclick="toggleCart(false)"></div>
+<!-- Cart panel -->
+<div class="cart-panel" id="cartPanel" role="dialog" aria-label="Shopping cart">
+  <div id="cartContent"></div>
+</div>
+
+<!-- Search overlay + box -->
+<div class="search-overlay" id="searchOverlay" onclick="toggleSearch(false)"></div>
+<div class="search-box" id="searchBox" role="dialog" aria-label="Search products">
+  <div id="searchContent"></div>
+</div>
+
+<!-- Filter bottom sheet (mobile) -->
+<div class="filter-backdrop" id="filterBackdrop" onclick="toggleFilterSheet(false)"></div>
+<div class="filter-sheet" id="filterSheet" role="dialog" aria-label="Filters">
+  <div id="filterContent"></div>
+</div>
+
+<!-- Auth modal -->
+<div class="auth-overlay" id="authOverlay" onclick="if(event.target===this)toggleAuth(false)">
+  <div id="authContent"></div>
+</div>
+
+<!-- App wrapper -->
+<div id="app">
+  <header id="siteHeader"></header>
+  <main id="mainContent"></main>
+  <footer id="siteFooter"></footer>
+  <nav class="bottom-nav" id="bottomNav" aria-label="Mobile navigation"></nav>
+</div>
+
+<script>
+// =====================================================
+// DATA: Products, categories, homepage sections
+// =====================================================
+const CATEGORIES = [
+  { id:'c1', name:'Outerwear', slug:'outerwear', image:'https://picsum.photos/seed/outerwear/400/500.jpg', count:24 },
+  { id:'c2', name:'Footwear', slug:'footwear', image:'https://picsum.photos/seed/footwear/400/500.jpg', count:36 },
+  { id:'c3', name:'Accessories', slug:'accessories', image:'https://picsum.photos/seed/accessories/400/500.jpg', count:18 },
+  { id:'c4', name:'Activewear', slug:'activewear', image:'https://picsum.photos/seed/activewear/400/500.jpg', count:42 },
+  { id:'c5', name:'Denim', slug:'denim', image:'https://picsum.photos/seed/denim55/400/500.jpg', count:15 },
+  { id:'c6', name:'Essentials', slug:'essentials', image:'https://picsum.photos/seed/essentials/400/500.jpg', count:30 },
+];
+
+const COLORS = [
+  { name:'Black', hex:'#1A1A1A' },{ name:'White', hex:'#F5F5F5' },{ name:'Navy', hex:'#1E3A5F' },
+  { name:'Olive', hex:'#556B2F' },{ name:'Rust', hex:'#B7410E' },{ name:'Sage', hex:'#9CAF88' },
+  { name:'Cream', hex:'#FFFDD0' },{ name:'Charcoal', hex:'#36454F' },
+];
+
+const SIZES = ['XS','S','M','L','XL','XXL'];
+
+const PRODUCTS = [
+  { id:'p1', name:'Alpine Shell Jacket', slug:'alpine-shell-jacket', category:'c1', basePrice:289, compareAt:349, description:'Engineered for high-altitude performance with a 3-layer waterproof membrane and taped seams. Lightweight, packable, and built to withstand the harshest conditions.', images:['https://picsum.photos/seed/jacket1/600/750.jpg','https://picsum.photos/seed/jacket2/600/750.jpg','https://picsum.photos/seed/jacket3/600/750.jpg','https://picsum.photos/seed/jacket4/600/750.jpg'], colors:['Black','Navy','Olive'], sizes:['S','M','L','XL'], isFeatured:true, tags:['waterproof','shell'], vendor:'Nexus Technical' },
+  { id:'p2', name:'Merino Wool Crewneck', slug:'merino-wool-crewneck', category:'c6', basePrice:128, compareAt:null, description:'Ultra-fine 17.5 micron merino wool, naturally temperature-regulating and odor-resistant. The perfect everyday layer.', images:['https://picsum.photos/seed/merino1/600/750.jpg','https://picsum.photos/seed/merino2/600/750.jpg','https://picsum.photos/seed/merino3/600/750.jpg'], colors:['Black','Cream','Charcoal','Sage'], sizes:['XS','S','M','L','XL'], isFeatured:true, tags:['merino','layering'], vendor:'Nexus Essentials' },
+  { id:'p3', name:'Trail Runner Pro', slug:'trail-runner-pro', category:'c2', basePrice:195, compareAt:240, description:'Vibram Megagrip outsole, responsive EVA midsole, and a breathable knit upper. Designed for technical terrain with 8mm lugs.', images:['https://picsum.photos/seed/trail1/600/750.jpg','https://picsum.photos/seed/trail2/600/750.jpg','https://picsum.photos/seed/trail3/600/750.jpg'], colors:['Black','Olive','Rust'], sizes:['S','M','L','XL','XXL'], isFeatured:true, tags:['trail','running'], vendor:'Nexus Active' },
+  { id:'p4', name:'Canvas Weekender Bag', slug:'canvas-weekender-bag', category:'c3', basePrice:165, compareAt:null, description:'Waxed organic canvas with full-grain leather handles and brass hardware. Spacious main compartment with shoe pocket.', images:['https://picsum.photos/seed/bag1/600/750.jpg','https://picsum.photos/seed/bag2/600/750.jpg','https://picsum.photos/seed/bag3/600/750.jpg'], colors:['Olive','Charcoal','Cream'], sizes:[], isFeatured:false, tags:['bag','travel'], vendor:'Nexus Goods' },
+  { id:'p5', name:'Compression Training Tee', slug:'compression-training-tee', category:'c4', basePrice:68, compareAt:85, description:'Four-way stretch fabric with moisture-wicking technology and flatlock seams. Built for high-intensity training sessions.', images:['https://picsum.photos/seed/compress1/600/750.jpg','https://picsum.photos/seed/compress2/600/750.jpg'], colors:['Black','White','Navy'], sizes:['S','M','L','XL','XXL'], isFeatured:true, tags:['compression','training'], vendor:'Nexus Active' },
+  { id:'p6', name:'Selvedge Straight Denim', slug:'selvedge-straight-denim', category:'c5', basePrice:198, compareAt:null, description:'14oz Japanese selvedge denim, raw and unwashed. Straight fit with a mid-rise. Will develop unique fades over time.', images:['https://picsum.photos/seed/denim1/600/750.jpg','https://picsum.photos/seed/denim2/600/750.jpg','https://picsum.photos/seed/denim3/600/750.jpg'], colors:['Indigo','Black'], sizes:['28','30','32','34','36'], isFeatured:false, tags:['selvedge','raw'], vendor:'Nexus Denim Co.' },
+  { id:'p7', name:'Down Insulated Vest', slug:'down-insulated-vest', category:'c1', basePrice:175, compareAt:210, description:'850-fill-power responsibly sourced goose down. Lightweight warmth with a packable design that fits in its own pocket.', images:['https://picsum.photos/seed/vest1/600/750.jpg','https://picsum.photos/seed/vest2/600/750.jpg'], colors:['Black','Navy','Sage'], sizes:['S','M','L','XL'], isFeatured:false, tags:['down','insulated'], vendor:'Nexus Technical' },
+  { id:'p8', name:'Leather Minimalist Belt', slug:'leather-minimalist-belt', category:'c3', basePrice:72, compareAt:null, description:'Full-grain vegetable-tanned leather with a solid brass buckle. 30mm width for a clean, modern silhouette.', images:['https://picsum.photos/seed/belt1/600/750.jpg','https://picsum.photos/seed/belt2/600/750.jpg'], colors:['Black','Brown'], sizes:[], isFeatured:false, tags:['leather','belt'], vendor:'Nexus Goods' },
+  { id:'p9', name:'Performance Joggers', slug:'performance-joggers', category:'c4', basePrice:98, compareAt:null, description:'French terry with 4-way stretch, zippered pockets, and tapered fit. From the gym to coffee without skipping a beat.', images:['https://picsum.photos/seed/jogger1/600/750.jpg','https://picsum.photos/seed/jogger2/600/750.jpg'], colors:['Black','Charcoal','Navy'], sizes:['S','M','L','XL'], isFeatured:true, tags:['joggers','athleisure'], vendor:'Nexus Active' },
+  { id:'p10', name:'Wool-Blend Overcoat', slug:'wool-blend-overcoat', category:'c1', basePrice:425, compareAt:520, description:'Italian wool-cashmere blend with a relaxed silhouette. Double-breasted closure with horn buttons. Fully lined.', images:['https://picsum.photos/seed/coat1/600/750.jpg','https://picsum.photos/seed/coat2/600/750.jpg','https://picsum.photos/seed/coat3/600/750.jpg'], colors:['Charcoal','Navy','Black'], sizes:['S','M','L','XL'], isFeatured:false, tags:['overcoat','wool'], vendor:'Nexus Premium' },
+  { id:'p11', name:'Technical Windbreaker', slug:'technical-windbreaker', category:'c1', basePrice:145, compareAt:null, description:'Ultralight ripstop nylon with DWR coating. Packs into its own chest pocket. Essential trail-to-town layering.', images:['https://picsum.photos/seed/wind1/600/750.jpg','https://picsum.photos/seed/wind2/600/750.jpg'], colors:['Black','White','Sage'], sizes:['S','M','L','XL','XXL'], isFeatured:false, tags:['windbreaker','lightweight'], vendor:'Nexus Technical' },
+  { id:'p12', name:'Premium Cotton Hoodie', slug:'premium-cotton-hoodie', category:'c6', basePrice:110, compareAt:135, description:'400gsm heavyweight organic cotton fleece. Garment-dyed for a lived-in feel from day one. Kangaroo pocket and ribbed cuffs.', images:['https://picsum.photos/seed/hoodie1/600/750.jpg','https://picsum.photos/seed/hoodie2/600/750.jpg','https://picsum.photos/seed/hoodie3/600/750.jpg'], colors:['Black','Cream','Olive','Rust'], sizes:['S','M','L','XL','XXL'], isFeatured:true, tags:['hoodie','heavyweight'], vendor:'Nexus Essentials' },
+];
+
+// Generate variant inventory for each product
+PRODUCTS.forEach(p => {
+  p.variants = [];
+  if (p.sizes.length > 0) {
+    p.colors.forEach(c => {
+      p.sizes.forEach((s, i) => {
+        const stock = Math.floor(Math.random() * 25);
+        p.variants.push({
+          id: `${p.id}-${c}-${s}`, color: c, size: s,
+          price: p.basePrice + (s === 'XXL' ? 10 : 0),
+          sku: `NX-${p.id.slice(-2).toUpperCase()}-${c.slice(0,3).toUpperCase()}-${s}`,
+          stock, lowStock: stock > 0 && stock <= 5
+        });
+      });
+    });
+  } else {
+    p.colors.forEach(c => {
+      const stock = Math.floor(Math.random() * 20) + 5;
+      p.variants.push({ id:`${p.id}-${c}`, color:c, size:null, price:p.basePrice, sku:`NX-${p.id.slice(-2).toUpperCase()}-${c.slice(0,3).toUpperCase()}`, stock, lowStock:false });
+    });
+  }
+});
+
+const TESTIMONIALS = [
+  { name:'Sarah Mitchell', role:'Verified Buyer', text:'The Alpine Shell kept me dry through a full day of hiking in the Scottish Highlands. Worth every penny.', avatar:'https://picsum.photos/seed/avatar1/80/80.jpg', rating:5 },
+  { name:'James Park', role:'Verified Buyer', text:'Best fitting joggers I have ever owned. The fabric quality is on another level compared to what I usually find.', avatar:'https://picsum.photos/seed/avatar2/80/80.jpg', rating:5 },
+  { name:'Elena Rossi', role:'Verified Buyer', text:'The selvedge denim is exceptional. After three months of daily wear, the fades are developing beautifully.', avatar:'https://picsum.photos/seed/avatar3/80/80.jpg', rating:5 },
+];
+
+const COUPONS = [
+  { code:'WELCOME10', type:'percent', value:10, minOrder:50, maxUses:1000, perCustomer:1 },
+  { code:'FLAT25', type:'fixed', value:25, minOrder:150, maxUses:500, perCustomer:1 },
+];
+
+// =====================================================
+// STATE MANAGEMENT
+// =====================================================
+const state = {
+  cart: JSON.parse(localStorage.getItem('nexus_cart') || '[]'),
+  user: JSON.parse(localStorage.getItem('nexus_user') || 'null'),
+  coupon: null,
+  currentPage: 'home',
+  pageParam: null,
+  filters: { category:null, colors:[], sizes:[], inStock:false, priceRange:[0,600], sort:'newest' },
+  searchQuery: '',
+  checkoutStep: 1,
+  checkoutData: { email:'', firstName:'', lastName:'', address1:'', address2:'', city:'', postcode:'', country:'US', shippingMethod:null },
+  wishlist: JSON.parse(localStorage.getItem('nexus_wishlist') || '[]'),
+};
+
+function saveCart() { localStorage.setItem('nexus_cart', JSON.stringify(state.cart)); }
+function saveWishlist() { localStorage.setItem('nexus_wishlist', JSON.stringify(state.wishlist)); }
+function saveUser() { localStorage.setItem('nexus_user', JSON.stringify(state.user)); }
+
+function cartCount() { return state.cart.reduce((s,i) => s + i.quantity, 0); }
+function cartSubtotal() { return state.cart.reduce((s,i) => s + i.price * i.quantity, 0); }
+function cartDiscount() {
+  if (!state.coupon) return 0;
+  const sub = cartSubtotal();
+  if (sub < state.coupon.minOrder) return 0;
+  return state.coupon.type === 'percent' ? Math.round(sub * state.coupon.value / 100 * 100) / 100 : state.coupon.value;
+}
+function cartTotal() { return Math.max(0, cartSubtotal() - cartDiscount()); }
+function freeShippingThreshold() { return 100; }
+function shippingCost() { return cartSubtotal() >= freeShippingThreshold() ? 0 : 9.95; }
+
+function addToCart(variantId, quantity = 1) {
+  const existing = state.cart.find(i => i.variantId === variantId);
+  if (existing) { existing.quantity += quantity; }
+  else {
+    let variant = null, product = null;
+    PRODUCTS.forEach(p => { p.variants.forEach(v => { if (v.id === variantId) { variant = v; product = p; } }); });
+    if (!variant) return;
+    state.cart.push({ variantId, productId:product.id, name:product.name, color:variant.color, size:variant.size, price:variant.price, image:product.images[0], quantity });
+  }
+  saveCart(); renderCartBadge(); showToast('Added to cart','success');
+}
+function removeFromCart(variantId) {
+  state.cart = state.cart.filter(i => i.variantId !== variantId);
+  if (state.cart.length === 0) state.coupon = null;
+  saveCart(); renderCartBadge(); renderCartDrawer();
+}
+function updateQty(variantId, qty) {
+  const item = state.cart.find(i => i.variantId === variantId);
+  if (!item) return;
+  if (qty <= 0) { removeFromCart(variantId); return; }
+  item.quantity = qty;
+  saveCart(); renderCartBadge(); renderCartDrawer();
+}
+function toggleWishlist(productId) {
+  const idx = state.wishlist.indexOf(productId);
+  if (idx > -1) { state.wishlist.splice(idx,1); showToast('Removed from wishlist','info'); }
+  else { state.wishlist.push(productId); showToast('Added to wishlist','success'); }
+  saveWishlist();
+}
+function isWished(productId) { return state.wishlist.includes(productId); }
+
+// =====================================================
+// TOAST SYSTEM
+// =====================================================
+function showToast(msg, type='info') {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  const icons = { success:'fa-check-circle', error:'fa-exclamation-circle', info:'fa-info-circle' };
+  t.innerHTML = `<i class="fas ${icons[type]||icons.info}"></i><span>${msg}</span>`;
+  c.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3500);
+}
+
+// =====================================================
+// ROUTER
+// =====================================================
+function navigate(page, param = null) {
+  const app = document.getElementById('app');
+  app.classList.add('transitioning');
+  setTimeout(() => {
+    state.currentPage = page;
+    state.pageParam = param;
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    renderPage();
+    app.classList.remove('transitioning');
+    setTimeout(() => initPageAnimations(), 50);
+  }, 150);
+}
+
+function renderPage() {
+  const main = document.getElementById('mainContent');
+  switch(state.currentPage) {
+    case 'home': main.innerHTML = renderHomepage(); break;
+    case 'products': main.innerHTML = renderProductList(); break;
+    case 'product': main.innerHTML = renderProductDetail(); break;
+    case 'checkout': main.innerHTML = renderCheckout(); break;
+    case 'account': main.innerHTML = renderAccount(); break;
+    case 'order-confirmation': main.innerHTML = renderOrderConfirmation(); break;
+    default: main.innerHTML = renderHomepage();
+  }
+  renderHeader(); renderFooter(); renderBottomNav();
+}
+
+// =====================================================
+// HEADER
+// =====================================================
+function renderHeader() {
+  const h = document.getElementById('siteHeader');
+  const count = cartCount();
+  h.innerHTML = `
+    <div class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-surface-100">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6">
+        <div class="flex items-center justify-between h-16">
+          <!-- Logo -->
+          <a onclick="navigate('home')" class="cursor-pointer flex items-center gap-2" aria-label="NEXUS COMMERCE home">
+            <div class="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center">
+              <span class="text-white font-display font-bold text-sm">N</span>
+            </div>
+            <span class="font-display font-bold text-lg tracking-tight hidden sm:block">NEXUS</span>
+          </a>
+          <!-- Desktop nav -->
+          <nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
+            <div class="mega-trigger relative">
+              <button class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors flex items-center gap-1">
+                Shop <i class="fas fa-chevron-down text-[10px]"></i>
+              </button>
+              <div class="mega-menu">
+                <div class="max-w-7xl mx-auto px-6 py-8 grid grid-cols-4 gap-8">
+                  ${CATEGORIES.slice(0,4).map(c => `
+                    <a onclick="state.filters={category:'${c.id}',colors:[],sizes:[],inStock:false,priceRange:[0,600],sort:'newest'};navigate('products')" class="cursor-pointer group">
+                      <div class="aspect-[4/5] rounded-xl overflow-hidden mb-3 bg-surface-50">
+                        <img src="${c.image}" alt="${c.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                      </div>
+                      <p class="font-display font-semibold text-sm">${c.name}</p>
+                      <p class="text-xs text-gray-400 mt-0.5">${c.count} products</p>
+                    </a>
+                  `).join('')}
+                  <div class="flex flex-col justify-center">
+                    <a onclick="state.filters={category:null,colors:[],sizes:[],inStock:false,priceRange:[0,600],sort:'newest'};navigate('products')" class="cursor-pointer inline-flex items-center gap-2 text-brand-500 font-semibold text-sm hover:text-brand-600 transition-colors mb-2">
+                      View All Products <i class="fas fa-arrow-right text-xs"></i>
+                    </a>
+                    <p class="text-xs text-gray-400">Explore our complete collection of premium essentials.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <a onclick="navigate('products')" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors cursor-pointer">All Products</a>
+            <a onclick="state.filters={category:'c6',colors:[],sizes:[],inStock:false,priceRange:[0,600],sort:'newest'};navigate('products')" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors cursor-pointer">Essentials</a>
+            <a onclick="state.filters={category:'c4',colors:[],sizes:[],inStock:false,priceRange:[0,600],sort:'newest'};navigate('products')" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors cursor-pointer">Activewear</a>
+          </nav>
+          <!-- Right actions -->
+          <div class="flex items-center gap-2">
+            <button onclick="toggleSearch(true)" class="p-2.5 rounded-full hover:bg-surface-50 transition-colors" aria-label="Search products">
+              <i class="fas fa-search text-gray-600"></i>
+            </button>
+            <button onclick="state.user?navigate('account'):toggleAuth(true)" class="p-2.5 rounded-full hover:bg-surface-50 transition-colors hidden sm:flex" aria-label="Account">
+              <i class="fas fa-user text-gray-600"></i>
+            </button>
+            <button onclick="toggleCart(true)" class="p-2.5 rounded-full hover:bg-surface-50 transition-colors relative" aria-label="Cart">
+              <i class="fas fa-shopping-bag text-gray-600"></i>
+              <span id="cartBadge" class="absolute -top-0.5 -right-0.5 w-5 h-5 bg-brand-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center ${count?'':'hidden'}">${count}</span>
+            </button>
+            <button onclick="document.getElementById('mobileMenuBtn').click()" class="p-2.5 rounded-full hover:bg-surface-50 transition-colors md:hidden" aria-label="Menu">
+              <i class="fas fa-bars text-gray-600"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- Promo bar -->
+      <div class="bg-brand-500 text-white text-center text-xs font-medium py-1.5 px-4">
+        Free shipping on orders over $100 — Use code <strong>WELCOME10</strong> for 10% off your first order
+      </div>
+    </div>
+    <!-- Mobile menu -->
+    <input type="checkbox" id="mobileMenuBtn" class="hidden">
+    <div class="fixed inset-0 bg-black/40 z-50 opacity-0 pointer-events-none transition-opacity md:hidden" onclick="document.getElementById('mobileMenuBtn').checked=false" style="transition:opacity .3s">
+    </div>
+    <div class="fixed top-0 left-0 bottom-0 w-72 bg-white z-50 transform -translate-x-full transition-transform duration-300 md:hidden" style="transition:transform .3s cubic-bezier(.4,0,.2,1)" id="mobileMenuPanel">
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-8">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center"><span class="text-white font-display font-bold text-sm">N</span></div>
+            <span class="font-display font-bold text-lg">NEXUS</span>
+          </div>
+          <label for="mobileMenuBtn" class="cursor-pointer p-1"><i class="fas fa-times text-gray-400"></i></label>
+        </div>
+        <nav class="flex flex-col gap-1">
+          <a onclick="navigate('home');document.getElementById('mobileMenuBtn').checked=false" class="px-4 py-3 text-sm font-medium rounded-lg hover:bg-surface-50 cursor-pointer">Home</a>
+          <a onclick="state.filters={category:null,colors:[],sizes:[],inStock:false,priceRange:[0,600],sort:'newest'};navigate('products');document.getElementById('mobileMenuBtn').checked=false" class="px-4 py-3 text-sm font-medium rounded-lg hover:bg-surface-50 cursor-pointer">All Products</a>
+          ${CATEGORIES.map(c=>`<a onclick="state.filters={category:'${c.id}',colors:[],sizes:[],inStock:false,priceRange:[0,600],sort:'newest'};navigate('products');document.getElementById('mobileMenuBtn').checked=false" class="px-4 py-3 text-sm text-gray-600 rounded-lg hover:bg-surface-50 cursor-pointer">${c.name}</a>`).join('')}
+          <hr class="my-3 border-surface-100">
+          <a onclick="state.user?navigate('account'):toggleAuth(true);document.getElementById('mobileMenuBtn').checked=false" class="px-4 py-3 text-sm font-medium rounded-lg hover:bg-surface-50 cursor-pointer">
+            ${state.user?'My Account':'Sign In'}
+          </a>
+        </nav>
+      </div>
+    </div>
+    <style>
+      #mobileMenuBtn:checked ~ div:first-of-type { opacity:1!important;pointer-events:auto!important; }
+      #mobileMenuBtn:checked ~ div:nth-of-type(2) { transform:translateX(0)!important; }
+    </style>
+  `;
+}
+function renderCartBadge() {
+  const b = document.getElementById('cartBadge');
+  if (!b) return;
+  const c = cartCount();
+  b.textContent = c; b.classList.toggle('hidden', !c);
+  b.classList.remove('badge-bounce'); void b.offsetWidth; b.classList.add('badge-bounce');
+}
+
+// =====================================================
+// FOOTER
+// =====================================================
+function renderFooter() {
+  document.getElementById('siteFooter').innerHTML = `
+    <footer class="bg-gray-900 text-gray-300 mt-20">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-16">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+          <div class="col-span-2 md:col-span-1">
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center"><span class="text-white font-display font-bold text-sm">N</span></div>
+              <span class="font-display font-bold text-lg text-white">NEXUS</span>
+            </div>
+            <p class="text-sm text-gray-400 leading-relaxed mb-4">Premium essentials engineered for modern life. Built to last, designed to perform.</p>
+            <div class="flex gap-3">
+              <a href="#" class="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition-colors" aria-label="Instagram"><i class="fab fa-instagram text-sm"></i></a>
+              <a href="#" class="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition-colors" aria-label="Twitter"><i class="fab fa-x-twitter text-sm"></i></a>
+              <a href="#" class="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition-colors" aria-label="YouTube"><i class="fab fa-youtube text-sm"></i></a>
+            </div>
+          </div>
+          <div>
+            <h4 class="font-display font-semibold text-white text-sm mb-4">Shop</h4>
+            <ul class="space-y-2.5 text-sm">
+              ${CATEGORIES.slice(0,5).map(c=>`<li><a onclick="state.filters={category:'${c.id}',colors:[],sizes:[],inStock:false,priceRange:[0,600],sort:'newest'};navigate('products')" class="hover:text-white cursor-pointer transition-colors">${c.name}</a></li>`).join('')}
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-display font-semibold text-white text-sm mb-4">Support</h4>
+            <ul class="space-y-2.5 text-sm">
+              <li><a href="#" class="hover:text-white transition-colors">Help Center</a></li>
+              <li><a href="#" class="hover:text-white transition-colors">Shipping Info</a></li>
+              <li><a href="#" class="hover:text-white transition-colors">Returns & Exchanges</a></li>
+              <li><a href="#" class="hover:text-white transition-colors">Size Guide</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-display font-semibold text-white text-sm mb-4">Company</h4>
+            <ul class="space-y-2.5 text-sm">
+              <li><a href="#" class="hover:text-white transition-colors">About Us</a></li>
+              <li><a href="#" class="hover:text-white transition-colors">Sustainability</a></li>
+              <li><a href="#" class="hover:text-white transition-colors">Careers</a></li>
+              <li><a href="#" class="hover:text-white transition-colors">Press</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="border-t border-gray-800 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p class="text-xs text-gray-500">&copy; 2026 NEXUS COMMERCE. All rights reserved.</p>
+          <div class="flex items-center gap-4 text-xs text-gray-500">
+            <a href="#" class="hover:text-gray-300 transition-colors">Privacy Policy</a>
+            <a href="#" class="hover:text-gray-300 transition-colors">Terms of Service</a>
+            <a href="#" class="hover:text-gray-300 transition-colors">Cookie Settings</a>
+          </div>
+        </div>
+      </div>
+      <div class="h-16 md:h-0"></div>
+    </footer>
+  `;
+}
+
+// =====================================================
+// BOTTOM NAV (MOBILE)
+// =====================================================
+function renderBottomNav() {
+  document.getElementById('bottomNav').innerHTML = `
+    <div class="flex items-center justify-around">
+      <button onclick="navigate('home')" class="flex flex-col items-center gap-0.5 py-1 px-3 ${state.currentPage==='home'?'text-brand-500':'text-gray-400'}" aria-label="Home">
+        <i class="fas fa-home text-lg"></i><span class="text-[10px] font-medium">Home</span>
+      </button>
+      <button onclick="toggleSearch(true)" class="flex flex-col items-center gap-0.5 py-1 px-3 text-gray-400" aria-label="Search">
+        <i class="fas fa-search text-lg"></i><span class="text-[10px] font-medium">Search</span>
+      </button>
+      <button onclick="toggleCart(true)" class="flex flex-col items-center gap-0.5 py-1 px-3 text-gray-400 relative" aria-label="Cart">
+        <i class="fas fa-shopping-bag text-lg"></i>
+        ${cartCount()?`<span class="absolute -top-0.5 right-1 w-4 h-4 bg-brand-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center">${cartCount()}</span>`:''}
+        <span class="text-[10px] font-medium">Cart</span>
+      </button>
+      <button onclick="state.user?navigate('account'):toggleAuth(true)" class="flex flex-col items-center gap-0.5 py-1 px-3 ${state.currentPage==='account'?'text-brand-500':'text-gray-400'}" aria-label="Account">
+        <i class="fas fa-user text-lg"></i><span class="text-[10px] font-medium">Account</span>
+      </button>
+    </div>
+  `;
+}
+
+// =====================================================
+// CART DRAWER
+// =====================================================
+function toggleCart(open) {
+  document.getElementById('cartOverlay').classList.toggle('open', open);
+  document.getElementById('cartPanel').classList.toggle('open', open);
+  if (open) { renderCartDrawer(); document.body.style.overflow = 'hidden'; }
+  else { document.body.style.overflow = ''; }
+}
+function renderCartDrawer() {
+  const el = document.getElementById('cartContent');
+  const items = state.cart;
+  const sub = cartSubtotal();
+  const disc = cartDiscount();
+  const ship = shippingCost();
+  const total = sub - disc + ship;
+  const threshold = freeShippingThreshold();
+  const progress = Math.min(100, (sub / threshold) * 100);
+  const remaining = Math.max(0, threshold - sub);
+
+  if (items.length === 0) {
+    el.innerHTML = `
+      <div class="flex items-center justify-between p-6 border-b border-surface-100">
+        <h2 class="font-display font-semibold text-lg">Your Cart</h2>
+        <button onclick="toggleCart(false)" class="p-1 hover:bg-surface-50 rounded-lg" aria-label="Close cart"><i class="fas fa-times text-gray-400"></i></button>
+      </div>
+      <div class="flex-1 flex flex-col items-center justify-center p-8 text-center">
+        <div class="w-20 h-20 bg-surface-50 rounded-full flex items-center justify-center mb-4"><i class="fas fa-shopping-bag text-2xl text-gray-300"></i></div>
+        <p class="font-display font-semibold text-gray-700 mb-1">Your cart is empty</p>
+        <p class="text-sm text-gray-400 mb-6">Looks like you haven't added anything yet.</p>
+        <button onclick="toggleCart(false);navigate('products')" class="bg-gray-900 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">Browse Products</button>
+      </div>
+    `;
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="flex items-center justify-between p-6 border-b border-surface-100">
+      <h2 class="font-display font-semibold text-lg">Your Cart <span class="text-gray-400 font-normal text-sm">(${cartCount()} items)</span></h2>
+      <button onclick="toggleCart(false)" class="p-1 hover:bg-surface-50 rounded-lg" aria-label="Close cart"><i class="fas fa-times text-gray-400"></i></button>
+    </div>
+    <!-- Free shipping progress -->
+    <div class="px-6 py-3 bg-brand-50 border-b border-brand-100">
+      ${remaining > 0 ? `
+        <p class="text-xs text-brand-700 font-medium mb-1.5">Add $${remaining.toFixed(2)} more for free shipping</p>
+        <div class="h-1.5 bg-brand-100 rounded-full overflow-hidden"><div class="h-full bg-brand-500 rounded-full progress-fill" style="width:${progress}%"></div></div>
+      ` : `<p class="text-xs text-brand-700 font-medium"><i class="fas fa-check-circle mr-1"></i>You qualify for free shipping!</p>`}
+    </div>
+    <!-- Items -->
+    <div class="flex-1 overflow-y-auto">
+      ${items.map(item => `
+        <div class="flex gap-4 p-4 border-b border-surface-50">
+          <img src="${item.image}" alt="${item.name}" class="w-20 h-24 rounded-lg object-cover bg-surface-50 flex-shrink-0">
+          <div class="flex-1 min-w-0">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="font-medium text-sm truncate">${item.name}</p>
+                <p class="text-xs text-gray-400 mt-0.5">${item.color}${item.size?' / '+item.size:''}</p>
+              </div>
+              <button onclick="removeFromCart('${item.variantId}')" class="p-1 text-gray-300 hover:text-gray-500 transition-colors" aria-label="Remove item"><i class="fas fa-times text-xs"></i></button>
+            </div>
+            <div class="flex items-center justify-between mt-3">
+              <div class="flex items-center gap-2">
+                <button class="qty-btn" onclick="updateQty('${item.variantId}',${item.quantity-1})">-</button>
+                <span class="text-sm font-medium w-6 text-center">${item.quantity}</span>
+                <button class="qty-btn" onclick="updateQty('${item.variantId}',${item.quantity+1})">+</button>
+              </div>
+              <span class="font-semibold text-sm">$${(item.price * item.quantity).toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <!-- Coupon -->
+    <div class="px-6 py-3 border-t border-surface-100">
+      ${state.coupon ? `
+        <div class="flex items-center justify-between bg-brand-50 px-3 py-2 rounded-lg">
+          <span class="text-xs font-medium text-brand-700"><i class="fas fa-tag mr-1"></i>${state.coupon.code} — -$${disc.toFixed(2)}</span>
+          <button onclick="state.coupon=null;renderCartDrawer()" class="text-brand-600 hover:text-brand-800 text-xs font-medium">Remove</button>
+        </div>
+      ` : `
+        <form onsubmit="applyCoupon(event)" class="flex gap-2">
+          <input type="text" id="couponInput" placeholder="Coupon code" class="flex-1 px-3 py-2 text-sm border border-surface-200 rounded-lg focus:outline-none focus:border-brand-500 bg-surface-0">
+          <button type="submit" class="px-4 py-2 text-sm font-medium text-brand-600 border border-brand-500 rounded-lg hover:bg-brand-50 transition-colors">Apply</button>
+        </form>
+      `}
+    </div>
+    <!-- Totals -->
+    <div class="px-6 py-4 border-t border-surface-100 bg-surface-0 space-y-2">
+      <div class="flex justify-between text-sm"><span class="text-gray-500">Subtotal</span><span>$${sub.toFixed(2)}</span></div>
+      ${disc > 0 ? `<div class="flex justify-between text-sm"><span class="text-brand-600">Discount</span><span class="text-brand-600">-$${disc.toFixed(2)}</span></div>` : ''}
+      <div class="flex justify-between text-sm"><span class="text-gray-500">Shipping</span><span>${ship === 0 ? '<span class="text-brand-600">Free</span>' : '$'+ship.toFixed(2)}</span></div>
+      <div class="flex justify-between font-display font-semibold text-base pt-2 border-t border-surface-100"><span>Total</span><span>$${total.toFixed(2)}</span></div>
+    </div>
+    <!-- Checkout CTA -->
+    <div class="p-6 pt-0">
+      <button onclick="toggleCart(false);navigate('checkout')" class="w-full bg-gray-900 text-white py-3.5 rounded-xl font-display font-semibold text-sm hover:bg-gray-800 transition-colors">
+        Proceed to Checkout
+      </button>
+      <button onclick="toggleCart(false);navigate('products')" class="w-full text-center text-sm text-gray-400 hover:text-gray-600 mt-2 py-1 transition-colors">Continue Shopping</button>
+    </div>
+  `;
+}
+function applyCoupon(e) {
+  e.preventDefault();
+  const code = document.getElementById('couponInput').value.trim().toUpperCase();
+  const coupon = COUPONS.find(c => c.code === code);
+  if (!coupon) { showToast('Invalid coupon code','error'); return; }
+  if (cartSubtotal() < coupon.minOrder) { showToast(`Minimum order of $${coupon.minOrder} required`,'error'); return; }
+  state.coupon = coupon;
+  showToast(`Coupon ${code} applied!`,'success');
+  renderCartDrawer();
+}
+
+// =====================================================
+// SEARCH MODAL
+// =====================================================
+function toggleSearch(open) {
+  document.getElementById('searchOverlay').classList.toggle('open', open);
+  document.getElementById('searchBox').classList.toggle('open', open);
+  if (open) {
+    document.body.style.overflow = 'hidden';
+    const content = document.getElementById('searchContent');
+    content.innerHTML = `
+      <div class="p-4 border-b border-surface-100">
+        <div class="flex items-center gap-3">
+          <i class="fas fa-search text-gray-400"></i>
+          <input type="text" id="searchInput" placeholder="Search products..." class="flex-1 text-lg bg-transparent focus:outline-none placeholder:text-gray-300" autofocus oninput="handleSearch(this.value)">
+          <kbd class="hidden sm:inline-flex items-center px-2 py-0.5 text-xs text-gray-400 bg-surface-50 border border-surface-200 rounded">ESC</kbd>
+        </div>
+      </div>
+      <div id="searchResults" class="overflow-y-auto" style="max-height:50vh">
+        <div class="p-8 text-center text-gray-400 text-sm">Start typing to search...</div>
+      </div>
+    `;
+    setTimeout(() => document.getElementById('searchInput')?.focus(), 100);
+  } else {
+    document.body.style.overflow = '';
+  }
+}
+function handleSearch(query) {
+  const el = document.getElementById('searchResults');
+  if (!query.trim()) { el.innerHTML = '<div class="p-8 text-center text-gray-400 text-sm">Start typing to search...</div>'; return; }
+  const q = query.toLowerCase();
+  const results = PRODUCTS.filter(p => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q) || p.tags.some(t => t.includes(q)) || p.vendor.toLowerCase().includes(q));
+  if (results.length === 0) {
+    el.innerHTML = `<div class="p-8 text-center"><div class="w-16 h-16 bg-surface-50 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fas fa-search text-xl text-gray-300"></i></div><p class="font-display font-semibold text-gray-600 mb-1">No results found</p><p class="text-sm text-gray-400">Try searching for "jacket" or "denim"</p></div>`;
+    return;
+  }
+  el.innerHTML = results.map(p => `
+    <a onclick="toggleSearch(false);navigate('product','${p.slug}')" class="flex items-center gap-4 p-4 hover:bg-surface-50 cursor-pointer transition-colors border-b border-surface-50 last:border-0">
+      <img src="${p.images[0]}" alt="${p.name}" class="w-14 h-16 rounded-lg object-cover bg-surface-50">
+      <div class="flex-1 min-w-0">
+        <p class="font-medium text-sm truncate">${p.name}</p>
+        <p class="text-xs text-gray-400 mt-0.5">${p.vendor}</p>
+      </div>
+      <div class="text-right">
+        <p class="font-semibold text-sm">$${p.basePrice}</p>
+        ${p.compareAt ? `<p class="text-xs text-gray-400 line-through">$${p.compareAt}</p>` : ''}
+      </div>
+    </a>
+  `).join('');
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('searchBox').classList.contains('open')) toggleSearch(false);
+    if (document.getElementById('authOverlay').classList.contains('open')) toggleAuth(false);
+  }
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); toggleSearch(true); }
+});
+
+// =====================================================
+// FILTER SHEET (MOBILE)
+// =====================================================
+function toggleFilterSheet(open) {
+  document.getElementById('filterBackdrop').classList.toggle('open', open);
+  document.getElementById('filterSheet').classList.toggle('open', open);
+  if (open) { renderFilterContent(); document.body.style.overflow = 'hidden'; }
+  else { document.body.style.overflow = ''; }
+}
+function renderFilterContent() {
+  document.getElementById('filterContent').innerHTML = `
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="font-display font-semibold text-lg">Filters</h3>
+      <button onclick="toggleFilterSheet(false)" class="p-1"><i class="fas fa-times text-gray-400"></i></button>
+    </div>
+    <!-- Category -->
+    <div class="mb-6">
+      <h4 class="font-semibold text-sm mb-3">Category</h4>
+      <div class="flex flex-wrap gap-2">
+        <button onclick="state.filters.category=null;renderFilterContent()" class="px-3 py-1.5 text-sm rounded-full border ${!state.filters.category?'bg-gray-900 text-white border-gray-900':'border-surface-200 text-gray-600 hover:border-gray-300'} transition-colors">All</button>
+        ${CATEGORIES.map(c => `<button onclick="state.filters.category='${c.id}';renderFilterContent()" class="px-3 py-1.5 text-sm rounded-full border ${state.filters.category===c.id?'bg-gray-900 text-white border-gray-900':'border-surface-200 text-gray-600 hover:border-gray-300'} transition-colors">${c.name}</button>`).join('')}
+      </div>
+    </div>
+    <!-- Color -->
+    <div class="mb-6">
+      <h4 class="font-semibold text-sm mb-3">Color</h4>
+      <div class="flex flex-wrap gap-2">
+        ${COLORS.map(c => {
+          const active = state.filters.colors.includes(c.name);
+          return `<button onclick="toggleFilterColor('${c.name}')" class="swatch ${active?'active':''}" style="background:${c.hex}" title="${c.name}" ${c.name==='White'?'style="background:'+c.hex+';border:1px solid #ddd"':''}></button>`;
+        }).join('')}
+      </div>
+    </div>
+    <!-- Size -->
+    <div class="mb-6">
+      <h4 class="font-semibold text-sm mb-3">Size</h4>
+      <div class="flex flex-wrap gap-2">
+        ${SIZES.map(s => `<button onclick="toggleFilterSize('${s}')" class="size-pill ${state.filters.sizes.includes(s)?'active':''}">${s}</button>`).join('')}
+      </div>
+    </div>
+    <!-- In stock -->
+    <div class="mb-6">
+      <label class="flex items-center gap-3 cursor-pointer">
+        <input type="checkbox" ${state.filters.inStock?'checked':''} onchange="state.filters.inStock=this.checked" class="w-4 h-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500">
+        <span class="text-sm">In stock only</span>
+      </label>
+    </div>
+    <div class="flex gap-3 mt-8">
+      <button onclick="state.filters={category:null,colors:[],sizes:[],inStock:false,priceRange:[0,600],sort:'newest'};toggleFilterSheet(false);navigate('products')" class="flex-1 py-3 text-sm font-medium border border-surface-200 rounded-xl hover:bg-surface-50 transition-colors">Clear All</button>
+      <button onclick="toggleFilterSheet(false);navigate('products')" class="flex-1 py-3 text-sm font-medium bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors">Apply Filters</button>
+    </div>
+  `;
+}
+function toggleFilterColor(name) {
+  const idx = state.filters.colors.indexOf(name);
+  if (idx > -1) state.filters.colors.splice(idx, 1); else state.filters.colors.push(name);
+  renderFilterContent();
+}
+function toggleFilterSize(size) {
+  const idx = state.filters.sizes.indexOf(size);
+  if (idx > -1) state.filters.sizes.splice(idx, 1); else state.filters.sizes.push(size);
+  renderFilterContent();
+}
+
+// =====================================================
+// AUTH MODAL
+// =====================================================
+function toggleAuth(open) {
+  document.getElementById('authOverlay').classList.toggle('open', open);
+  if (open) { renderAuthContent(); document.body.style.overflow = 'hidden'; }
+  else { document.body.style.overflow = ''; }
+}
+let authMode = 'login';
+function renderAuthContent() {
+  const el = document.getElementById('authContent');
+  el.innerHTML = `
+    <div class="bg-white rounded-2xl w-full max-w-md mx-4 p-8 shadow-2xl relative" style="animation:circle-pop .3s ease forwards">
+      <button onclick="toggleAuth(false)" class="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-600" aria-label="Close"><i class="fas fa-times"></i></button>
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 bg-brand-500 rounded-xl flex items-center justify-center mx-auto mb-3"><span class="text-white font-display font-bold text-lg">N</span></div>
+        <h2 class="font-display font-bold text-xl">${authMode==='login'?'Welcome back':'Create account'}</h2>
+        <p class="text-sm text-gray-400 mt-1">${authMode==='login'?'Sign in to your account':'Join NEXUS COMMERCE today'}</p>
+      </div>
+      <form onsubmit="handleAuth(event)">
+        ${authMode==='register'?`
+          <div class="grid grid-cols-2 gap-3 mb-3">
+            <div>
+              <label class="text-xs font-medium text-gray-500 mb-1 block">First Name</label>
+              <input type="text" id="authFirst" required class="w-full px-3 py-2.5 text-sm border border-surface-200 rounded-lg focus:outline-none focus:border-brand-500 bg-surface-0">
+            </div>
+            <div>
+              <label class="text-xs font-medium text-gray-500 mb-1 block">Last Name</label>
+              <input type="text" id="authLast" required class="w-full px-3 py-2.5 text-sm border border-surface-200 rounded-lg focus:outline-none focus:border-brand-500 bg-surface-0">
+            </div>
+          </div>
+        `:''}
+        <div class="mb-3">
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Email</label>
+          <input type="email" id="authEmail" required class="w-full px-3 py-2.5 text-sm border border-surface-200 rounded-lg focus:outline-none focus:border-brand-500 bg-surface-0" value="demo@nexus.com">
+        </div>
+        <div class="mb-4">
+          <label class="text-xs font-medium text-gray-500 mb-1 block">Password</label>
+          <input type="password" id="authPass" required minlength="6" class="w-full px-3 py-2.5 text-sm border border-surface-200 rounded-lg focus:outline-none focus:border-brand-500 bg-surface-0" value="password123">
+        </div>
+        <button type="submit" class="w-full bg-gray-900 text-white py-3 rounded-xl font-display font-semibold text-sm hover:bg-gray-800 transition-colors">${authMode==='login'?'Sign In':'Create Account'}</button>
+      </form>
+      <div class="relative my-5"><div class="absolute inset-0 flex items-center"><div class="w-full border-t border-surface-100"></div></div><div class="relative flex justify-center"><span class="bg-white px-3 text-xs text-gray-400">or continue with</span></div></div>
+      <button onclick="handleAuth(null,true)" class="w-full flex items-center justify-center gap-3 py-2.5 border border-surface-200 rounded-xl text-sm font-medium hover:bg-surface-50 transition-colors">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        Google
+      </button>
+      <p class="text-center text-sm text-gray-400 mt-5">
+        ${authMode==='login'?'Don\'t have an account?':'Already have an account?'}
+        <button onclick="authMode='${authMode==='login'?'register':'login'}';renderAuthContent()" class="text-brand-500 font-medium hover:text-brand-600 ml-1">${authMode==='login'?'Sign up':'Sign in'}</button>
+      </p>
+    </div>
+  `;
+}
+function handleAuth(e, google = false) {
+  if (e) e.preventDefault();
+  const email = google ? 'user@google.com' : document.getElementById('authEmail').value;
+  const first = google ? 'Google' : (document.getElementById('authFirst')?.value || 'Demo');
+  const last = google ? 'User' : (document.getElementById('authLast')?.value || 'User');
+  state.user = { name: `${first} ${last}`, email, avatar: `https://picsum.photos/seed/${email}/80/80.jpg` };
+  saveUser(); toggleAuth(false);
+  showToast(`Welcome${google?'':' back'}, ${first}!`, 'success');
+  renderHeader(); renderBottomNav();
+}
+
+// =====================================================
+// HOMEPAGE
+// =====================================================
+function renderHomepage() {
+  const featured = PRODUCTS.filter(p => p.isFeatured);
+  return `
+    <!-- Hero -->
+    <section class="relative overflow-hidden bg-gray-900 min-h-[90vh] flex items-center" id="heroSection">
+      <div class="absolute inset-0">
+        <img src="https://picsum.photos/seed/nexus-hero/1600/900.jpg" alt="" class="w-full h-full object-cover opacity-40" style="transform:scale(1.05)">
+        <div class="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-transparent"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent"></div>
+      </div>
+      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 py-20 w-full">
+        <div class="max-w-xl">
+          <div class="gsap-hero-word inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/10 rounded-full px-4 py-1.5 mb-6 opacity-0">
+            <span class="w-1.5 h-1.5 bg-brand-400 rounded-full animate-pulse"></span>
+            <span class="text-sm text-gray-300 font-medium">New Collection 2026</span>
+          </div>
+          <h1 class="font-display font-bold text-5xl sm:text-6xl lg:text-7xl text-white leading-[1.05] mb-6">
+            <span class="gsap-hero-word block opacity-0">Built for</span>
+            <span class="gsap-hero-word block opacity-0 text-brand-400">those who</span>
+            <span class="gsap-hero-word block opacity-0">move forward</span>
+          </h1>
+          <p class="gsap-hero-word text-lg text-gray-300 mb-8 max-w-md leading-relaxed opacity-0">Premium essentials engineered with precision materials and modern design. Performance meets purpose.</p>
+          <div class="gsap-hero-word flex flex-wrap gap-3 opacity-0">
+            <button onclick="state.filters={category:null,colors:[],sizes:[],inStock:false,priceRange:[0,600],sort:'newest'};navigate('products')" class="bg-brand-500 hover:bg-brand-600 text-white px-8 py-3.5 rounded-xl font-display font-semibold text-sm transition-colors">Shop Collection</button>
+            <button onclick="state.filters={category:'c1',colors:[],sizes:[],inStock:false,priceRange:[0,600],sort:'newest'};navigate('products')" class="bg-white/10 hover:bg-white/20 text-white px-8 py-3.5 rounded-xl font-display font-semibold text-sm backdrop-blur-sm border border-white/10 transition-colors">Explore Outerwear</button>
+          </div>
+        </div>
+      </div>
+      <!-- Scroll indicator -->
+      <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/40">
+        <span class="text-xs font-medium tracking-widest uppercase">Scroll</span>
+        <div class="w-5 h-8 border border-white/20 rounded-full flex justify-center pt-1.5">
+          <div class="w-1 h-2 bg-white/40 rounded-full animate-bounce"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Featured Products Carousel -->
+    <section class="py-20 px-4 sm:px-6" id="featuredSection">
+      <div class="max-w-7xl mx-auto">
+        <div class="flex items-end justify-between mb-10 gsap-stagger" style="opacity:0;transform:translateY(30px)">
+          <div>
+            <span class="text-brand-500 text-sm font-semibold tracking-wider uppercase">Curated Selection</span>
+            <h2 class="font-display font-bold text-3xl sm:text-4xl mt-1">Featured Products</h2>
+          </div>
+          <a onclick="navigate('products')" class="hidden sm:flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 cursor-pointer transition-colors">
+            View all <i class="fas fa-arrow-right text-xs"></i>
+          </a>
+        </div>
+        <div class="swiper featuredSwiper gsap-stagger" style="opacity:0;transform:translateY(30px)">
+          <div class="swiper-wrapper">
+            ${featured.map(p => renderProductCard(p)).join('')}
+          </div>
+          <div class="swiper-pagination mt-8"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Category Grid -->
+    <section class="py-20 px-4 sm:px-6 bg-surface-0" id="categorySection">
+      <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-12 gsap-stagger" style="opacity:0;transform:translateY(30px)">
+          <span class="text-brand-500 text-sm font-semibold tracking-wider uppercase">Browse by Category</span>
+          <h2 class="font-display font-bold text-3xl sm:text-4xl mt-1">Find Your Style</h2>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+          ${CATEGORIES.slice(0,6).map((c,i) => `
+            <a onclick="state.filters={category:'${c.id}',colors:[],sizes:[],inStock:false,priceRange:[0,600],sort:'newest'};navigate('products')" class="gsap-stagger cursor-pointer group relative aspect-[3/4] rounded-2xl overflow-hidden ${i===0||i===5?'md:row-span-2 md:aspect-auto':''}" style="opacity:0;transform:translateY(30px)">
+              <img src="${c.image}" alt="${c.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy">
+              <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+              <div class="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
+                <h3 class="font-display font-bold text-white text-lg sm:text-xl">${c.name}</h3>
+                <p class="text-sm text-white/60 mt-0.5">${c.count} products</p>
+              </div>
+            </a>
+          `).join('')}
+        </div>
+      </div>
+    </section>
+
+    <!-- Promo Banner -->
+    <section class="py-20 px-4 sm:px-6">
+      <div class="max-w-7xl mx-auto gsap-stagger" style="opacity:0;transform:translateY(30px)">
+        <div class="relative rounded-3xl overflow-hidden bg-gray-900">
+          <img src="https://picsum.photos/seed/promo-nexus/1400/500.jpg" alt="" class="w-full h-64 sm:h-80 object-cover opacity-50">
+          <div class="absolute inset-0 flex items-center">
+            <div class="px-8 sm:px-14 max-w-lg">
+              <span class="text-brand-400 text-sm font-semibold tracking-wider uppercase">Limited Time</span>
+              <h2 class="font-display font-bold text-3xl sm:text-4xl text-white mt-2 leading-tight">Up to 30% Off Technical Outerwear</h2>
+              <p class="text-gray-300 mt-3 text-sm sm:text-base">Performance-tested gear at our best prices of the season. Ends soon.</p>
+              <button onclick="state.filters={category:'c1',colors:[],sizes:[],inStock:false,priceRange:[0,600],sort:'newest'};navigate('products')" class="mt-6 bg-brand-500 hover:bg-brand-600 text-white px-8 py-3 rounded-xl font-display font-semibold text-sm transition-colors">Shop the Sale</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="py-20 px-4 sm:px-6 bg-surface-0" id="testimonialSection">
+      <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-12 gsap-stagger" style="opacity:0;transform:translateY(30px)">
+          <span class="text-brand-500 text-sm font-semibold tracking-wider uppercase">Customer Reviews</span>
+          <h2 class="font-display font-bold text-3xl sm:text-4xl mt-1">What People Say</h2>
+        </div>
+        <div class="grid md:grid-cols-3 gap-6">
+          ${TESTIMONIALS.map((t,i) => `
+            <div class="gsap-stagger bg-white rounded-2xl p-6 sm:p-8 border border-surface-100 hover:shadow-lg transition-shadow duration-300" style="opacity:0;transform:translateY(30px)">
+              <div class="flex gap-0.5 mb-4">${Array(5).fill(0).map(()=>'<i class="fas fa-star text-warm-400 text-sm"></i>').join('')}</div>
+              <p class="text-gray-600 text-sm leading-relaxed mb-6">"${t.text}"</p>
+              <div class="flex items-center gap-3">
+                <img src="${t.avatar}" alt="${t.name}" class="w-10 h-10 rounded-full object-cover">
+                <div>
+                  <p class="font-semibold text-sm">${t.name}</p>
+                  <p class="text-xs text-gray-400">${t.role}</p>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </section>
+
+    <!-- Newsletter -->
+    <section class="py-20 px-4 sm:px-6">
+      <div class="max-w-2xl mx-auto text-center gsap-stagger" style="opacity:0;transform:translateY(30px)">
+        <div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4"><i class="fas fa-envelope text-brand-500 text-xl"></i></div>
+        <h2 class="font-display font-bold text-3xl">Stay in the Loop</h2>
+        <p class="text-gray-500 mt-2 text-sm">Get early access to new drops, exclusive offers, and style guides. No spam, ever.</p>
+        <form onsubmit="event.preventDefault();showToast('Subscribed successfully!','success');this.reset();" class="mt-6 flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+          <input type="email" required placeholder="Your email address" class="flex-1 px-4 py-3 text-sm border border-surface-200 rounded-xl focus:outline-none focus:border-brand-500 bg-white">
+          <button type="submit" class="bg-gray-900 text-white px-6 py-3 rounded-xl text-sm font-display font-semibold hover:bg-gray-800 transition-colors whitespace-nowrap">Subscribe</button>
+        </form>
+      </div>
+    </section>
+  `;
+}
+
+function renderProductCard(p) {
+  const wished = isWished(p.id);
+  const discount = p.compareAt ? Math.round((1 - p.basePrice / p.compareAt) * 100) : 0;
+  return `
+    <div class="swiper-slide">
+      <div class="product-card group cursor-pointer" onclick="navigate('product','${p.slug}')">
+        <div class="relative aspect-[4/5] rounded-2xl overflow-hidden bg-surface-50 mb-3">
+          <img src="${p.images[0]}" alt="${p.name}" class="card-img w-full h-full object-cover" loading="lazy">
+          ${discount ? `<span class="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">-${discount}%</span>` : ''}
+          <button onclick="event.stopPropagation();toggleWishlist('${p.id}')" class="absolute top-3 right-3 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-colors shadow-sm" aria-label="Toggle wishlist">
+            <i class="${wished?'fas':'far'} fa-heart text-sm ${wished?'text-red-500':'text-gray-500'}"></i>
+          </button>
+          <div class="quick-add absolute bottom-3 left-3 right-3">
+            <button onclick="event.stopPropagation();quickAdd('${p.id}')" class="w-full bg-white/95 backdrop-blur-sm text-gray-900 py-2.5 rounded-xl text-sm font-semibold hover:bg-white transition-colors shadow-lg">Quick Add</button>
+          </div>
+        </div>
+        <div class="px-1">
+          <p class="text-xs text-gray-400 font-medium mb-0.5">${p.vendor}</p>
+          <h3 class="font-display font-semibold text-sm sm:text-base truncate">${p.name}</h3>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="font-semibold text-sm">$${p.basePrice}</span>
+            ${p.compareAt ? `<span class="text-sm text-gray-400 line-through">$${p.compareAt}</span>` : ''}
+          </div>
+          ${p.colors.length ? `<div class="flex gap-1.5 mt-2">${p.colors.slice(0,4).map(c => {
+            const col = COLORS.find(x=>x.name===c);
+            return `<span class="w-4 h-4 rounded-full border border-surface-200" style="background:${col?col.hex:'#999'}"></span>`;
+          }).join('')}${p.colors.length>4?`<span class="text-xs text-gray-400">+${p.colors.length-4}</span>`:''}</div>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+function quickAdd(productId) {
+  const p = PRODUCTS.find(x => x.id === productId);
+  if (!p) return;
+  // Add first available variant
+  const v = p.variants.find(v => v.stock > 0) || p.variants[0];
+  if (v) addToCart(v.id);
+  toggleCart(true);
+}
+
+// =====================================================
+// PRODUCT LISTING PAGE
+// =====================================================
+function renderProductList() {
+  const f = state.filters;
+  let products = [...PRODUCTS];
+  // Filter
+  if (f.category) products = products.filter(p => p.category === f.category);
+  if (f.colors.length) products = products.filter(p => p.colors.some(c => f.colors.includes(c)));
+  if (f.sizes.length) products = products.filter(p => p.sizes.some(s => f.sizes.includes(s)));
+  if (f.inStock) products = products.filter(p => p.variants.some(v => v.stock > 0));
+  // Sort
+  switch(f.sort) {
+    case 'price-asc': products.sort((a,b) => a.basePrice - b.basePrice); break;
+    case 'price-desc': products.sort((a,b) => b.basePrice - a.basePrice); break;
+    case 'newest': break; // default order
+  }
+  const catName = f.category ? CATEGORIES.find(c=>c.id===f.category)?.name : 'All Products';
+  const activeFilterCount = (f.category?1:0) + f.colors.length + f.sizes.length + (f.inStock?1:0);
+
+  return `
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <!-- Breadcrumb -->
+      <nav class="flex items-center gap-2 text-sm text-gray-400 mb-6" aria-label="Breadcrumb">
+        <a onclick="navigate('home')" class="hover:text-gray-600 cursor-pointer">Home</a>
+        <i class="fas fa-chevron-right text-[10px]"></i>
+        <span class="text-gray-700 font-medium">${catName}</span>
+      </nav>
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div>
+          <h1 class="font-display font-bold text-2xl sm:text-3xl">${catName}</h1>
+          <p class="text-sm text-gray-400 mt-1">${products.length} product${products.length!==1?'s':''}</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <!-- Mobile filter button -->
+          <button onclick="toggleFilterSheet(true)" class="flex items-center gap-2 px-4 py-2.5 border border-surface-200 rounded-xl text-sm font-medium hover:bg-surface-50 transition-colors md:hidden">
+            <i class="fas fa-sliders-h text-gray-400"></i>
+            Filters ${activeFilterCount?`<span class="w-5 h-5 bg-brand-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">${activeFilterCount}</span>`:''}
+          </button>
+          <!-- Sort -->
+          <select onchange="state.filters.sort=this.value;navigate('products')" class="px-4 py-2.5 border border-surface-200 rounded-xl text-sm bg-white focus:outline-none focus:border-brand-500 cursor-pointer" aria-label="Sort products">
+            <option value="newest" ${f.sort==='newest'?'selected':''}>Newest</option>
+            <option value="price-asc" ${f.sort==='price-asc'?'selected':''}>Price: Low to High</option>
+            <option value="price-desc" ${f.sort==='price-desc'?'selected':''}>Price: High to Low</option>
+          </select>
+        </div>
+      </div>
+      <!-- Active filters -->
+      ${activeFilterCount ? `
+        <div class="flex flex-wrap gap-2 mb-6">
+          ${f.category?`<span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-50 rounded-full text-sm"><span>${CATEGORIES.find(c=>c.id===f.category)?.name}</span><button onclick="state.filters.category=null;navigate('products')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xs"></i></button></span>`:''}
+          ${f.colors.map(c=>`<span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-50 rounded-full text-sm"><span>${c}</span><button onclick="state.filters.colors=state.filters.colors.filter(x=>x!=='${c}');navigate('products')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xs"></i></button></span>`).join('')}
+          ${f.sizes.map(s=>`<span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-50 rounded-full text-sm"><span>${s}</span><button onclick="state.filters.sizes=state.filters.sizes.filter(x=>x!=='${s}');navigate('products')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xs"></i></button></span>`).join('')}
+          ${f.inStock?`<span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-50 rounded-full text-sm"><span>In Stock</span><button onclick="state.filters.inStock=false;navigate('products')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xs"></i></button></span>`:''}
+          <button onclick="state.filters={category:null,colors:[],sizes:[],inStock:false,priceRange:[0,600],sort:state.filters.sort};navigate('products')" class="text-sm text-gray-400 hover:text-gray-600 font-medium ml-1">Clear all</button>
+        </div>
+      ` : ''}
+      <!-- Layout: filters sidebar + grid -->
+      <div class="flex gap-8">
+        <!-- Desktop filters sidebar -->
+        <aside class="hidden md:block w-56 flex-shrink-0">
+          <div class="sticky top-36 space-y-8">
+            <div>
+              <h3 class="font-semibold text-sm mb-3">Category</h3>
+              <div class="space-y-2">
+                <label class="flex items-center gap-2 cursor-pointer text-sm ${!f.category?'font-medium text-gray-900':'text-gray-500'}">
+                  <input type="radio" name="cat" ${!f.category?'checked':''} onchange="state.filters.category=null;navigate('products')" class="text-brand-500 focus:ring-brand-500"> All
+                </label>
+                ${CATEGORIES.map(c => `
+                  <label class="flex items-center gap-2 cursor-pointer text-sm ${f.category===c.id?'font-medium text-gray-900':'text-gray-500'}">
+                    <input type="radio" name="cat" ${f.category===c.id?'checked':''} onchange="state.filters.category='${c.id}';navigate('products')" class="text-brand-500 focus:ring-brand-500"> ${c.name}
+                  </label>
+                `).join('')}
+              </div>
+            </div>
+            <div>
+              <h3 class="font-semibold text-sm mb-3">Color</h3>
+              <div class="flex flex-wrap gap-2">
+                ${COLORS.map(c => `
+                  <button onclick="toggleFilterColor('${c.name}');navigate('products')" class="swatch ${f.colors.includes(c.name)?'active':''}" style="background:${c.hex}" title="${c.name}"></button>
+                `).join('')}
+              </div>
+            </div>
+            <div>
+              <h3 class="font-semibold text-sm mb-3">Size</h3>
+              <div class="flex flex-wrap gap-2">
+                ${SIZES.map(s => `<button onclick="toggleFilterSize('${s}');navigate('products')" class="size-pill ${f.sizes.includes(s)?'active':''}">${s}</button>`).join('')}
+              </div>
+            </div>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" ${f.inStock?'checked':''} onchange="state.filters.inStock=this.checked;navigate('products')" class="w-4 h-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500">
+              <span class="text-sm">In stock only</span>
+            </label>
+          </div>
+        </aside>
+        <!-- Product grid -->
+        <div class="flex-1">
+          ${products.length === 0 ? `
+            <div class="text-center py-20">
+              <div class="w-20 h-20 bg-surface-50 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fas fa-filter text-2xl text-gray-300"></i></div>
+              <p class="font-display font-semibold text-gray-700 mb-1">No products match your filters</p>
+              <p class="text-sm text-gray-400 mb-4">Try adjusting your filter selections.</p>
+              <button onclick="state.filters={category:null,colors:[],sizes:[],inStock:false,priceRange:[0,600],sort:'newest'};navigate('products')" class="bg-gray-900 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">Clear All Filters</button>
+            </div>
+          ` : `
+            <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              ${products.map(p => renderProductCardGrid(p)).join('')}
+            </div>
+          `}
+        </div>
+      </div>
+    </div>
+  `;
+}
+function renderProductCardGrid(p) {
+  const wished = isWished(p.id);
+  const discount = p.compareAt ? Math.round((1 - p.basePrice / p.compareAt) * 100) : 0;
+  return `
+    <div class="product-card group cursor-pointer" onclick="navigate('product','${p.slug}')">
+      <div class="relative aspect-[4/5] rounded-2xl overflow-hidden bg-surface-50 mb-3">
+        <img src="${p.images[0]}" alt="${p.name}" class="card-img w-full h-full object-cover" loading="lazy">
+        ${discount ? `<span class="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">-${discount}%</span>` : ''}
+        <button onclick="event.stopPropagation();toggleWishlist('${p.id}');navigate('products')" class="absolute top-3 right-3 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-colors shadow-sm" aria-label="Toggle wishlist">
+          <i class="${wished?'fas':'far'} fa-heart text-sm ${wished?'text-red-500':'text-gray-500'}"></i>
+        </button>
+        <div class="quick-add absolute bottom-3 left-3 right-3">
+          <button onclick="event.stopPropagation();quickAdd('${p.id}')" class="w-full bg-white/95 backdrop-blur-sm text-gray-900 py-2.5 rounded-xl text-sm font-semibold hover:bg-white transition-colors shadow-lg">Quick Add</button>
+        </div>
+      </div>
+      <div class="px-1">
+        <p class="text-xs text-gray-400 font-medium mb-0.5">${p.vendor}</p>
+        <h3 class="font-display font-semibold text-sm sm:text-base truncate">${p.name}</h3>
+        <div class="flex items-center gap-2 mt-1">
+          <span class="font-semibold text-sm">$${p.basePrice}</span>
+          ${p.compareAt ? `<span class="text-sm text-gray-400 line-through">$${p.compareAt}</span>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// =====================================================
+// PRODUCT DETAIL PAGE
+// =====================================================
+function renderProductDetail() {
+  const p = PRODUCTS.find(x => x.slug === state.pageParam);
+  if (!p) return `<div class="max-w-7xl mx-auto px-6 py-20 text-center"><p class="text-gray-400">Product not found.</p></div>`;
+  const wished = isWished(p.id);
+  const discount = p.compareAt ? Math.round((1 - p.basePrice / p.compareAt) * 100) : 0;
+  return `
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <!-- Breadcrumb -->
+      <nav class="flex items-center gap-2 text-sm text-gray-400 mb-8" aria-label="Breadcrumb">
+        <a onclick="navigate('home')" class="hover:text-gray-600 cursor-pointer">Home</a>
+        <i class="fas fa-chevron-right text-[10px]"></i>
+        <a onclick="navigate('products')" class="hover:text-gray-600 cursor-pointer">Products</a>
+        <i class="fas fa-chevron-right text-[10px]"></i>
+        <span class="text-gray-700 font-medium truncate">${p.name}</span>
+      </nav>
+      <div class="grid lg:grid-cols-2 gap-8 lg:gap-14">
+        <!-- Gallery -->
+        <div class="space-y-4">
+          <div class="aspect-[4/5] rounded-2xl overflow-hidden bg-surface-50" id="mainImageWrap">
+            <img id="mainImage" src="${p.images[0]}" alt="${p.name}" class="w-full h-full object-cover transition-opacity duration-200">
+          </div>
+          <div class="grid grid-cols-4 gap-3">
+            ${p.images.map((img,i) => `
+              <button onclick="document.getElementById('mainImage').src='${img}';document.querySelectorAll('.thumb-btn').forEach(b=>b.classList.remove('ring-2','ring-gray-900'));this.classList.add('ring-2','ring-gray-900')" class="thumb-btn aspect-square rounded-xl overflow-hidden bg-surface-50 ${i===0?'ring-2 ring-gray-900':''}" aria-label="View image ${i+1}">
+                <img src="${img}" alt="" class="w-full h-full object-cover">
+              </button>
+            `).join('')}
+          </div>
+        </div>
+        <!-- Product Info -->
+        <div class="lg:py-4">
+          <p class="text-sm text-gray-400 font-medium mb-2">${p.vendor}</p>
+          <h1 class="font-display font-bold text-3xl sm:text-4xl mb-3">${p.name}</h1>
+          <div class="flex items-center gap-3 mb-6">
+            <span class="font-display font-bold text-2xl">$${p.basePrice}</span>
+            ${p.compareAt ? `<span class="text-lg text-gray-400 line-through">$${p.compareAt}</span><span class="bg-red-50 text-red-600 text-sm font-semibold px-2.5 py-0.5 rounded-full">-${discount}%</span>` : ''}
+          </div>
+          <div class="flex gap-0.5 mb-6">${Array(5).fill(0).map(()=>'<i class="fas fa-star text-warm-400 text-sm"></i>').join('')}<span class="text-sm text-gray-400 ml-2">(${Math.floor(Math.random()*80+20)} reviews)</span></div>
+          <p class="text-gray-600 leading-relaxed mb-8">${p.description}</p>
+          <!-- Color selector -->
+          <div class="mb-6" id="pdpColors">
+            <p class="text-sm font-semibold mb-3">Color: <span id="selectedColorLabel" class="font-normal text-gray-500">${p.colors[0]}</span></p>
+            <div class="flex gap-3">
+              ${p.colors.map((c,i) => {
+                const col = COLORS.find(x=>x.name===c);
+                return `<button onclick="selectPdpColor('${c}',this)" class="swatch ${i===0?'active':''}" style="background:${col?col.hex:'#999'}" title="${c}" aria-label="Select ${c}"></button>`;
+              }).join('')}
+            </div>
+          </div>
+          <!-- Size selector -->
+          ${p.sizes.length ? `
+            <div class="mb-8" id="pdpSizes">
+              <div class="flex items-center justify-between mb-3">
+                <p class="text-sm font-semibold">Size: <span id="selectedSizeLabel" class="font-normal text-gray-500">${p.sizes[0]}</span></p>
+                <button class="text-sm text-brand-500 font-medium hover:text-brand-600">Size Guide</button>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                ${p.sizes.map((s,i) => {
+                  const variant = p.variants.find(v => v.color === p.colors[0] && v.size === s);
+                  const disabled = variant && variant.stock === 0;
+                  return `<button onclick="selectPdpSize('${s}',this)" class="size-pill ${i===0?'active':''} ${disabled?'disabled':''}" ${disabled?'disabled':''}>${s}${variant&&variant.lowStock?' — Low Stock':''}</button>`;
+                }).join('')}
+              </div>
+            </div>
+          ` : ''}
+          <!-- Stock status -->
+          <div id="stockStatus" class="mb-6">
+            ${(() => {
+              const v = p.variants.find(v => v.color === p.colors[0] && v.size === (p.sizes[0]||null));
+              if (!v || v.stock === 0) return '<p class="text-sm text-red-500 font-medium">Out of stock</p>';
+              if (v.lowStock) return '<p class="text-sm text-warm-500 font-medium"><i class="fas fa-exclamation-triangle mr-1"></i>Only a few left</p>';
+              return '<p class="text-sm text-brand-600 font-medium"><i class="fas fa-check-circle mr-1"></i>In stock</p>';
+            })()}
+          </div>
+          <!-- Add to cart -->
+          <div class="flex gap-3 mb-8">
+            <button onclick="addPdpToCart('${p.id}')" id="pdpAddBtn" class="flex-1 bg-gray-900 text-white py-4 rounded-xl font-display font-semibold text-sm hover:bg-gray-800 transition-colors flex items-center justify-center gap-2">
+              <i class="fas fa-shopping-bag"></i> Add to Cart
+            </button>
+            <button onclick="toggleWishlist('${p.id}');navigate('product','${p.slug}')" class="w-14 border border-surface-200 rounded-xl flex items-center justify-center hover:bg-surface-50 transition-colors" aria-label="Toggle wishlist">
+              <i class="${wished?'fas':'far'} fa-heart ${wished?'text-red-500':'text-gray-400'}"></i>
+            </button>
+          </div>
+          <!-- Details accordion -->
+          <div class="border-t border-surface-100">
+            <details class="group">
+              <summary class="flex items-center justify-between py-4 cursor-pointer text-sm font-semibold">
+                Product Details
+                <i class="fas fa-chevron-down text-xs text-gray-400 group-open:rotate-180 transition-transform"></i>
+              </summary>
+              <div class="pb-4 text-sm text-gray-500 space-y-1">
+                <p>SKU: ${p.variants[0]?.sku || 'N/A'}</p>
+                <p>Category: ${CATEGORIES.find(c=>c.id===p.category)?.name}</p>
+                <p>Tags: ${p.tags.join(', ')}</p>
+                ${p.weight ? `<p>Weight: ${p.weight}kg</p>` : ''}
+              </div>
+            </details>
+            <details class="group border-t border-surface-100">
+              <summary class="flex items-center justify-between py-4 cursor-pointer text-sm font-semibold">
+                Shipping & Returns
+                <i class="fas fa-chevron-down text-xs text-gray-400 group-open:rotate-180 transition-transform"></i>
+              </summary>
+              <div class="pb-4 text-sm text-gray-500 space-y-1">
+                <p>Free standard shipping on orders over $100.</p>
+                <p>Standard delivery: 3-5 business days.</p>
+                <p>Express delivery: 1-2 business days ($14.95).</p>
+                <p>Free returns within 30 days of delivery.</p>
+              </div>
+            </details>
+            <details class="group border-t border-surface-100">
+              <summary class="flex items-center justify-between py-4 cursor-pointer text-sm font-semibold">
+                Care Instructions
+                <i class="fas fa-chevron-down text-xs text-gray-400 group-open:rotate-180 transition-transform"></i>
+              </summary>
+              <div class="pb-4 text-sm text-gray-500">Machine wash cold, tumble dry low. Do not bleach. Iron on low heat if needed.</div>
+            </details>
+          </div>
+        </div>
+      </div>
+      <!-- Related products -->
+      <section class="mt-20">
+        <h2 class="font-display font-bold text-2xl mb-8">You May Also Like</h2>
+        <div class="swiper relatedSwiper">
+          <div class="swiper-wrapper">
+            ${PRODUCTS.filter(x => x.id !== p.id && x.category === p.category).slice(0,6).map(x => renderProductCard(x)).join('')}
+            ${PRODUCTS.filter(x => x.id !== p.id && x.category !== p.category).slice(0,4).map(x => renderProductCard(x)).join('')}
+          </div>
+          <div class="swiper-pagination mt-6"></div>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+// PDP state
+let pdpSelectedColor = null;
+let pdpSelectedSize = null;
+
+function selectPdpColor(color, btn) {
+  pdpSelectedColor = color;
+  document.getElementById('selectedColorLabel').textContent = color;
+  document.querySelectorAll('#pdpColors .swatch').forEach(s => s.classList.remove('active'));
+  btn.classList.add('active');
+  updatePdpStock();
+}
+function selectPdpSize(size, btn) {
+  pdpSelectedSize = size;
+  document.getElementById('selectedSizeLabel').textContent = size;
+  document.querySelectorAll('#pdpSizes .size-pill').forEach(s => s.classList.remove('active'));
+  btn.classList.add('active');
+  updatePdpStock();
+}
+function updatePdpStock() {
+  const p = PRODUCTS.find(x => x.slug === state.pageParam);
+  if (!p) return;
+  const v = p.variants.find(v => v.color === (pdpSelectedColor || p.colors[0]) && v.size === (pdpSelectedSize || p.sizes[0] || null));
+  const el = document.getElementById('stockStatus');
+  if (!v || v.stock === 0) { el.innerHTML = '<p class="text-sm text-red-500 font-medium">Out of stock</p>'; return; }
+  if (v.lowStock) { el.innerHTML = '<p class="text-sm text-warm-500 font-medium"><i class="fas fa-exclamation-triangle mr-1"></i>Only a few left</p>'; return; }
+  el.innerHTML = '<p class="text-sm text-brand-600 font-medium"><i class="fas fa-check-circle mr-1"></i>In stock</p>';
+}
+function addPdpToCart(productId) {
+  const p = PRODUCTS.find(x => x.id === productId);
+  if (!p) return;
+  const color = pdpSelectedColor || p.colors[0];
+  const size = pdpSelectedSize || (p.sizes[0] || null);
+  const variantId = `${p.id}-${color}${size?'-'+size:''}`;
+  const variant = p.variants.find(v => v.id === variantId);
+  if (variant && variant.stock === 0) { showToast('This variant is out of stock','error'); return; }
+  addToCart(variantId);
+  toggleCart(true);
+  pdpSelectedColor = null; pdpSelectedSize = null;
+}
+
+// =====================================================
+// CHECKOUT
+// =====================================================
+function renderCheckout() {
+  if (state.cart.length === 0) { navigate('products'); return ''; }
+  const step = state.checkoutStep;
+  const d = state.checkoutData;
+  const sub = cartSubtotal();
+  const disc = cartDiscount();
+  const ship = shippingCost();
+  const total = sub - disc + ship;
+
+  return `
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      <nav class="flex items-center gap-2 text-sm text-gray-400 mb-8" aria-label="Breadcrumb">
+        <a onclick="navigate('home')" class="hover:text-gray-600 cursor-pointer">Home</a>
+        <i class="fas fa-chevron-right text-[10px]"></i>
+        <span class="text-gray-700 font-medium">Checkout</span>
+      </nav>
+      <!-- Progress -->
+      <div class="flex items-center gap-0 mb-10 max-w-md mx-auto">
+        ${['Information','Shipping','Payment'].map((label,i) => `
+          <div class="flex items-center ${i>0?'flex-1':''}">
+            ${i>0?`<div class="step-connector ${i<step?'active':''}"></div>`:''}
+            <div class="flex items-center gap-2 ${i<step?'':'ml-auto sm:ml-0'}">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${i<step?'bg-brand-500 text-white':i===step?'bg-gray-900 text-white ring-4 ring-gray-100':'bg-surface-50 text-gray-400'}">${i<step?'<i class="fas fa-check text-[10px]"></i>':i+1}</div>
+              <span class="text-sm font-medium ${i<=step?'text-gray-900':'text-gray-400'} hidden sm:block">${label}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="grid lg:grid-cols-5 gap-10">
+        <!-- Form -->
+        <div class="lg:col-span-3">
+          ${step === 1 ? renderCheckoutStep1(d) : ''}
+          ${step === 2 ? renderCheckoutStep2() : ''}
+          ${step === 3 ? renderCheckoutStep3() : ''}
+        </div>
+        <!-- Order summary sidebar -->
+        <div class="lg:col-span-2">
+          <div class="bg-surface-0 rounded-2xl p-6 sticky top-36">
+            <h3 class="font-display font-semibold text-base mb-4">Order Summary</h3>
+            <div class="space-y-3 mb-4 max-h-60 overflow-y-auto">
+              ${state.cart.map(item => `
+                <div class="flex gap-3">
+                  <div class="relative">
+                    <img src="${item.image}" alt="${item.name}" class="w-14 h-16 rounded-lg object-cover bg-white">
+                    <span class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">${item.quantity}</span>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium truncate">${item.name}</p>
+                    <p class="text-xs text-gray-400">${item.color}${item.size?' / '+item.size:''}</p>
+                  </div>
+                  <span class="text-sm font-medium">$${(item.price*item.quantity).toFixed(2)}</span>
+                </div>
+              `).join('')}
+            </div>
+            <div class="space-y-2 pt-4 border-t border-surface-100 text-sm">
+              <div class="flex justify-between"><span class="text-gray-500">Subtotal</span><span>$${sub.toFixed(2)}</span></div>
+              ${disc>0?`<div class="flex justify-between text-brand-600"><span>Discount</span><span>-$${disc.toFixed(2)}</span></div>`:''}
+              <div class="flex justify-between"><span class="text-gray-500">Shipping</span><span>${ship===0?'<span class="text-brand-600">Free</span>':'$'+ship.toFixed(2)}</span></div>
+              <div class="flex justify-between font-display font-bold text-base pt-2 border-t border-surface-100"><span>Total</span><span>$${total.toFixed(2)}</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+function renderCheckoutStep1(d) {
+  return `
+    <div class="bg-white rounded-2xl p-6 sm:p-8 border border-surface-100">
+      <h2 class="font-display font-semibold text-xl mb-6">Contact & Shipping</h2>
+      <div class="space-y-4">
+        <div>
+          <label class="text-sm font-medium text-gray-700 mb-1 block">Email address</label>
+          <input type="email" id="chkEmail" value="${d.email}" required class="w-full px-4 py-3 text-sm border border-surface-200 rounded-xl focus:outline-none focus:border-brand-500 bg-surface-0" placeholder="you@example.com">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="text-sm font-medium text-gray-700 mb-1 block">First name</label><input type="text" id="chkFirst" value="${d.firstName}" required class="w-full px-4 py-3 text-sm border border-surface-200 rounded-xl focus:outline-none focus:border-brand-500 bg-surface-0"></div>
+          <div><label class="text-sm font-medium text-gray-700 mb-1 block">Last name</label><input type="text" id="chkLast" value="${d.lastName}" required class="w-full px-4 py-3 text-sm border border-surface-200 rounded-xl focus:outline-none focus:border-brand-500 bg-surface-0"></div>
+        </div>
+        <div><label class="text-sm font-medium text-gray-700 mb-1 block">Address</label><input type="text" id="chkAddr1" value="${d.address1}" required class="w-full px-4 py-3 text-sm border border-surface-200 rounded-xl focus:outline-none focus:border-brand-500 bg-surface-0" placeholder="Street address"></div>
+        <div><label class="text-sm font-medium text-gray-700 mb-1 block">Apartment, suite, etc. <span class="text-gray-400">(optional)</span></label><input type="text" id="chkAddr2" value="${d.address2}" class="w-full px-4 py-3 text-sm border border-surface-200 rounded-xl focus:outline-none focus:border-brand-500 bg-surface-0"></div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div><label class="text-sm font-medium text-gray-700 mb-1 block">City</label><input type="text" id="chkCity" value="${d.city}" required class="w-full px-4 py-3 text-sm border border-surface-200 rounded-xl focus:outline-none focus:border-brand-500 bg-surface-0"></div>
+          <div><label class="text-sm font-medium text-gray-700 mb-1 block">Postal code</label><input type="text" id="chkPostcode" value="${d.postcode}" required class="w-full px-4 py-3 text-sm border border-surface-200 rounded-xl focus:outline-none focus:border-brand-500 bg-surface-0"></div>
+          <div class="col-span-2 sm:col-span-1"><label class="text-sm font-medium text-gray-700 mb-1 block">Country</label><select id="chkCountry" class="w-full px-4 py-3 text-sm border border-surface-200 rounded-xl focus:outline-none focus:border-brand-500 bg-surface-0"><option value="US" ${d.country==='US'?'selected':''}>United States</option><option value="GB" ${d.country==='GB'?'selected':''}>United Kingdom</option><option value="CA" ${d.country==='CA'?'selected':''}>Canada</option><option value="AU" ${d.country==='AU'?'selected':''}>Australia</option></select></div>
+        </div>
+      </div>
+      <div class="flex items-center justify-between mt-8">
+        <button onclick="navigate('products')" class="text-sm text-gray-500 hover:text-gray-700 font-medium"><i class="fas fa-arrow-left mr-1 text-xs"></i> Back to cart</button>
+        <button onclick="goCheckoutStep2()" class="bg-gray-900 text-white px-8 py-3 rounded-xl font-display font-semibold text-sm hover:bg-gray-800 transition-colors">Continue to Shipping</button>
+      </div>
+    </div>
+  `;
+}
+function goCheckoutStep2() {
+  const fields = ['chkEmail','chkFirst','chkLast','chkAddr1','chkCity','chkPostcode'];
+  let valid = true;
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el.value.trim()) { el.style.borderColor = '#DC2626'; valid = false; }
+    else { el.style.borderColor = ''; }
+  });
+  if (!valid) { showToast('Please fill in all required fields','error'); return; }
+  state.checkoutData = {
+    email: document.getElementById('chkEmail').value,
+    firstName: document.getElementById('chkFirst').value,
+    lastName: document.getElementById('chkLast').value,
+    address1: document.getElementById('chkAddr1').value,
+    address2: document.getElementById('chkAddr2').value,
+    city: document.getElementById('chkCity').value,
+    postcode: document.getElementById('chkPostcode').value,
+    country: document.getElementById('chkCountry').value,
+    shippingMethod: state.checkoutData.shippingMethod
+  };
+  state.checkoutStep = 2;
+  renderPage();
+}
+function renderCheckoutStep2() {
+  const methods = [
+    { id:'standard', name:'Standard Shipping', desc:'3-5 business days', price: shippingCost() === 0 ? 'Free' : '$9.95' },
+    { id:'express', name:'Express Shipping', desc:'1-2 business days', price:'$14.95' },
+  ];
+  return `
+    <div class="bg-white rounded-2xl p-6 sm:p-8 border border-surface-100">
+      <h2 class="font-display font-semibold text-xl mb-6">Shipping Method</h2>
+      <div class="space-y-3 mb-8">
+        ${methods.map(m => `
+          <label class="flex items-center justify-between p-4 rounded-xl border ${state.checkoutData.shippingMethod===m.id?'border-brand-500 bg-brand-50':'border-surface-200 hover:border-gray-300'} cursor-pointer transition-colors">
+            <div class="flex items-center gap-3">
+              <input type="radio" name="ship" value="${m.id}" ${state.checkoutData.shippingMethod===m.id?'checked':''} onchange="state.checkoutData.shippingMethod='${m.id}';renderPage()" class="text-brand-500 focus:ring-brand-500">
+              <div>
+                <p class="font-medium text-sm">${m.name}</p>
+                <p class="text-xs text-gray-400">${m.desc}</p>
+              </div>
+            </div>
+            <span class="font-semibold text-sm ${m.price==='Free'?'text-brand-600':''}">${m.price}</span>
+          </label>
+        `).join('')}
+      </div>
+      <div class="flex items-center justify-between">
+        <button onclick="state.checkoutStep=1;renderPage()" class="text-sm text-gray-500 hover:text-gray-700 font-medium"><i class="fas fa-arrow-left mr-1 text-xs"></i> Back</button>
+        <button onclick="if(!state.checkoutData.shippingMethod){showToast('Please select a shipping method','error');return;}state.checkoutStep=3;renderPage()" class="bg-gray-900 text-white px-8 py-3 rounded-xl font-display font-semibold text-sm hover:bg-gray-800 transition-colors">Continue to Payment</button>
+      </div>
+    </div>
+  `;
+}
+function renderCheckoutStep3() {
+  return `
+    <div class="bg-white rounded-2xl p-6 sm:p-8 border border-surface-100">
+      <h2 class="font-display font-semibold text-xl mb-6">Payment</h2>
+      <!-- Card form (simulated) -->
+      <div class="space-y-4 mb-6">
+        <div>
+          <label class="text-sm font-medium text-gray-700 mb-1 block">Card number</label>
+          <div class="relative">
+            <input type="text" id="cardNumber" maxlength="19" class="w-full px-4 py-3 text-sm border border-surface-200 rounded-xl focus:outline-none focus:border-brand-500 bg-surface-0 pr-12" placeholder="4242 4242 4242 4242" oninput="formatCardNumber(this)">
+            <div class="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
+              <i class="fab fa-cc-visa text-blue-600 text-lg"></i>
+              <i class="fab fa-cc-mastercard text-orange-500 text-lg"></i>
+            </div>
+          </div>
+        </div>
+        <div class="text-xs text-gray-400 flex items-center gap-1"><i class="fas fa-lock"></i> Your card info is encrypted and secure (Stripe)</div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="text-sm font-medium text-gray-700 mb-1 block">Expiry</label><input type="text" maxlength="5" class="w-full px-4 py-3 text-sm border border-surface-200 rounded-xl focus:outline-none focus:border-brand-500 bg-surface-0" placeholder="MM/YY" oninput="formatExpiry(this)"></div>
+          <div><label class="text-sm font-medium text-gray-700 mb-1 block">CVC</label><input type="text" maxlength="4" class="w-full px-4 py-3 text-sm border border-surface-200 rounded-xl focus:outline-none focus:border-brand-500 bg-surface-0" placeholder="123"></div>
+        </div>
+        <div><label class="text-sm font-medium text-gray-700 mb-1 block">Name on card</label><input type="text" class="w-full px-4 py-3 text-sm border border-surface-200 rounded-xl focus:outline-none focus:border-brand-500 bg-surface-0" value="${state.checkoutData.firstName} ${state.checkoutData.lastName}"></div>
+      </div>
+      <!-- Other methods -->
+      <div class="border-t border-surface-100 pt-4 space-y-3 mb-8">
+        <label class="flex items-center gap-3 p-3 rounded-xl border border-surface-200 cursor-pointer hover:border-gray-300 transition-colors">
+          <input type="radio" name="paymethod" value="paypal" class="text-brand-500 focus:ring-brand-500">
+          <i class="fab fa-paypal text-blue-600 text-lg"></i>
+          <span class="text-sm font-medium">PayPal</span>
+        </label>
+        <label class="flex items-center gap-3 p-3 rounded-xl border border-surface-200 cursor-pointer hover:border-gray-300 transition-colors">
+          <input type="radio" name="paymethod" value="cod" class="text-brand-500 focus:ring-brand-500">
+          <i class="fas fa-money-bill-wave text-green-600"></i>
+          <span class="text-sm font-medium">Cash on Delivery</span>
+        </label>
+      </div>
+      <div class="flex items-center justify-between">
+        <button onclick="state.checkoutStep=2;renderPage()" class="text-sm text-gray-500 hover:text-gray-700 font-medium"><i class="fas fa-arrow-left mr-1 text-xs"></i> Back</button>
+        <button onclick="placeOrder()" id="placeOrderBtn" class="bg-brand-500 hover:bg-brand-600 text-white px-8 py-3.5 rounded-xl font-display font-semibold text-sm transition-colors flex items-center gap-2">
+          <i class="fas fa-lock text-xs"></i> Place Order
+        </button>
+      </div>
+    </div>
+  `;
+}
+function formatCardNumber(el) { let v = el.value.replace(/\D/g,'').slice(0,16); el.value = v.replace(/(.{4})/g,'$1 ').trim(); }
+function formatExpiry(el) { let v = el.value.replace(/\D/g,'').slice(0,4); if (v.length >= 2) v = v.slice(0,2) + '/' + v.slice(2); el.value = v; }
+
+function placeOrder() {
+  const btn = document.getElementById('placeOrderBtn');
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+  btn.disabled = true;
+  setTimeout(() => {
+    state.cart = [];
+    state.coupon = null;
+    saveCart();
+    state.checkoutStep = 1;
+    state.checkoutData = { email:'', firstName:'', lastName:'', address1:'', address2:'', city:'', postcode:'', country:'US', shippingMethod:null };
+    navigate('order-confirmation');
+  }, 1800);
+}
+
+// =====================================================
+// ORDER CONFIRMATION
+// =====================================================
+function renderOrderConfirmation() {
+  const orderNum = 'NX-2026-' + String(Math.floor(Math.random()*90000)+10000);
+  return `
+    <div class="max-w-lg mx-auto px-4 py-20 text-center">
+      <div class="mb-6">
+        <svg width="80" height="80" viewBox="0 0 80 80" class="mx-auto">
+          <circle cx="40" cy="40" r="36" fill="none" stroke="#059669" stroke-width="3" class="success-circle"/>
+          <path d="M24 42 L35 53 L56 28" fill="none" stroke="#059669" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="success-check"/>
+        </svg>
+      </div>
+      <h1 class="font-display font-bold text-3xl mb-2">Order Confirmed</h1>
+      <p class="text-gray-500 mb-2">Thank you for your purchase!</p>
+      <p class="text-sm text-gray-400 mb-8">Order number: <span class="font-semibold text-gray-700">${orderNum}</span></p>
+      <p class="text-sm text-gray-500 mb-8">A confirmation email has been sent to your email address with order details and tracking information.</p>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <button onclick="navigate('products')" class="bg-gray-900 text-white px-8 py-3 rounded-xl font-display font-semibold text-sm hover:bg-gray-800 transition-colors">Continue Shopping</button>
+        <button onclick="navigate('account')" class="border border-surface-200 px-8 py-3 rounded-xl font-display font-semibold text-sm hover:bg-surface-50 transition-colors">View Orders</button>
+      </div>
+    </div>
+  `;
+}
+
+// =====================================================
+// ACCOUNT PAGE
+// =====================================================
+function renderAccount() {
+  if (!state.user) { toggleAuth(true); return '<div class="max-w-7xl mx-auto px-6 py-20 text-center"><p class="text-gray-400">Please sign in to view your account.</p></div>'; }
+  const orders = [
+    { number:'NX-2026-08421', date:'Apr 22, 2026', status:'delivered', total:'$312.00', items:2 },
+    { number:'NX-2026-08195', date:'Apr 15, 2026', status:'shipped', total:'$189.00', items:1 },
+    { number:'NX-2026-07803', date:'Apr 3, 2026', status:'delivered', total:'$425.00', items:3 },
+  ];
+  const statusColors = { pending:'bg-yellow-100 text-yellow-700', processing:'bg-blue-100 text-blue-700', shipped:'bg-indigo-100 text-indigo-700', delivered:'bg-green-100 text-green-700', cancelled:'bg-red-100 text-red-700' };
+  return `
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+      <nav class="flex items-center gap-2 text-sm text-gray-400 mb-8" aria-label="Breadcrumb">
+        <a onclick="navigate('home')" class="hover:text-gray-600 cursor-pointer">Home</a>
+        <i class="fas fa-chevron-right text-[10px]"></i>
+        <span class="text-gray-700 font-medium">Account</span>
+      </nav>
+      <div class="grid md:grid-cols-4 gap-8">
+        <!-- Sidebar -->
+        <aside class="md:col-span-1">
+          <div class="bg-white rounded-2xl p-6 border border-surface-100 text-center">
+            <img src="${state.user.avatar}" alt="${state.user.name}" class="w-20 h-20 rounded-full mx-auto mb-3 object-cover">
+            <p class="font-display font-semibold">${state.user.name}</p>
+            <p class="text-sm text-gray-400">${state.user.email}</p>
+            <hr class="my-4 border-surface-100">
+            <nav class="space-y-1 text-left">
+              <a class="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg bg-surface-50 text-gray-900"><i class="fas fa-box w-4 text-center text-gray-400"></i>Orders</a>
+              <a class="flex items-center gap-2 px-3 py-2 text-sm text-gray-500 rounded-lg hover:bg-surface-50 cursor-pointer"><i class="fas fa-heart w-4 text-center text-gray-400"></i>Wishlist <span class="ml-auto text-xs text-gray-400">${state.wishlist.length}</span></a>
+              <a class="flex items-center gap-2 px-3 py-2 text-sm text-gray-500 rounded-lg hover:bg-surface-50 cursor-pointer"><i class="fas fa-map-marker-alt w-4 text-center text-gray-400"></i>Addresses</a>
+              <a class="flex items-center gap-2 px-3 py-2 text-sm text-gray-500 rounded-lg hover:bg-surface-50 cursor-pointer"><i class="fas fa-cog w-4 text-center text-gray-400"></i>Settings</a>
+              <hr class="my-3 border-surface-100">
+              <a onclick="state.user=null;saveUser();navigate('home');showToast('Signed out','info')" class="flex items-center gap-2 px-3 py-2 text-sm text-red-500 rounded-lg hover:bg-red-50 cursor-pointer"><i class="fas fa-sign-out-alt w-4 text-center"></i>Sign Out</a>
+            </nav>
+          </div>
+        </aside>
+        <!-- Main -->
+        <div class="md:col-span-3">
+          <h2 class="font-display font-bold text-2xl mb-6">Recent Orders</h2>
+          ${orders.length === 0 ? '<p class="text-gray-400 py-10 text-center">No orders yet.</p>' : `
+            <div class="space-y-4">
+              ${orders.map(o => `
+                <div class="bg-white rounded-2xl p-5 sm:p-6 border border-surface-100 hover:shadow-md transition-shadow">
+                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <div>
+                      <p class="font-display font-semibold">${o.number}</p>
+                      <p class="text-xs text-gray-400 mt-0.5">${o.date} — ${o.items} item${o.items>1?'s':''}</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <span class="px-3 py-1 rounded-full text-xs font-semibold ${statusColors[o.status]}">${o.status.charAt(0).toUpperCase()+o.status.slice(1)}</span>
+                      <span class="font-semibold text-sm">$${o.total}</span>
+                    </div>
+                  </div>
+                  <div class="flex gap-2">
+                    <button class="text-sm text-brand-500 font-medium hover:text-brand-600">View Details</button>
+                    ${o.status==='delivered'?'<button class="text-sm text-gray-500 font-medium hover:text-gray-700 ml-4">Track Package</button>':''}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `}
+          <!-- Wishlist preview -->
+          ${state.wishlist.length > 0 ? `
+            <h2 class="font-display font-bold text-2xl mt-10 mb-6">Your Wishlist</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              ${state.wishlist.map(id => {
+                const p = PRODUCTS.find(x=>x.id===id);
+                if (!p) return '';
+                return `
+                  <div class="product-card group cursor-pointer" onclick="navigate('product','${p.slug}')">
+                    <div class="relative aspect-square rounded-xl overflow-hidden bg-surface-50 mb-2">
+                      <img src="${p.images[0]}" alt="${p.name}" class="card-img w-full h-full object-cover" loading="lazy">
+                    </div>
+                    <p class="font-medium text-sm truncate">${p.name}</p>
+                    <p class="text-sm font-semibold">$${p.basePrice}</p>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// =====================================================
+// ANIMATIONS (GSAP + ScrollTrigger)
+// =====================================================
+function initPageAnimations() {
+  // Hero entrance
+  const heroWords = document.querySelectorAll('.gsap-hero-word');
+  if (heroWords.length) {
+    gsap.fromTo(heroWords, { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8, stagger: 0.12, ease: 'power3.out', delay: 0.2 });
+    // Parallax on hero image
+    const heroImg = document.querySelector('#heroSection img');
+    if (heroImg) {
+      gsap.to(heroImg, { y: 80, ease: 'none', scrollTrigger: { trigger: '#heroSection', start: 'top top', end: 'bottom top', scrub: true } });
+    }
+  }
+
+  // Scroll-triggered staggers
+  const staggers = document.querySelectorAll('.gsap-stagger');
+  staggers.forEach(el => {
+    gsap.to(el, {
+      y: 0, opacity: 1, duration: 0.6, ease: 'power2.out',
+      scrollTrigger: { trigger: el, start: 'top 88%', once: true }
+    });
+  });
+
+  // Swiper init
+  initSwipers();
+}
+
+function initSwipers() {
+  // Featured products swiper
+  const featEl = document.querySelector('.featuredSwiper');
+  if (featEl && !featEl.swiper) {
+    new Swiper('.featuredSwiper', {
+      slidesPerView: 1.2,
+      spaceBetween: 16,
+      grabCursor: true,
+      breakpoints: {
+        640: { slidesPerView: 2.2, spaceBetween: 20 },
+        768: { slidesPerView: 3, spaceBetween: 24 },
+        1024: { slidesPerView: 4, spaceBetween: 24 }
+      },
+      pagination: { el: '.featuredSwiper .swiper-pagination', clickable: true },
+    });
+  }
+
+  // Related products swiper
+  const relEl = document.querySelector('.relatedSwiper');
+  if (relEl && !relEl.swiper) {
+    new Swiper('.relatedSwiper', {
+      slidesPerView: 1.3, spaceBetween: 16, grabCursor: true,
+      breakpoints: { 640: { slidesPerView: 2.2, spaceBetween: 20 }, 1024: { slidesPerView: 3, spaceBetween: 24 } },
+      pagination: { el: '.relatedSwiper .swiper-pagination', clickable: true },
+    });
+  }
+}
+
+// =====================================================
+// WINDOW EVENTS
+// =====================================================
+window.addEventListener('resize', () => {
+  // Destroy swipers on mobile if needed, handled by Swiper internally
+});
+
+// Back/forward browser navigation
+window.addEventListener('popstate', () => {
+  // Simple hash-based fallback — SPA nav handles most cases
+});
+
+// Keyboard: ESC closes overlays
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('cartPanel').classList.contains('open')) toggleCart(false);
+    if (document.getElementById('searchBox').classList.contains('open')) toggleSearch(false);
+    if (document.getElementById('authOverlay').classList.contains('open')) toggleAuth(false);
+    if (document.getElementById('filterSheet').classList.contains('open')) toggleFilterSheet(false);
+  }
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    toggleSearch(true);
+  }
+});
+
+// =====================================================
+// INIT
+// =====================================================
+document.addEventListener('DOMContentLoaded', () => {
+  // Register GSAP plugin
+  gsap.registerPlugin(ScrollTrigger);
+
+  // Render the initial page
+  renderHeader();
+  renderPage();
+  renderBottomNav();
+
+  // Animate homepage on load
+  setTimeout(() => initPageAnimations(), 100);
+});
+</script>
+</body>
+</html>
