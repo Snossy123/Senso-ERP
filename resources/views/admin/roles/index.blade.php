@@ -3,11 +3,11 @@
 <div class="breadcrumb-header justify-content-between">
     <div class="my-auto">
         <div class="d-flex">
-            <h4 class="content-title mb-0 my-auto">Admin</h4><span class="text-muted mt-1 tx-13 ml-2 mb-0">/ Roles</span>
+            <h4 class="content-title mb-0 my-auto">{{ __('messages.common.admin') }}</h4><span class="text-muted mt-1 tx-13 ml-2 mb-0">/ {{ __('roles.breadcrumb_roles') }}</span>
         </div>
     </div>
     <div class="d-flex my-xl-auto right-content">
-        <a href="{{ route('admin.roles.create') }}" class="btn btn-primary"><i class="fa fa-plus"></i> Add New Role</a>
+        <a href="{{ route('admin.roles.create') }}" class="btn btn-primary"><i class="fa fa-plus"></i> {{ __('roles.add_new_role') }}</a>
     </div>
 </div>
 @endsection
@@ -16,20 +16,20 @@
     <div class="col-xl-12">
         <div class="card">
             <div class="card-header pb-0">
-                <h4 class="card-title mg-b-0">User Roles & Permissions</h4>
+                <h4 class="card-title mg-b-0">{{ __('roles.title_list') }}</h4>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0 text-md-nowrap">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Slug</th>
-                                <th>Description</th>
-                                <th class="text-center">Permissions</th>
-                                <th class="text-center">Users Count</th>
-                                <th>Status</th>
-                                <th>Actions</th>
+                                <th>{{ __('roles.name') }}</th>
+                                <th>{{ __('roles.slug') }}</th>
+                                <th>{{ __('roles.description') }}</th>
+                                <th class="text-center">{{ __('roles.permissions_count') }}</th>
+                                <th class="text-center">{{ __('roles.users_count') }}</th>
+                                <th>{{ __('roles.status') }}</th>
+                                <th>{{ __('roles.actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -46,9 +46,9 @@
                                 </td>
                                 <td>
                                     @if($role->is_active)
-                                        <span class="badge badge-success">Active</span>
+                                        <span class="badge badge-success">{{ __('messages.common.active') }}</span>
                                     @else
-                                        <span class="badge badge-danger">Inactive</span>
+                                        <span class="badge badge-danger">{{ __('messages.common.inactive') }}</span>
                                     @endif
                                 </td>
                                 <td class="text-nowrap">
@@ -64,8 +64,8 @@
                             @empty
                             <tr>
                                 <td colspan="7" class="text-center py-5">
-                                    <p class="text-muted">No roles found</p>
-                                    <a href="{{ route('admin.roles.create') }}" class="btn btn-primary">Add First Role</a>
+                                    <p class="text-muted">{{ __('roles.no_roles') }}</p>
+                                    <a href="{{ route('admin.roles.create') }}" class="btn btn-primary">{{ __('roles.create_first') }}</a>
                                 </td>
                             </tr>
                             @endforelse
@@ -87,7 +87,7 @@ $(function() {
         var url = form.attr('action');
         var name = form.data('name');
 
-        if (confirm('Delete the role "' + name + '"? This will revoke it from all assigned users.')) {
+        if (confirm(@json(__('roles.delete_confirm')).replace(':name', name))) {
             $.ajax({
                 url: url,
                 type: 'POST',
@@ -100,7 +100,7 @@ $(function() {
                     }
                 },
                 error: function(xhr) {
-                    var msg = xhr.responseJSON ? xhr.responseJSON.error : 'Error deleting role';
+                    var msg = xhr.responseJSON ? xhr.responseJSON.error : @json(__('roles.delete_error'));
                     alert(msg);
                 }
             });

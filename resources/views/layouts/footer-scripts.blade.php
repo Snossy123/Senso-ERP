@@ -3,7 +3,11 @@
 <!-- JQuery min js -->
 <script src="{{URL::asset('assets/plugins/jquery/jquery.min.js')}}"></script>
 <!-- Bootstrap Bundle js -->
+@if(!empty($isRtl))
+<script src="{{URL::asset('assets/plugins/bootstrap/js/bootstrap-rtl.js')}}"></script>
+@else
 <script src="{{URL::asset('assets/plugins/bootstrap/js/bootstrap.bundle.min.js')}}"></script>
+@endif
 <!-- Ionicons js -->
 <script src="{{URL::asset('assets/plugins/ionicons/ionicons.js')}}"></script>
 <!-- Moment js -->
@@ -21,7 +25,11 @@
 <!-- Custom Scroll bar Js-->
 <script src="{{URL::asset('assets/plugins/mscrollbar/jquery.mCustomScrollbar.concat.min.js')}}"></script>
 <!-- right-sidebar js -->
+@if(!empty($isRtl))
 <script src="{{URL::asset('assets/plugins/sidebar/sidebar-rtl.js')}}"></script>
+@else
+<script src="{{URL::asset('assets/plugins/sidebar/sidebar.js')}}"></script>
+@endif
 <script src="{{URL::asset('assets/plugins/sidebar/sidebar-custom.js')}}"></script>
 <!-- Eva-icons js -->
 <script src="{{URL::asset('assets/js/eva-icons.min.js')}}"></script>

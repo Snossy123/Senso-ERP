@@ -25,8 +25,8 @@
 										<div class="mb-5 d-flex"> <a href="{{ route('dashboard') }}"><img src="{{URL::asset('assets/img/brand/favicon.png')}}" class="sign-favicon ht-40" alt="logo"></a><h1 class="main-logo1 ml-1 mr-0 my-auto tx-28">Senso <span>ERP</span></h1></div>
 										<div class="card-sigin">
 											<div class="main-signup-header">
-												<h2>Welcome back!</h2>
-												<h5 class="font-weight-semibold mb-4">Staff Admin Login</h5>
+												<h2>{{ __('auth_pages.signin.welcome') }}</h2>
+												<h5 class="font-weight-semibold mb-4">{{ __('auth_pages.signin.subtitle') }}</h5>
 												<form action="{{ route('login') }}" method="POST">
 													@csrf
 													@if($errors->any())
@@ -35,26 +35,26 @@
 														</div>
 													@endif
 													<div class="form-group">
-														<label>Email</label> <input class="form-control" name="email" placeholder="Enter your email" type="email" value="{{ old('email') }}" required autofocus>
+														<label>{{ __('auth_pages.signin.email') }}</label> <input class="form-control" name="email" placeholder="{{ __('auth_pages.signin.email_placeholder') }}" type="email" value="{{ old('email') }}" required autofocus>
 													</div>
 													<div class="form-group">
-														<label>Password</label> <input class="form-control" name="password" placeholder="Enter your password" type="password" required>
+														<label>{{ __('auth_pages.signin.password') }}</label> <input class="form-control" name="password" placeholder="{{ __('auth_pages.signin.password_placeholder') }}" type="password" required>
 													</div>
 													<div class="form-group">
 														<div class="checkbox">
 															<div class="custom-checkbox custom-control">
 																<input type="checkbox" name="remember" data-checkboxes="mygroup" class="custom-control-input" id="checkbox-1">
-																<label for="checkbox-1" class="custom-control-label mt-1">Remember me</label>
+																<label for="checkbox-1" class="custom-control-label mt-1">{{ __('auth_pages.signin.remember') }}</label>
 															</div>
 														</div>
 													</div>
-													<button type="submit" class="btn btn-main-primary btn-block">Sign In</button>
+													<button type="submit" class="btn btn-main-primary btn-block">{{ __('auth_pages.signin.submit') }}</button>
 												</form>
 											</div>
 										</div>
 												<div class="main-signin-footer mt-5">
-													<p><a href="">Forgot password?</a></p>
-													<p>Don't have an account? <a href="{{ url('/' . $page='signup') }}">Create an Account</a></p>
+													<p><a href="">{{ __('auth_pages.signin.forgot') }}</a></p>
+													<p>{{ __('auth_pages.signin.no_account') }} <a href="{{ url('/' . $page='signup') }}">{{ __('auth_pages.signin.create_account') }}</a></p>
 												</div>
 											</div>
 										</div>

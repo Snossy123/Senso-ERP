@@ -1,17 +1,17 @@
 @extends('layouts.master')
-@section('title', 'Dashboard')
+@section('title', __('dashboard.title'))
 
 @section('page-header')
 <div class="content-header">
     <div class="container-fluid">
         <div class="row mb-2">
             <div class="col-sm-6">
-                <h1 class="m-0 text-dark">Dashboard</h1>
+                <h1 class="m-0 text-dark">{{ __('dashboard.title') }}</h1>
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
-                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-                    <li class="breadcrumb-item active">Dashboard</li>
+                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">{{ __('dashboard.breadcrumb_home') }}</a></li>
+                    <li class="breadcrumb-item active">{{ __('dashboard.breadcrumb_dashboard') }}</li>
                 </ol>
             </div>
         </div>
@@ -104,11 +104,11 @@
             <div class="dashboard-card stat-card bg-white">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <p class="stat-subtitle mb-1">Total Products</p>
+                        <p class="stat-subtitle mb-1">{{ __('dashboard.total_products') }}</p>
                         <h3 class="mb-1 font-weight-bold text-dark">{{ $products['total'] }}</h3>
                         <div class="d-flex gap-3 mt-2">
                             <span class="stat-trend">
-                                <span class="text-success">{{ $products['healthy_stock'] }}</span> in stock
+                                <span class="text-success">{{ $products['healthy_stock'] }}</span> {{ __('dashboard.in_stock') }}
                             </span>
                         </div>
                     </div>
@@ -118,11 +118,11 @@
                 </div>
                 <div class="mt-3 pt-3 border-top">
                     <div class="d-flex justify-content-between text-sm">
-                        <span class="text-muted">Out of stock</span>
+                        <span class="text-muted">{{ __('dashboard.out_of_stock') }}</span>
                         <span class="font-weight-semibold text-danger">{{ $products['out_of_stock'] }}</span>
                     </div>
                     <div class="d-flex justify-content-between text-sm mt-1">
-                        <span class="text-muted">Low stock</span>
+                        <span class="text-muted">{{ __('dashboard.low_stock') }}</span>
                         <span class="font-weight-semibold text-warning">{{ $products['low_stock'] }}</span>
                     </div>
                 </div>
@@ -135,12 +135,12 @@
                 <div class="dashboard-card stat-card bg-white position-relative overflow-hidden">
                     @if($lowStock['total'] > 0)
                         <div class="position-absolute top-0 end-0 p-2">
-                            <span class="badge badge-danger pulse-badge">Alert</span>
+                            <span class="badge badge-danger pulse-badge">{{ __('dashboard.alert') }}</span>
                         </div>
                     @endif
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <p class="stat-subtitle mb-1">Low Stock Alert</p>
+                            <p class="stat-subtitle mb-1">{{ __('dashboard.low_stock_alert') }}</p>
                             <h3 class="mb-1 font-weight-bold {{ $lowStock['total'] > 0 ? 'text-danger' : 'text-success' }}">
                                 {{ $lowStock['total'] }}
                             </h3>
@@ -153,11 +153,11 @@
                     @if($lowStock['total'] > 0)
                         <div class="mt-3">
                             <div class="d-flex justify-content-between text-xs text-muted mb-1">
-                                <span>Critical (0 stock)</span>
+                                <span>{{ __('dashboard.critical_zero') }}</span>
                                 <span class="font-weight-semibold">{{ $lowStock['critical'] }}</span>
                             </div>
                             <div class="d-flex justify-content-between text-xs text-muted">
-                                <span>Warning (low)</span>
+                                <span>{{ __('dashboard.warning_low') }}</span>
                                 <span class="font-weight-semibold">{{ $lowStock['warning'] }}</span>
                             </div>
                         </div>
@@ -171,11 +171,11 @@
             <div class="dashboard-card stat-card bg-white">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <p class="stat-subtitle mb-1">Today's Sales</p>
+                        <p class="stat-subtitle mb-1">{{ __('dashboard.today_sales') }}</p>
                         <h3 class="mb-1 font-weight-bold text-success">{{ config('app.currency_symbol') }}{{ number_format($todaySales['pos_revenue'], 2) }}</h3>
                         <span class="stat-trend {{ $salesSummary['today_growth'] >= 0 ? 'up' : 'down' }}">
                             <i class="fe {{ $salesSummary['today_growth'] >= 0 ? 'fe-arrow-up-right' : 'fe-arrow-down-right' }}"></i>
-                            {{ abs($salesSummary['today_growth']) }}% vs yesterday
+                            {{ abs($salesSummary['today_growth']) }}{{ __('dashboard.vs_yesterday') }}
                         </span>
                     </div>
                     <div class="stat-icon bg-success bg-opacity-10">
@@ -184,11 +184,11 @@
                 </div>
                 <div class="mt-3 pt-3 border-top">
                     <div class="d-flex justify-content-between text-sm">
-                        <span class="text-muted">POS Orders</span>
+                        <span class="text-muted">{{ __('dashboard.pos_orders') }}</span>
                         <span class="font-weight-semibold">{{ $todaySales['pos_orders'] }}</span>
                     </div>
                     <div class="d-flex justify-content-between text-sm mt-1">
-                        <span class="text-muted">Avg. Order</span>
+                        <span class="text-muted">{{ __('dashboard.avg_order') }}</span>
                         <span class="font-weight-semibold">{{ config('app.currency_symbol') }}{{ number_format($todaySales['avg_order_value'], 2) }}</span>
                     </div>
                 </div>
@@ -201,9 +201,9 @@
                 <div class="dashboard-card stat-card bg-white">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <p class="stat-subtitle mb-1">Pending Orders</p>
+                            <p class="stat-subtitle mb-1">{{ __('dashboard.pending_orders') }}</p>
                             <h3 class="mb-1 font-weight-bold text-warning">{{ $pendingOrders['total_pending'] }}</h3>
-                            <span class="stat-trend">awaiting action</span>
+                            <span class="stat-trend">{{ __('dashboard.awaiting_action') }}</span>
                         </div>
                         <div class="stat-icon bg-warning bg-opacity-10">
                             <i class="fe fe-clock text-warning"></i>
@@ -211,11 +211,11 @@
                     </div>
                     <div class="mt-3 pt-3 border-top">
                         <div class="d-flex justify-content-between text-sm">
-                            <span class="text-muted">Online Orders</span>
+                            <span class="text-muted">{{ __('dashboard.online_orders') }}</span>
                             <span class="font-weight-semibold">{{ $pendingOrders['online_pending'] }}</span>
                         </div>
                         <div class="d-flex justify-content-between text-sm mt-1">
-                            <span class="text-muted">Unpaid POS</span>
+                            <span class="text-muted">{{ __('dashboard.unpaid_pos') }}</span>
                             <span class="font-weight-semibold">{{ $pendingOrders['pos_pending'] }}</span>
                         </div>
                     </div>
@@ -231,12 +231,12 @@
             <div class="dashboard-card bg-white">
                 <div class="widget-header d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="mb-0 font-weight-semibold">Sales Activity</h5>
-                        <p class="text-muted mb-0" style="font-size: 0.8rem;">Revenue & Orders over time</p>
+                        <h5 class="mb-0 font-weight-semibold">{{ __('dashboard.sales_activity') }}</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.8rem;">{{ __('dashboard.revenue_orders_time') }}</p>
                     </div>
                     <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-outline-secondary active" data-period="daily">Daily</button>
-                        <button type="button" class="btn btn-outline-secondary" data-period="monthly">Monthly</button>
+                        <button type="button" class="btn btn-outline-secondary active" data-period="daily">{{ __('dashboard.daily') }}</button>
+                        <button type="button" class="btn btn-outline-secondary" data-period="monthly">{{ __('dashboard.monthly') }}</button>
                     </div>
                 </div>
                 <div class="card-body py-4">
@@ -249,52 +249,52 @@
         <div class="col-lg-4">
             <div class="dashboard-card bg-white h-100">
                 <div class="widget-header">
-                    <h5 class="mb-0 font-weight-semibold">Quick Stats</h5>
+                    <h5 class="mb-0 font-weight-semibold">{{ __('dashboard.quick_stats') }}</h5>
                 </div>
                 <div class="card-body">
                     <!-- Stock Value -->
                     <div class="mb-4">
                         <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted">Inventory Value</span>
+                            <span class="text-muted">{{ __('dashboard.inventory_value') }}</span>
                             <span class="font-weight-semibold text-primary">{{ config('app.currency_symbol') }}{{ number_format($stockValue['total_retail_value'], 0) }}</span>
                         </div>
                         <div class="progress progress-mini bg-light">
                             <div class="progress-bar bg-primary" style="width: 70%"></div>
                         </div>
                         <div class="d-flex justify-content-between mt-1 text-xs text-muted">
-                            <span>Cost: {{ config('app.currency_symbol') }}{{ number_format($stockValue['total_cost'], 0) }}</span>
-                            <span>{{ number_format($stockValue['total_units']) }} units</span>
+                            <span>{{ __('dashboard.cost') }}: {{ config('app.currency_symbol') }}{{ number_format($stockValue['total_cost'], 0) }}</span>
+                            <span>{{ number_format($stockValue['total_units']) }} {{ __('dashboard.units') }}</span>
                         </div>
                     </div>
 
                     <!-- Monthly Summary -->
                     <div class="mb-4">
-                        <h6 class="text-muted text-uppercase text-xs font-weight-semibold mb-3">This Month</h6>
+                        <h6 class="text-muted text-uppercase text-xs font-weight-semibold mb-3">{{ __('dashboard.this_month') }}</h6>
                         <div class="metric-row">
-                            <span class="text-muted">Total Revenue</span>
+                            <span class="text-muted">{{ __('dashboard.total_revenue') }}</span>
                             <span class="font-weight-semibold text-success">{{ config('app.currency_symbol') }}{{ number_format($salesSummary['this_month'], 2) }}</span>
                         </div>
                         <div class="metric-row">
-                            <span class="text-muted">vs Last Month</span>
+                            <span class="text-muted">{{ __('dashboard.vs_last_month') }}</span>
                             <span class="font-weight-semibold {{ $salesSummary['month_growth'] >= 0 ? 'text-success' : 'text-danger' }}">
                                 {{ $salesSummary['month_growth'] >= 0 ? '+' : '' }}{{ $salesSummary['month_growth'] }}%
                             </span>
                         </div>
                         <div class="metric-row">
-                            <span class="text-muted">This Year</span>
+                            <span class="text-muted">{{ __('dashboard.this_year') }}</span>
                             <span class="font-weight-semibold">{{ config('app.currency_symbol') }}{{ number_format($salesSummary['this_year'], 2) }}</span>
                         </div>
                     </div>
 
                     <!-- Online Sales -->
                     <div>
-                        <h6 class="text-muted text-uppercase text-xs font-weight-semibold mb-3">Online Store</h6>
+                        <h6 class="text-muted text-uppercase text-xs font-weight-semibold mb-3">{{ __('dashboard.online_store') }}</h6>
                         <div class="metric-row">
-                            <span class="text-muted">Orders</span>
+                            <span class="text-muted">{{ __('dashboard.orders') }}</span>
                             <span class="font-weight-semibold">{{ $todaySales['online_orders'] }}</span>
                         </div>
                         <div class="metric-row">
-                            <span class="text-muted">Revenue</span>
+                            <span class="text-muted">{{ __('dashboard.revenue') }}</span>
                             <span class="font-weight-semibold text-info">{{ config('app.currency_symbol') }}{{ number_format($todaySales['online_revenue'], 2) }}</span>
                         </div>
                     </div>
@@ -310,7 +310,7 @@
             <div class="dashboard-card bg-white">
                 <div class="widget-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0 font-weight-semibold">
-                        <i class="fe fe-bell text-warning mr-1"></i> Alerts
+                        <i class="fe fe-bell text-warning mr-1"></i> {{ __('dashboard.alerts') }}
                     </h5>
                     <span class="badge badge-danger">{{ count($alerts) }}</span>
                 </div>
@@ -333,7 +333,7 @@
                     @empty
                         <div class="text-center py-4">
                             <i class="fe fe-check-circle text-success" style="font-size: 2rem;"></i>
-                            <p class="text-muted mt-2 mb-0">All clear! No alerts at this time.</p>
+                            <p class="text-muted mt-2 mb-0">{{ __('dashboard.all_clear') }}</p>
                         </div>
                     @endforelse
                 </div>
@@ -344,8 +344,8 @@
         <div class="col-lg-4">
             <div class="dashboard-card bg-white">
                 <div class="widget-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 font-weight-semibold">Top Selling Products</h5>
-                    <a href="{{ route('reports.sales') }}" class="btn btn-link btn-sm p-0">View all</a>
+                    <h5 class="mb-0 font-weight-semibold">{{ __('dashboard.top_selling_products') }}</h5>
+                    <a href="{{ route('reports.sales') }}" class="btn btn-link btn-sm p-0">{{ __('dashboard.view_all') }}</a>
                 </div>
                 <div class="card-body p-0">
                     @forelse($topProducts['products'] as $index => $product)
@@ -356,13 +356,13 @@
                                 <p class="text-muted mb-0 text-xs">{{ $product['sku'] }}</p>
                             </div>
                             <div class="text-right">
-                                <p class="mb-0 font-weight-semibold text-success">{{ $product['total_sold'] }} sold</p>
+                                <p class="mb-0 font-weight-semibold text-success">{{ $product['total_sold'] }} {{ __('dashboard.sold') }}</p>
                                 <p class="text-muted mb-0 text-xs">{{ config('app.currency_symbol') }}{{ number_format($product['total_revenue'], 0) }}</p>
                             </div>
                         </div>
                     @empty
                         <div class="text-center py-4">
-                            <p class="text-muted mb-0">No sales data available</p>
+                            <p class="text-muted mb-0">{{ __('dashboard.no_sales_data') }}</p>
                         </div>
                     @endforelse
                 </div>
@@ -373,8 +373,8 @@
         <div class="col-lg-4">
             <div class="dashboard-card bg-white">
                 <div class="widget-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 font-weight-semibold">Top Customers</h5>
-                    <a href="{{ route('reports.customers') }}" class="btn btn-link btn-sm p-0">View all</a>
+                    <h5 class="mb-0 font-weight-semibold">{{ __('dashboard.top_customers') }}</h5>
+                    <a href="{{ route('reports.customers') }}" class="btn btn-link btn-sm p-0">{{ __('dashboard.view_all') }}</a>
                 </div>
                 <div class="card-body p-0">
                     @forelse($topCustomers['customers'] as $index => $customer)
@@ -382,7 +382,7 @@
                             <span class="rank-badge rank-{{ $index + 1 }} mr-3">{{ $index + 1 }}</span>
                             <div class="flex-grow-1 min-w-0">
                                 <p class="mb-0 text-truncate font-weight-medium">{{ $customer['name'] }}</p>
-                                <p class="text-muted mb-0 text-xs">{{ $customer['order_count'] }} orders</p>
+                                <p class="text-muted mb-0 text-xs">{{ __('dashboard.orders_count', ['count' => $customer['order_count']]) }}</p>
                             </div>
                             <div class="text-right">
                                 <p class="mb-0 font-weight-semibold text-primary">{{ config('app.currency_symbol') }}{{ number_format($customer['total_spent'], 0) }}</p>
@@ -390,7 +390,7 @@
                         </div>
                     @empty
                         <div class="text-center py-4">
-                            <p class="text-muted mb-0">No customer data available</p>
+                            <p class="text-muted mb-0">{{ __('dashboard.no_customer_data') }}</p>
                         </div>
                     @endforelse
                 </div>
@@ -404,20 +404,20 @@
         <div class="col-lg-8">
             <div class="dashboard-card bg-white">
                 <div class="widget-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 font-weight-semibold">Recent POS Sales</h5>
-                    <a href="{{ route('pos.sales.index') }}" class="btn btn-link btn-sm p-0">View all</a>
+                    <h5 class="mb-0 font-weight-semibold">{{ __('dashboard.recent_pos_sales') }}</h5>
+                    <a href="{{ route('pos.sales.index') }}" class="btn btn-link btn-sm p-0">{{ __('dashboard.view_all') }}</a>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-mini mb-0">
                             <thead class="bg-light">
                                 <tr>
-                                    <th class="border-0 text-muted text-xs text-uppercase">Sale #</th>
-                                    <th class="border-0 text-muted text-xs text-uppercase">Customer</th>
-                                    <th class="border-0 text-muted text-xs text-uppercase">Cashier</th>
-                                    <th class="border-0 text-muted text-xs text-uppercase">Amount</th>
-                                    <th class="border-0 text-muted text-xs text-uppercase">Status</th>
-                                    <th class="border-0 text-muted text-xs text-uppercase">Time</th>
+                                    <th class="border-0 text-muted text-xs text-uppercase">{{ __('dashboard.sale_number') }}</th>
+                                    <th class="border-0 text-muted text-xs text-uppercase">{{ __('dashboard.customer') }}</th>
+                                    <th class="border-0 text-muted text-xs text-uppercase">{{ __('dashboard.cashier') }}</th>
+                                    <th class="border-0 text-muted text-xs text-uppercase">{{ __('dashboard.amount') }}</th>
+                                    <th class="border-0 text-muted text-xs text-uppercase">{{ __('dashboard.status') }}</th>
+                                    <th class="border-0 text-muted text-xs text-uppercase">{{ __('dashboard.time') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -444,7 +444,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="text-center py-4 text-muted">No recent sales</td>
+                                        <td colspan="6" class="text-center py-4 text-muted">{{ __('dashboard.no_recent_sales') }}</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -459,7 +459,7 @@
             <div class="dashboard-card bg-white">
                 <div class="widget-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0 font-weight-semibold">
-                        <i class="fe fe-alert-circle text-danger mr-1"></i> Out of Stock
+                        <i class="fe fe-alert-circle text-danger mr-1"></i> {{ __('dashboard.out_of_stock_title') }}
                     </h5>
                     <span class="badge badge-danger">{{ $outOfStock['count'] ?? 0 }}</span>
                 </div>
@@ -470,12 +470,12 @@
                                 <p class="mb-0 text-truncate font-weight-medium">{{ $product->name }}</p>
                                 <p class="text-danger mb-0 text-xs">SKU: {{ $product->sku }}</p>
                             </div>
-                            <span class="badge badge-danger">0 left</span>
+                            <span class="badge badge-danger">{{ __('dashboard.left_zero') }}</span>
                         </div>
                     @empty
                         <div class="text-center py-4">
                             <i class="fe fe-check-circle text-success" style="font-size: 1.5rem;"></i>
-                            <p class="text-muted mt-2 mb-0" style="font-size: 0.85rem;">All products in stock!</p>
+                            <p class="text-muted mt-2 mb-0" style="font-size: 0.85rem;">{{ __('dashboard.all_products_in_stock') }}</p>
                         </div>
                     @endforelse
                 </div>
@@ -516,7 +516,7 @@ document.addEventListener('DOMContentLoaded', function() {
             labels: chartData.labels,
             datasets: [
                 {
-                    label: 'Revenue',
+                    label: @json(__('dashboard.chart_revenue')),
                     data: chartData.revenue,
                     borderColor: '#10b981',
                     backgroundColor: 'rgba(16, 185, 129, 0.1)',
@@ -525,7 +525,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     yAxisID: 'y'
                 },
                 {
-                    label: 'Orders',
+                    label: @json(__('dashboard.chart_orders')),
                     data: chartData.orders,
                     borderColor: '#3b82f6',
                     backgroundColor: 'rgba(59, 130, 246, 0.1)',

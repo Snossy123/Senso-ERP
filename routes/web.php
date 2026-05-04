@@ -30,6 +30,9 @@ use App\Http\Controllers\ExportController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UomoAssetController;
+use App\Http\Controllers\LocaleController;
+
+Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
 
 // ── ADMIN ERP AUTH (staff) ──────────────────────────────────
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');

@@ -3,11 +3,11 @@
 <div class="breadcrumb-header justify-content-between">
     <div class="my-auto">
         <div class="d-flex">
-            <h4 class="content-title mb-0 my-auto">Admin</h4><span class="text-muted mt-1 tx-13 ml-2 mb-0">/ Users</span>
+            <h4 class="content-title mb-0 my-auto">{{ __('messages.common.admin') }}</h4><span class="text-muted mt-1 tx-13 ml-2 mb-0">/ {{ __('users.breadcrumb_users') }}</span>
         </div>
     </div>
     <div class="d-flex my-xl-auto right-content">
-        <a href="{{ route('admin.users.create') }}" class="btn btn-primary"><i class="fa fa-plus"></i> Add User</a>
+        <a href="{{ route('admin.users.create') }}" class="btn btn-primary"><i class="fa fa-plus"></i> {{ __('users.add_user') }}</a>
     </div>
 </div>
 @endsection
@@ -16,17 +16,17 @@
     <div class="col-xl-12">
         <div class="card">
             <div class="card-header pb-0">
-                <h4 class="card-title mg-b-0">System Users</h4>
+                <h4 class="card-title mg-b-0">{{ __('users.system_users') }}</h4>
             </div>
             <div class="card-body">
                 <div class="mb-4">
                     <form action="{{ route('admin.users.index') }}" method="GET" class="row">
                         <div class="col-md-3">
-                            <input type="text" name="search" class="form-control" placeholder="Search by name, email..." value="{{ request('search') }}">
+                            <input type="text" name="search" class="form-control" placeholder="{{ __('users.search_placeholder') }}" value="{{ request('search') }}">
                         </div>
                         <div class="col-md-2">
                             <select name="role" class="form-control">
-                                <option value="">Select Role</option>
+                                <option value="">{{ __('users.select_role') }}</option>
                                 @foreach($roles as $role)
                                     <option value="{{ $role->slug }}" {{ request('role') == $role->slug ? 'selected' : '' }}>{{ $role->name }}</option>
                                 @endforeach
@@ -35,7 +35,7 @@
                         @if($branches->count() > 0)
                         <div class="col-md-2">
                             <select name="branch" class="form-control">
-                                <option value="">Select Branch</option>
+                                <option value="">{{ __('users.select_branch') }}</option>
                                 @foreach($branches as $branch)
                                     <option value="{{ $branch->id }}" {{ request('branch') == $branch->id ? 'selected' : '' }}>{{ $branch->name }}</option>
                                 @endforeach
@@ -44,9 +44,9 @@
                         @endif
                         <div class="col-md-2">
                             <select name="is_active" class="form-control">
-                                <option value="">Status</option>
-                                <option value="1" {{ request('is_active') === '1' ? 'selected' : '' }}>Active</option>
-                                <option value="0" {{ request('is_active') === '0' ? 'selected' : '' }}>Inactive</option>
+                                <option value="">{{ __('users.status_filter') }}</option>
+                                <option value="1" {{ request('is_active') === '1' ? 'selected' : '' }}>{{ __('messages.common.active') }}</option>
+                                <option value="0" {{ request('is_active') === '0' ? 'selected' : '' }}>{{ __('messages.common.inactive') }}</option>
                             </select>
                         </div>
                         <div class="col-md-3">
@@ -65,13 +65,13 @@
                     <table class="table table-hover mb-0 text-md-nowrap">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th>Phone</th>
-                                <th>Status</th>
-                                <th>Created</th>
-                                <th>Actions</th>
+                                <th>{{ __('users.name') }}</th>
+                                <th>{{ __('users.email') }}</th>
+                                <th>{{ __('users.role') }}</th>
+                                <th>{{ __('users.phone') }}</th>
+                                <th>{{ __('users.status') }}</th>
+                                <th>{{ __('users.created') }}</th>
+                                <th>{{ __('users.actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -84,26 +84,26 @@
                                         </div>
                                         <strong>{{ $user->name }}</strong>
                                         @if($user->id === auth()->id())
-                                            <span class="badge badge-info ml-2">You</span>
+                                            <span class="badge badge-info ml-2">{{ __('users.you') }}</span>
                                         @endif
                                     </div>
                                 </td>
                                 <td>{{ $user->email }}</td>
                                 <td>
                                     @if($user->role?->slug === 'admin')
-                                        <span class="badge badge-danger">Admin</span>
+                                        <span class="badge badge-danger">{{ __('users.admin') }}</span>
                                     @elseif($user->role?->slug === 'manager')
-                                        <span class="badge badge-warning">Manager</span>
+                                        <span class="badge badge-warning">{{ __('users.manager') }}</span>
                                     @else
-                                        <span class="badge badge-secondary">{{ $user->role?->name ?? 'Staff' }}</span>
+                                        <span class="badge badge-secondary">{{ $user->role?->name ?? __('users.staff') }}</span>
                                     @endif
                                 </td>
                                 <td>{{ $user->phone ?? '-' }}</td>
                                 <td>
                                     @if($user->is_active)
-                                        <span class="badge badge-success">Active</span>
+                                        <span class="badge badge-success">{{ __('messages.common.active') }}</span>
                                     @else
-                                        <span class="badge badge-danger">Inactive</span>
+                                        <span class="badge badge-danger">{{ __('messages.common.inactive') }}</span>
                                     @endif
                                 </td>
                                 <td>{{ $user->created_at->format('M d, Y') }}</td>
@@ -121,8 +121,8 @@
                             @empty
                             <tr>
                                 <td colspan="7" class="text-center py-5">
-                                    <p class="text-muted">No users found</p>
-                                    <a href="{{ route('admin.users.create') }}" class="btn btn-primary">Add First User</a>
+                                    <p class="text-muted">{{ __('users.no_users') }}</p>
+                                    <a href="{{ route('admin.users.create') }}" class="btn btn-primary">{{ __('users.add_first_user') }}</a>
                                 </td>
                             </tr>
                             @endforelse
@@ -147,7 +147,7 @@ $(function() {
         var url = form.attr('action');
         var name = form.data('name');
 
-        if (confirm('Are you sure you want to delete user "' + name + '"?')) {
+        if (confirm(@json(__('users.delete_confirm')).replace(':name', name))) {
             $.ajax({
                 url: url,
                 type: 'POST',
@@ -161,7 +161,7 @@ $(function() {
                     }
                 },
                 error: function(xhr) {
-                    var msg = xhr.responseJSON ? xhr.responseJSON.error : 'Error deleting user';
+                    var msg = xhr.responseJSON ? xhr.responseJSON.error : @json(__('users.delete_error'));
                     alert(msg);
                 }
             });

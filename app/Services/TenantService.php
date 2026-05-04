@@ -18,7 +18,7 @@ class TenantService
                 'domain' => $data['domain'] ?? null,
                 'status' => 'trial',
                 'is_active' => true,
-                'trial_ends_at' => now()->addDays($data['trial_days'] ?? 14),
+                'trial_ends_at' => now()->addDays((int)($data['trial_days'] ?? 14)),
                 'currency' => $data['currency'] ?? 'USD',
                 'language' => $data['language'] ?? 'en',
                 'timezone' => $data['timezone'] ?? 'UTC',

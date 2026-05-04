@@ -1,17 +1,17 @@
 @extends('layouts.master')
-@section('title', 'Tenant Management')
+@section('title', __('tenants.title'))
 
 @section('page-header')
     <div class="breadcrumb-header justify-content-between">
         <div class="left-content">
             <div>
-                <h2 class="main-content-title tx-24 mg-b-1 mg-b-lg-1">Tenant Management</h2>
-                <p class="mg-b-0">Manage system tenants and subscriptions.</p>
+                <h2 class="main-content-title tx-24 mg-b-1 mg-b-lg-1">{{ __('tenants.title') }}</h2>
+                <p class="mg-b-0">{{ __('tenants.subtitle') }}</p>
             </div>
         </div>
         <div class="main-dashboard-header-right">
             <a href="{{ route('tenants.create') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Add Tenant
+                <i class="fas fa-plus"></i> {{ __('tenants.add_tenant') }}
             </a>
         </div>
     </div>
@@ -33,14 +33,14 @@
                 <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Domain</th>
-                            <th>Plan</th>
-                            <th>Status</th>
-                            <th>Billing</th>
-                            <th>Users</th>
-                            <th>Expires</th>
-                            <th>Actions</th>
+                            <th>{{ __('tenants.name') }}</th>
+                            <th>{{ __('tenants.domain') }}</th>
+                            <th>{{ __('tenants.plan') }}</th>
+                            <th>{{ __('tenants.status') }}</th>
+                            <th>{{ __('tenants.billing') }}</th>
+                            <th>{{ __('tenants.users') }}</th>
+                            <th>{{ __('tenants.expires') }}</th>
+                            <th>{{ __('tenants.actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -55,7 +55,7 @@
                                     @if($tenant->plan)
                                         <span class="badge bg-primary">{{ $tenant->plan->name }}</span>
                                     @else
-                                        <span class="badge bg-secondary">No Plan</span>
+                                        <span class="badge bg-secondary">{{ __('tenants.no_plan') }}</span>
                                     @endif
                                 </td>
                                 <td>
@@ -88,10 +88,10 @@
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
-                                        <a href="{{ route('tenants.show', $tenant) }}" class="btn btn-info" title="View">
+                                        <a href="{{ route('tenants.show', $tenant) }}" class="btn btn-info" title="{{ __('tenants.view') }}">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{{ route('tenants.edit', $tenant) }}" class="btn btn-primary" title="Edit">
+                                        <a href="{{ route('tenants.edit', $tenant) }}" class="btn btn-primary" title="{{ __('tenants.edit_action') }}">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         <form action="{{ route('tenants.toggle', $tenant) }}" method="POST" class="d-inline">
@@ -111,7 +111,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center">No tenants found.</td>
+                                <td colspan="8" class="text-center">{{ __('tenants.empty_table') }}</td>
                             </tr>
                         @endforelse
                     </tbody>

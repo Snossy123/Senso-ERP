@@ -5,6 +5,7 @@
         </a>
         <nav class="d-flex flex-wrap justify-content-center gap-3 align-items-center">
             <a class="text-decoration-none text-dark fw-semibold" href="{{ route('store.index') }}">Shop</a>
+            <span class="d-inline-flex align-items-center gap-1 ms-2">@include('store.partials.lang-links-inline')</span>
 
             @auth('customer')
                 <a class="text-decoration-none text-dark fw-semibold" href="{{ route('store.account.dashboard') }}">Account</a>

@@ -1,12 +1,12 @@
 @extends('layouts.master')
-@section('title', 'Business Settings')
+@section('title', __('settings.page_title'))
 
 @section('page-header')
     <div class="breadcrumb-header justify-content-between">
         <div class="left-content">
             <div>
-                <h2 class="main-content-title tx-24 mg-b-1 mg-b-lg-1">System Settings</h2>
-                <p class="mg-b-0">Configure your business, localization, and system preferences.</p>
+                <h2 class="main-content-title tx-24 mg-b-1 mg-b-lg-1">{{ __('settings.page_title') }}</h2>
+                <p class="mg-b-0">{{ __('settings.page_subtitle') }}</p>
             </div>
         </div>
     </div>
@@ -17,7 +17,7 @@
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <button type="button" class="close" data-dismiss="alert" aria-label="{{ __('messages.common.close') }}">
                 <span aria-hidden="true">&times;</span>
             </button>
         </div>
@@ -43,7 +43,7 @@
                                     'notifications' => 'bell',
                                     default => 'cog'
                                 } }} me-2"></i> 
-                                {{ ucfirst($groupKey) }}
+                                {{ __('settings.group_' . $groupKey) }}
                             </button>
                         @endforeach
                     </div>
@@ -58,7 +58,7 @@
                          id="content-{{ $groupKey }}" role="tabpanel">
                         <div class="card shadow-sm">
                             <div class="card-header bg-white py-3">
-                                <h5 class="mb-0 text-primary">{{ ucfirst($groupKey) }} Configuration</h5>
+                                <h5 class="mb-0 text-primary">{{ __('settings.group_' . $groupKey) }} {{ __('settings.configuration_suffix') }}</h5>
                             </div>
                             <div class="card-body">
                                 <form action="{{ route('admin.settings.store') }}" method="POST" enctype="multipart/form-data">
@@ -103,7 +103,7 @@
 
                                     <div class="text-end mt-3">
                                         <button type="submit" class="btn btn-primary px-5">
-                                            <i class="fas fa-save me-2"></i> Save {{ ucfirst($groupKey) }} Settings
+                                            <i class="fas fa-save me-2"></i> {{ __('settings.save_group', ['group' => __('settings.group_' . $groupKey)]) }}
                                         </button>
                                     </div>
                                 </form>

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -26,5 +27,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
         \Illuminate\Pagination\Paginator::useBootstrapFour();
+
+        Blade::directive('localizedAsset', function ($expression) {
+            return "<?php echo asset('assets/' . \\App\\Support\\Locale::cssFolder() . '/' . {$expression}); ?>";
+        });
     }
 }

@@ -13,59 +13,18 @@
 							<a class="close-toggle" href="#"><i class="header-icons fe fe-x"></i></a>
 						</div>
 						<div class="main-header-center mr-3 d-sm-none d-md-none d-lg-block">
-							<input class="form-control" placeholder="Search for anything..." type="search"> <button class="btn"><i class="fas fa-search d-none d-md-block"></i></button>
+							<input class="form-control" placeholder="{{ __('messages.header.search_placeholder') }}" type="search"> <button class="btn"><i class="fas fa-search d-none d-md-block"></i></button>
 						</div>
 					</div>
 					<div class="main-header-right">
 						<ul class="nav">
-							<li class="">
-								<div class="dropdown  nav-itemd-none d-md-flex">
-									<a href="#" class="d-flex  nav-item nav-link pl-0 country-flag1" data-toggle="dropdown" aria-expanded="false">
-										<span class="avatar country-Flag mr-0 align-self-center bg-transparent"><img src="{{URL::asset('assets/img/flags/us_flag.jpg')}}" alt="img"></span>
-										<div class="my-auto">
-											<strong class="mr-2 ml-2 my-auto">English</strong>
-										</div>
-									</a>
-									<div class="dropdown-menu dropdown-menu-left dropdown-menu-arrow" x-placement="bottom-end">
-										<a href="#" class="dropdown-item d-flex ">
-											<span class="avatar  ml-3 align-self-center bg-transparent"><img src="{{URL::asset('assets/img/flags/french_flag.jpg')}}" alt="img"></span>
-											<div class="d-flex">
-												<span class="mt-2">French</span>
-											</div>
-										</a>
-										<a href="#" class="dropdown-item d-flex">
-											<span class="avatar  ml-3 align-self-center bg-transparent"><img src="{{URL::asset('assets/img/flags/germany_flag.jpg')}}" alt="img"></span>
-											<div class="d-flex">
-												<span class="mt-2">Germany</span>
-											</div>
-										</a>
-										<a href="#" class="dropdown-item d-flex">
-											<span class="avatar ml-3 align-self-center bg-transparent"><img src="{{URL::asset('assets/img/flags/italy_flag.jpg')}}" alt="img"></span>
-											<div class="d-flex">
-												<span class="mt-2">Italy</span>
-											</div>
-										</a>
-										<a href="#" class="dropdown-item d-flex">
-											<span class="avatar ml-3 align-self-center bg-transparent"><img src="{{URL::asset('assets/img/flags/russia_flag.jpg')}}" alt="img"></span>
-											<div class="d-flex">
-												<span class="mt-2">Russia</span>
-											</div>
-										</a>
-										<a href="#" class="dropdown-item d-flex">
-											<span class="avatar  ml-3 align-self-center bg-transparent"><img src="{{URL::asset('assets/img/flags/spain_flag.jpg')}}" alt="img"></span>
-											<div class="d-flex">
-												<span class="mt-2">spain</span>
-											</div>
-										</a>
-									</div>
-								</div>
-							</li>
+							@include('layouts.partials.lang-switcher')
 						</ul>
 						<div class="nav nav-item  navbar-nav-right ml-auto">
 							<div class="nav-link" id="bs-example-navbar-collapse-1">
 								<form class="navbar-form" role="search">
 									<div class="input-group">
-										<input type="text" class="form-control" placeholder="Search">
+										<input type="text" class="form-control" placeholder="{{ __('messages.header.search') }}">
 										<span class="input-group-btn">
 											<button type="reset" class="btn btn-default">
 												<i class="fas fa-times"></i>
@@ -82,10 +41,10 @@
 								<div class="dropdown-menu">
 									<div class="menu-header-content bg-primary text-right">
 										<div class="d-flex">
-											<h6 class="dropdown-title mb-1 tx-15 text-white font-weight-semibold">Messages</h6>
-											<span class="badge badge-pill badge-warning mr-auto my-auto float-left">Mark All Read</span>
+											<h6 class="dropdown-title mb-1 tx-15 text-white font-weight-semibold">{{ __('messages.header.messages') }}</h6>
+											<span class="badge badge-pill badge-warning mr-auto my-auto float-left">{{ __('messages.header.mark_all_read') }}</span>
 										</div>
-										<p class="dropdown-title-text subtext mb-0 text-white op-6 pb-0 tx-12 ">You have 4 unread messages</p>
+										<p class="dropdown-title-text subtext mb-0 text-white op-6 pb-0 tx-12 ">{{ __('messages.header.unread_messages', ['count' => 4]) }}</p>
 									</div>
 									<div class="main-message-list chat-scroll">
 										<a href="#" class="p-3 d-flex border-bottom">
@@ -150,7 +109,7 @@
 										</a>
 									</div>
 									<div class="text-center dropdown-footer">
-										<a href="text-center">VIEW ALL</a>
+										<a href="text-center">{{ __('messages.header.view_all') }}</a>
 									</div>
 								</div>
 							</div>
@@ -160,10 +119,10 @@
 								<div class="dropdown-menu">
 									<div class="menu-header-content bg-primary text-right">
 										<div class="d-flex">
-											<h6 class="dropdown-title mb-1 tx-15 text-white font-weight-semibold">Notifications</h6>
-											<span class="badge badge-pill badge-warning mr-auto my-auto float-left">Mark All Read</span>
+											<h6 class="dropdown-title mb-1 tx-15 text-white font-weight-semibold">{{ __('messages.header.notifications') }}</h6>
+											<span class="badge badge-pill badge-warning mr-auto my-auto float-left">{{ __('messages.header.mark_all_read') }}</span>
 										</div>
-										<p class="dropdown-title-text subtext mb-0 text-white op-6 pb-0 tx-12 ">You have 4 unread Notifications</p>
+										<p class="dropdown-title-text subtext mb-0 text-white op-6 pb-0 tx-12 ">{{ __('messages.header.unread_notifications', ['count' => 4]) }}</p>
 									</div>
 									<div class="main-notification-list Notification-scroll">
 										<a class="d-flex p-3 border-bottom" href="#">
@@ -240,7 +199,7 @@
 										</a>
 									</div>
 									<div class="dropdown-footer">
-										<a href="">VIEW ALL</a>
+										<a href="">{{ __('messages.header.view_all') }}</a>
 									</div>
 								</div>
 							</div>
@@ -254,14 +213,14 @@
 										<div class="d-flex wd-100p">
 											<div class="main-img-user"><img alt="" src="{{URL::asset('assets/img/faces/6.jpg')}}" class=""></div>
 											<div class="mr-3 my-auto">
-												<h6>{{ Auth::user()->name }}</h6><span>Staff Member</span>
+												<h6>{{ Auth::user()->name }}</h6><span>{{ __('messages.header.staff_member') }}</span>
 											</div>
 										</div>
 									</div>
-									<a class="dropdown-item" href="#"><i class="bx bx-user-circle"></i>Profile</a>
+									<a class="dropdown-item" href="#"><i class="bx bx-user-circle"></i>{{ __('messages.header.profile') }}</a>
 									<a class="dropdown-item" href="{{ route('logout') }}" 
 									   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-										<i class="bx bx-log-out"></i> Sign Out
+										<i class="bx bx-log-out"></i> {{ __('messages.header.sign_out') }}
 									</a>
 									<form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
 										@csrf

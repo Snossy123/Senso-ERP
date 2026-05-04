@@ -6,6 +6,7 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto align-items-center">
+                @include('store.partials.lang-switcher')
                 <li class="nav-item mx-2"><a class="nav-link" href="{{ route('store.index') }}">Shop</a></li>
 
                 @auth('customer')

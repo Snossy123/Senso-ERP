@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Plan;
 use App\Models\Tenant;
 use App\Services\TenantService;
+use App\Support\Locale;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -42,7 +43,7 @@ class TenantController extends Controller
             'plan_id' => 'nullable|exists:plans,id',
             'trial_days' => 'nullable|integer|min:0|max:60',
             'currency' => 'nullable|string|size:3',
-            'language' => 'nullable|string|max:10',
+            'language' => ['nullable', 'string', 'max:10', Rule::in(Locale::supportedCodes())],
             'timezone' => 'nullable|string|max:50',
         ]);
 
@@ -85,7 +86,7 @@ class TenantController extends Controller
             'plan_id' => 'nullable|exists:plans,id',
             'status' => ['nullable', Rule::in(['trial', 'active', 'expired', 'suspended'])],
             'currency' => 'nullable|string|size:3',
-            'language' => 'nullable|string|max:10',
+            'language' => ['nullable', 'string', 'max:10', Rule::in(Locale::supportedCodes())],
             'timezone' => 'nullable|string|max:50',
             'tax_settings' => 'nullable|array',
             'notes' => 'nullable|string',
