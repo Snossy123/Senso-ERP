@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ $dir ?? 'ltr' }}">
 	<head>
 		<meta charset="UTF-8">
 		<meta name='viewport' content='width=device-width, initial-scale=1.0, user-scalable=0'>
@@ -10,7 +10,7 @@
 		@include('layouts.head')
 	</head>
 	
-	<body class="main-body bg-primary-transparent">
+	<body class="main-body bg-primary-transparent @if(!empty($isRtl)) rtl @endif">
 		<!-- Loader -->
 		<div id="global-loader">
 			<img src="{{URL::asset('assets/img/loader.svg')}}" class="loader-img" alt="Loader">

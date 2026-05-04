@@ -6,41 +6,41 @@
         <div class="left-content">
             <div>
                 <h2 class="main-content-title tx-24 mg-b-1 mg-b-lg-1">{{ $tenant->name }}</h2>
-                <p class="mg-b-0">Tenant details, statistics and configuration.</p>
+                <p class="mg-b-0">{{ __('tenants.show_subtitle') }}</p>
             </div>
         </div>
         <div class="main-dashboard-header-right">
             <div class="btn-group" role="group">
                 @if($tenant->status !== 'suspended')
                     <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#suspendModal">
-                        <i class="fas fa-pause"></i> Suspend
+                        <i class="fas fa-pause"></i> {{ __('tenants.suspend') }}
                     </button>
                 @else
                     <form action="{{ route('tenants.activate', $tenant) }}" method="POST" class="d-inline">
                         @csrf
                         <button type="submit" class="btn btn-success">
-                            <i class="fas fa-play"></i> Activate
+                            <i class="fas fa-play"></i> {{ __('tenants.activate') }}
                         </button>
                     </form>
                 @endif
                 
                 <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#loginAsModal">
-                    <i class="fas fa-sign-in-alt"></i> Login as
+                    <i class="fas fa-sign-in-alt"></i> {{ __('tenants.login_as') }}
                 </button>
                 
                 <a href="{{ route('tenants.edit', $tenant) }}" class="btn btn-primary">
-                    <i class="fas fa-edit"></i> Edit
+                    <i class="fas fa-edit"></i> {{ __('tenants.edit') }}
                 </a>
                 
                 <form action="{{ route('tenants.sync-usage', $tenant) }}" method="POST" class="d-inline">
                     @csrf
                     <button type="submit" class="btn btn-warning">
-                        <i class="fas fa-sync"></i> Sync Usage
+                        <i class="fas fa-sync"></i> {{ __('tenants.sync_usage') }}
                     </button>
                 </form>
             </div>
             <a href="{{ route('tenants.index') }}" class="btn btn-secondary mr-2">
-                <i class="fas fa-arrow-left"></i> Back
+                <i class="fas fa-arrow-left"></i> {{ __('tenants.back') }}
             </a>
         </div>
     </div>
@@ -56,7 +56,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <p class="text-muted mb-0">Status</p>
+                            <p class="text-muted mb-0">{{ __('tenants.status_label') }}</p>
                             <h4 class="mb-0">
                                 <span class="badge bg-{{ $tenant->status_color }}">{{ $tenant->status_label }}</span>
                             </h4>
@@ -69,7 +69,7 @@
                     @if($tenant->isOnTrial() && $daysUntilTrial !== null)
                         <div class="mt-3">
                             <small class="text-warning">
-                                <i class="fas fa-clock"></i> Trial ends in {{ $daysUntilTrial }} days
+                                <i class="fas fa-clock"></i> {{ __('tenants.trial_ends_in', ['days' => $daysUntilTrial]) }}
                             </small>
                         </div>
                     @endif
@@ -82,8 +82,8 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <p class="text-muted mb-0">Current Plan</p>
-                            <h4 class="mb-0">{{ $tenant->plan->name ?? 'No Plan' }}</h4>
+                            <p class="text-muted mb-0">{{ __('tenants.current_plan') }}</p>
+                            <h4 class="mb-0">{{ $tenant->plan->name ?? __('tenants.no_plan') }}</h4>
                             <small class="text-muted">{{ $tenant->plan ? '$' . number_format($tenant->plan->price, 2) . '/' . $tenant->plan->billing_cycle : '-' }}</small>
                         </div>
                         <div class="text-primary">
@@ -92,7 +92,7 @@
                     </div>
                     <div class="mt-3">
                         <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#upgradePlanModal">
-                            <i class="fas fa-arrow-up"></i> Change Plan
+                            <i class="fas fa-arrow-up"></i> {{ __('tenants.change_plan') }}
                         </button>
                     </div>
                 </div>

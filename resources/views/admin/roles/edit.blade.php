@@ -3,7 +3,7 @@
 <div class="breadcrumb-header justify-content-between">
     <div class="my-auto">
         <div class="d-flex">
-            <h4 class="content-title mb-0 my-auto">Admin</h4><span class="text-muted mt-1 tx-13 ml-2 mb-0">/ Roles / Edit</span>
+            <h4 class="content-title mb-0 my-auto">{{ __('messages.common.admin') }}</h4><span class="text-muted mt-1 tx-13 ml-2 mb-0">/ {{ __('roles.breadcrumb_edit') }}</span>
         </div>
     </div>
 </div>
@@ -13,10 +13,10 @@
     <div class="col-lg-10 mx-auto">
         <div class="card shadow-md border-0">
             <div class="card-header pb-0 mt-3 d-flex justify-content-between align-items-center">
-                <h4 class="card-title">Edit Role: <span class="text-primary">{{ $role->name }}</span></h4>
+                <h4 class="card-title">{{ __('roles.edit_title') }}: <span class="text-primary">{{ $role->name }}</span></h4>
                 <div class="form-check form-switch pt-2">
                     <input class="form-check-input" type="checkbox" name="is_active" form="editRoleForm" value="1" id="is_active" {{ $role->is_active ? 'checked' : '' }}>
-                    <label class="form-check-label font-weight-bold ml-2" for="is_active">Role is Active</label>
+                    <label class="form-check-label font-weight-bold ml-2" for="is_active">{{ __('roles.role_is_active') }}</label>
                 </div>
             </div>
             <div class="card-body">
@@ -26,29 +26,29 @@
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <div class="form-group border-bottom pb-2">
-                                <label class="text-muted tx-11 font-weight-bold mb-1">Role Name <span class="text-danger">*</span></label>
-                                <input type="text" name="name" id="name" class="form-control border-0 px-0 pt-0 font-weight-bold tx-16" required value="{{ $role->name }}" placeholder="e.g. Sales Associate">
+                                <label class="text-muted tx-11 font-weight-bold mb-1">{{ __('roles.role_name_field') }} <span class="text-danger">*</span></label>
+                                <input type="text" name="name" id="name" class="form-control border-0 px-0 pt-0 font-weight-bold tx-16" required value="{{ $role->name }}" placeholder="{{ __('roles.role_name_placeholder') }}">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group border-bottom pb-2">
-                                <label class="text-muted tx-11 font-weight-bold mb-1">Description</label>
-                                <textarea name="description" id="description" class="form-control border-0 px-0 pt-0 tx-14" rows="1" placeholder="Short description of this role">{{ $role->description }}</textarea>
+                                <label class="text-muted tx-11 font-weight-bold mb-1">{{ __('roles.description') }}</label>
+                                <textarea name="description" id="description" class="form-control border-0 px-0 pt-0 tx-14" rows="1" placeholder="{{ __('roles.description_placeholder') }}">{{ $role->description }}</textarea>
                             </div>
                         </div>
                     </div>
 
                     <div class="alert alert-info py-2 d-flex align-items-center">
                         <i class="fa fa-info-circle mr-2 tx-18"></i>
-                        <span class="tx-11">Assigning permissions here will update the access for all users assigned to this role ({{ $role->users()->count() }} users affected).</span>
+                        <span class="tx-11">{{ __('roles.users_affected_info', ['count' => $role->users()->count()]) }}</span>
                     </div>
 
                     <hr>
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h5 class="mb-0 font-weight-bold">Assign Permissions</h5>
+                        <h5 class="mb-0 font-weight-bold">{{ __('roles.assign_permissions') }}</h5>
                         <div class="btn-group btn-group-sm rounded-pill overflow-hidden border">
-                            <button type="button" class="btn btn-light px-3" id="selectAll">Select All</button>
-                            <button type="button" class="btn btn-light px-3" id="deselectAll">Deselect All</button>
+                            <button type="button" class="btn btn-light px-3" id="selectAll">{{ __('roles.select_all') }}</button>
+                            <button type="button" class="btn btn-light px-3" id="deselectAll">{{ __('roles.deselect_all') }}</button>
                         </div>
                     </div>
 
@@ -80,8 +80,8 @@
                     @endif
 
                     <div class="form-footer mt-5 text-right">
-                        <a href="{{ route('admin.roles.index') }}" class="btn btn-light btn-lg px-4 mr-2">Cancel</a>
-                        <button type="submit" class="btn btn-primary px-5 btn-lg shadow-sm">Update Role & Permissions</button>
+                        <a href="{{ route('admin.roles.index') }}" class="btn btn-light btn-lg px-4 mr-2">{{ __('roles.cancel') }}</a>
+                        <button type="submit" class="btn btn-primary px-5 btn-lg shadow-sm">{{ __('roles.update_submit') }}</button>
                     </div>
                 </form>
             </div>

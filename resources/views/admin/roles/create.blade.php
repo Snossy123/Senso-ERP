@@ -3,7 +3,7 @@
 <div class="breadcrumb-header justify-content-between">
     <div class="my-auto">
         <div class="d-flex">
-            <h4 class="content-title mb-0 my-auto">Admin</h4><span class="text-muted mt-1 tx-13 ml-2 mb-0">/ Roles / Add New</span>
+            <h4 class="content-title mb-0 my-auto">{{ __('messages.common.admin') }}</h4><span class="text-muted mt-1 tx-13 ml-2 mb-0">/ {{ __('roles.breadcrumb_add') }}</span>
         </div>
     </div>
 </div>
@@ -13,7 +13,7 @@
     <div class="col-lg-10 mx-auto">
         <div class="card">
             <div class="card-header pb-0 mt-2">
-                <h4 class="card-title">Create New Role</h4>
+                <h4 class="card-title">{{ __('roles.create_new_role') }}</h4>
             </div>
             <div class="card-body">
                 <form id="createRoleForm" action="{{ route('admin.roles.store') }}" method="POST">
@@ -21,14 +21,14 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Role Name <span class="text-danger">*</span></label>
-                                <input type="text" name="name" id="name" class="form-control" required placeholder="e.g. Sales Associate">
+                                <label class="form-label">{{ __('roles.role_name_field') }} <span class="text-danger">*</span></label>
+                                <input type="text" name="name" id="name" class="form-control" required placeholder="{{ __('roles.role_name_placeholder') }}">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Description</label>
-                                <textarea name="description" id="description" class="form-control" rows="1" placeholder="Short description of this role"></textarea>
+                                <label class="form-label">{{ __('roles.description') }}</label>
+                                <textarea name="description" id="description" class="form-control" rows="1" placeholder="{{ __('roles.description_placeholder') }}"></textarea>
                             </div>
                         </div>
                     </div>
@@ -36,16 +36,16 @@
                     <div class="mb-3">
                         <label class="custom-control custom-checkbox pt-2">
                             <input type="checkbox" class="custom-control-input" name="is_active" value="1" checked>
-                            <span class="custom-control-label">Active Role</span>
+                            <span class="custom-control-label">{{ __('roles.active_role') }}</span>
                         </label>
                     </div>
 
                     <hr>
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0">Assign Permissions</h5>
+                        <h5 class="mb-0">{{ __('roles.assign_permissions') }}</h5>
                         <div class="btn-group btn-group-sm">
-                            <button type="button" class="btn btn-outline-primary" id="selectAll">Select All</button>
-                            <button type="button" class="btn btn-outline-secondary" id="deselectAll">Deselect All</button>
+                            <button type="button" class="btn btn-outline-primary" id="selectAll">{{ __('roles.select_all') }}</button>
+                            <button type="button" class="btn btn-outline-secondary" id="deselectAll">{{ __('roles.deselect_all') }}</button>
                         </div>
                     </div>
 
@@ -76,8 +76,8 @@
                     @endif
 
                     <div class="form-footer mt-4">
-                        <button type="submit" class="btn btn-primary px-5 btn-lg">Create Role</button>
-                        <a href="{{ route('admin.roles.index') }}" class="btn btn-secondary btn-lg">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-5 btn-lg">{{ __('roles.create_submit') }}</button>
+                        <a href="{{ route('admin.roles.index') }}" class="btn btn-secondary btn-lg">{{ __('roles.cancel') }}</a>
                     </div>
                 </form>
             </div>

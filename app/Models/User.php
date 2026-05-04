@@ -18,7 +18,7 @@ class User extends Authenticatable
     use HasFactory, Notifiable, BelongsToTenant, Loggable;
 
     protected $fillable = [
-        'name', 'email', 'password', 'phone', 'avatar', 'is_active', 'tenant_id',
+        'name', 'email', 'password', 'phone', 'avatar', 'language', 'is_active', 'tenant_id',
         'role_id', 'branch_id', 'created_by',
         'last_login_at', 'last_login_ip',
         'failed_login_attempts', 'locked_until',

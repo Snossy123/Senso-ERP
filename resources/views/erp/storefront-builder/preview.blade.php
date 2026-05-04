@@ -1,12 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ $dir ?? 'ltr' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Storefront Preview</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    @if(!empty($isRtl))
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    @else
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    @endif
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         :root {
@@ -37,7 +41,7 @@
         .btn-premium:hover { background: var(--secondary-color); transform: translateY(-2px); }
     </style>
 </head>
-<body class="bg-light" x-data="{ cartCount: 0 }">
+<body class="bg-light @if(!empty($isRtl)) rtl @endif" x-data="{ cartCount: 0 }">
 <div class="container py-5">
     <h2 class="mb-1">{{ $storefront->name }} - Preview</h2>
     <p class="text-muted">Page type: {{ $pageType }} | Template: {{ $storefront->active_template_key }}</p>

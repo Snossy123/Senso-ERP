@@ -3,7 +3,7 @@
 <div class="breadcrumb-header justify-content-between">
     <div class="my-auto">
         <div class="d-flex">
-            <h4 class="content-title mb-0 my-auto">Admin</h4><span class="text-muted mt-1 tx-13 ml-2 mb-0">/ Users / Edit</span>
+            <h4 class="content-title mb-0 my-auto">{{ __('messages.common.admin') }}</h4><span class="text-muted mt-1 tx-13 ml-2 mb-0">/ {{ __('users.breadcrumb_edit') }}</span>
         </div>
     </div>
 </div>
@@ -13,7 +13,7 @@
     <div class="col-lg-8 mx-auto">
         <div class="card">
             <div class="card-header pb-0">
-                <h4 class="card-title">Edit User: {{ $user->name }}</h4>
+                <h4 class="card-title">{{ __('users.edit_title', ['name' => $user->name]) }}</h4>
             </div>
             <div class="card-body">
                 <form action="{{ route('admin.users.update', $user) }}" method="POST">
@@ -22,14 +22,14 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                                <label class="form-label">{{ __('users.full_name') }} <span class="text-danger">*</span></label>
                                 <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" value="{{ old('name', $user->name) }}" required>
                                 @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Email <span class="text-danger">*</span></label>
+                                <label class="form-label">{{ __('users.email') }} <span class="text-danger">*</span></label>
                                 <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email', $user->email) }}" required>
                                 @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
@@ -38,25 +38,25 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">New Password</label>
-                                <input type="password" name="password" class="form-control @error('password') is-invalid @enderror" placeholder="Leave blank to keep current">
-                                <small class="text-muted">Leave blank to keep current password</small>
+                                <label class="form-label">{{ __('users.new_password') }}</label>
+                                <input type="password" name="password" class="form-control @error('password') is-invalid @enderror" placeholder="{{ __('users.password_placeholder') }}">
+                                <small class="text-muted">{{ __('users.password_hint') }}</small>
                                 @error('password') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Confirm Password</label>
-                                <input type="password" name="password_confirmation" class="form-control" placeholder="Confirm new password">
+                                <label class="form-label">{{ __('users.confirm_password') }}</label>
+                                <input type="password" name="password_confirmation" class="form-control" placeholder="{{ __('users.confirm_new_password') }}">
                             </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Role <span class="text-danger">*</span></label>
+                                <label class="form-label">{{ __('users.role') }} <span class="text-danger">*</span></label>
                                 <select name="role_id" class="form-control @error('role_id') is-invalid @enderror" required>
-                                    <option value="">Select Role</option>
+                                    <option value="">{{ __('users.select_role') }}</option>
                                     @foreach($roles as $role)
                                         <option value="{{ $role->id }}" {{ old('role_id', $user->role?->id) == $role->id ? 'selected' : '' }}>{{ $role->name }}</option>
                                     @endforeach
@@ -66,7 +66,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Phone</label>
+                                <label class="form-label">{{ __('users.phone') }}</label>
                                 <input type="text" name="phone" class="form-control" value="{{ old('phone', $user->phone) }}">
                             </div>
                         </div>
@@ -75,9 +75,9 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Branch</label>
+                                <label class="form-label">{{ __('users.branch') }}</label>
                                 <select name="branch_id" class="form-control">
-                                    <option value="">No Branch</option>
+                                    <option value="">{{ __('users.no_branch') }}</option>
                                     @foreach($branches as $branch)
                                         <option value="{{ $branch->id }}" {{ old('branch_id', $user->branch_id) == $branch->id ? 'selected' : '' }}>{{ $branch->name }}</option>
                                     @endforeach
@@ -89,11 +89,11 @@
                     <div class="form-group">
                         <label class="custom-control custom-checkbox">
                             <input type="checkbox" class="custom-control-input" name="is_active" value="1" {{ old('is_active', $user->is_active) ? 'checked' : '' }}>
-                            <span class="custom-control-label">Active User</span>
+                            <span class="custom-control-label">{{ __('users.active_user') }}</span>
                         </label>
                     </div>
                     <hr>
-                    <h5>Permissions (inherited from role, can override)</h5>
+                    <h5>{{ __('users.permissions_heading') }}</h5>
                     @if(!empty($permissionsGrouped))
                         @foreach($permissionsGrouped as $groupKey => $group)
                             <div class="card mb-2">
@@ -112,8 +112,8 @@
                         @endforeach
                     @endif
                     <div class="form-footer mt-4">
-                        <button type="submit" class="btn btn-primary">Update User</button>
-                        <a href="{{ route('admin.users.index') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">{{ __('users.update_user') }}</button>
+                        <a href="{{ route('admin.users.index') }}" class="btn btn-secondary">{{ __('users.cancel') }}</a>
                     </div>
                 </form>
             </div>
