@@ -11,12 +11,12 @@ trait BelongsToTenant
     public static function bootBelongsToTenant(): void
     {
         static::creating(function ($model) {
-            if (!$model->tenant_id) {
+            if (! $model->tenant_id) {
                 $model->tenant_id = app(TenantManager::class)->getCurrentId();
             }
         });
 
-        static::addGlobalScope(new TenantScope());
+        static::addGlobalScope(new TenantScope);
     }
 
     public function tenant()

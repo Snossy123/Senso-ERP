@@ -13,6 +13,7 @@ class ProductFactory extends Factory
     public function definition(): array
     {
         $name = $this->faker->words(3, true);
+
         return [
             'tenant_id' => 1,
             'sku' => strtoupper($this->faker->unique()->bothify('PRO-????-####')),

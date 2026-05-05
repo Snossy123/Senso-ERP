@@ -7,15 +7,16 @@ use App\Models\Branch;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class UserManagementService
 {
     protected int $maxFailedAttempts = 5;
+
     protected int $lockoutMinutes = 30;
+
     protected int $passwordExpiryDays = 90;
 
     public function getUsers(array $filters = [], int $perPage = 15): array
@@ -23,7 +24,7 @@ class UserManagementService
         $query = User::with(['role:id,name,slug', 'branch:id,name,code', 'creator:id,name'])
             ->select('users.*');
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -31,11 +32,11 @@ class UserManagementService
             });
         }
 
-        if (!empty($filters['role'])) {
-            $query->whereHas('role', fn($q) => $q->where('slug', $filters['role']));
+        if (! empty($filters['role'])) {
+            $query->whereHas('role', fn ($q) => $q->where('slug', $filters['role']));
         }
 
-        if (!empty($filters['branch'])) {
+        if (! empty($filters['branch'])) {
             $query->where('branch_id', $filters['branch']);
         }
 
@@ -65,7 +66,7 @@ class UserManagementService
         $tenantId = $data['tenant_id'] ?? auth()->user()->tenant_id;
         $tenant = $tenantId ? \App\Models\Tenant::find($tenantId) : null;
 
-        if ($tenant && !$tenant->canAddUser()) {
+        if ($tenant && ! $tenant->canAddUser()) {
             throw new \Exception('User limit reached for this tenant. Please upgrade your plan.');
         }
 
@@ -83,7 +84,7 @@ class UserManagementService
                 'must_change_password' => $data['must_change_password'] ?? true,
             ]);
 
-            if (!empty($data['permissions'])) {
+            if (! empty($data['permissions'])) {
                 $user->permissions()->attach($data['permissions']);
             }
 
@@ -130,7 +131,7 @@ class UserManagementService
                 $changes['status'] = ['old' => $user->is_active ? 'active' : 'inactive', 'new' => $data['is_active'] ? 'active' : 'inactive'];
             }
 
-            if (!empty($data['password'])) {
+            if (! empty($data['password'])) {
                 $updateData['password'] = $data['password'];
                 $updateData['must_change_password'] = false;
             }
@@ -144,15 +145,15 @@ class UserManagementService
             if (isset($data['permissions'])) {
                 $rolePermissionIds = $user->role?->permissions->pluck('id')->toArray() ?? [];
                 $checkedIds = array_map('intval', $data['permissions']);
-                
+
                 $syncData = [];
                 // Get all affected permission IDs (either currently in role or checked in form)
                 $affectedIds = array_unique(array_merge($rolePermissionIds, $checkedIds));
-                
+
                 foreach ($affectedIds as $id) {
                     $isChecked = in_array($id, $checkedIds);
                     $inRole = in_array($id, $rolePermissionIds);
-                    
+
                     if ($isChecked) {
                         // Always ensure checked items are grants (we can be redundant for safety)
                         $syncData[$id] = ['granted' => 1];
@@ -161,11 +162,11 @@ class UserManagementService
                         $syncData[$id] = ['granted' => 0];
                     }
                 }
-                
+
                 $user->permissions()->sync($syncData);
             }
 
-            if (!empty($changes)) {
+            if (! empty($changes)) {
                 Activity::log('user', 'update', "Updated user: {$user->name}", ['changes' => $changes], $user);
             }
         });
@@ -179,7 +180,7 @@ class UserManagementService
             throw new \Exception('Cannot delete your own account.');
         }
 
-        if ($user->isAdmin() && User::whereHas('role', fn($q) => $q->where('slug', 'admin'))->count() <= 1) {
+        if ($user->isAdmin() && User::whereHas('role', fn ($q) => $q->where('slug', 'admin'))->count() <= 1) {
             throw new \Exception('Cannot delete the last administrator.');
         }
 
@@ -187,13 +188,15 @@ class UserManagementService
         $user->delete();
 
         Activity::log('user', 'delete', "Deleted user: {$userName}");
+
         return true;
     }
 
     public function toggleStatus(User $user): User
     {
-        $user->update(['is_active' => !$user->is_active]);
-        Activity::log('user', 'toggle_status', ($user->is_active ? 'Activated' : 'Deactivated') . " user: {$user->name}", [], $user);
+        $user->update(['is_active' => ! $user->is_active]);
+        Activity::log('user', 'toggle_status', ($user->is_active ? 'Activated' : 'Deactivated')." user: {$user->name}", [], $user);
+
         return $user;
     }
 
@@ -201,6 +204,7 @@ class UserManagementService
     {
         $user->lockAccount($minutes);
         Activity::log('security', 'lock', "Locked user: {$user->name} for {$minutes} minutes", [], $user);
+
         return $user;
     }
 
@@ -208,6 +212,7 @@ class UserManagementService
     {
         $user->unlockAccount();
         Activity::log('security', 'unlock', "Unlocked user: {$user->name}", [], $user);
+
         return $user;
     }
 
@@ -230,6 +235,7 @@ class UserManagementService
     {
         $user->update(['must_change_password' => true]);
         Activity::log('security', 'force_password_change', "Forced password change for: {$user->name}", [], $user);
+
         return $user;
     }
 
@@ -237,11 +243,11 @@ class UserManagementService
     {
         $user = User::where('email', $email)->first();
 
-        if (!$user) {
+        if (! $user) {
             return null;
         }
 
-        if (!$user->is_active) {
+        if (! $user->is_active) {
             throw new \Exception('Account is inactive.');
         }
 
@@ -249,9 +255,10 @@ class UserManagementService
             throw new \Exception('Account is locked. Try again later.');
         }
 
-        if (!Hash::check($password, $user->password)) {
+        if (! Hash::check($password, $user->password)) {
             $user->incrementFailedAttempts();
             Activity::log('security', 'failed_login', "Failed login attempt for: {$email}", ['ip' => $ip], $user);
+
             return null;
         }
 
@@ -293,15 +300,24 @@ class UserManagementService
 
     public function terminateAllSessions(User $user): int
     {
-        Activity::log('security', 'terminate_sessions', "Terminated all sessions for user", [], $user);
+        Activity::log('security', 'terminate_sessions', 'Terminated all sessions for user', [], $user);
+
         return 0;
     }
 
     public function getRoles(array $filters = []): array
     {
-        $query = Role::withCount('permissions', 'users');
+        // Bypass TenantScope here: it allows tenant_id NULL (templates), which is wrong for company users.
+        // Tenant admins must see only rows for their tenant; platform operators only template rows (tenant_id null).
+        $query = Role::withoutGlobalScopes()->withCount('permissions', 'users');
 
-        if (!empty($filters['search'])) {
+        if (auth()->user()->tenant_id !== null) {
+            $query->where('tenant_id', auth()->user()->tenant_id);
+        } else {
+            $query->whereNull('tenant_id');
+        }
+
+        if (! empty($filters['search'])) {
             $query->where('name', 'like', "%{$filters['search']}%");
         }
 
@@ -317,15 +333,20 @@ class UserManagementService
     public function createRole(array $data): Role
     {
         $role = DB::transaction(function () use ($data) {
+            $operatorTenantId = auth()->user()->tenant_id;
+            $resolvedTenantId = $operatorTenantId !== null
+                ? $operatorTenantId
+                : ($data['tenant_id'] ?? null);
+
             $role = Role::create([
                 'name' => $data['name'],
-                'slug' => \Illuminate\Support\Str::slug($data['name']),
+                'slug' => $this->uniqueRoleSlug($data['name'], $resolvedTenantId),
                 'description' => $data['description'] ?? null,
-                'tenant_id' => $data['tenant_id'] ?? auth()->user()->tenant_id,
+                'tenant_id' => $resolvedTenantId,
                 'is_active' => $data['is_active'] ?? true,
             ]);
 
-            if (!empty($data['permissions'])) {
+            if (! empty($data['permissions'])) {
                 $role->permissions()->attach($data['permissions']);
             }
 
@@ -339,6 +360,8 @@ class UserManagementService
 
     public function updateRole(Role $role, array $data): Role
     {
+        $this->ensureCanManageRole($role);
+
         DB::transaction(function () use ($role, $data) {
             $role->update([
                 'name' => $data['name'] ?? $role->name,
@@ -358,6 +381,8 @@ class UserManagementService
 
     public function deleteRole(Role $role): bool
     {
+        $this->ensureCanManageRole($role);
+
         if ($role->users()->exists()) {
             throw new \Exception('Cannot delete role with assigned users.');
         }
@@ -370,13 +395,21 @@ class UserManagementService
         $role->delete();
 
         Activity::log('role', 'delete', "Deleted role: {$roleName}");
+
         return true;
     }
 
     public function getBranches(): array
     {
-        $branches = Branch::active()->get();
-        return ['branches' => $branches];
+        $query = Branch::withoutGlobalScopes()->active();
+
+        if (auth()->user()->tenant_id !== null) {
+            $query->where('tenant_id', auth()->user()->tenant_id);
+        } else {
+            $query->whereNull('tenant_id');
+        }
+
+        return ['branches' => $query->orderBy('name')->get()];
     }
 
     public function createBranch(array $data): Branch
@@ -433,7 +466,7 @@ class UserManagementService
         $allPermissions = Permission::pluck('id', 'slug');
 
         foreach ($roles as $roleData) {
-            $permissions = match($roleData['slug']) {
+            $permissions = match ($roleData['slug']) {
                 'admin' => $allPermissions->values()->toArray(),
                 'manager' => Permission::where('group', '!=', 'roles')->pluck('id')->toArray(),
                 'inventory_manager' => Permission::whereIn('group', ['products', 'categories', 'warehouses', 'suppliers'])->pluck('id')->toArray(),
@@ -442,19 +475,70 @@ class UserManagementService
                 default => [],
             };
 
-            $role = Role::firstOrCreate(['slug' => $roleData['slug']], [
-                'name' => $roleData['name'],
-                'description' => $roleData['description'],
-                'is_active' => true,
-            ]);
+            $role = Role::firstOrCreate(
+                ['tenant_id' => null, 'slug' => $roleData['slug']],
+                [
+                    'name' => $roleData['name'],
+                    'description' => $roleData['description'],
+                    'is_active' => true,
+                ]
+            );
 
             $role->permissions()->sync($permissions);
+        }
+    }
+
+    /**
+     * Slug must be unique per (tenant_id, slug). Default cloned roles already use e.g. admin, cashier;
+     * naming a new role "Cashier" used to collide and trigger a 500 from the database layer.
+     */
+    protected function uniqueRoleSlug(string $name, ?int $tenantId): string
+    {
+        $base = Str::slug($name);
+        if ($base === '') {
+            $base = 'role';
+        }
+
+        $slug = $base;
+        $suffix = 2;
+        while ($this->roleSlugExists($slug, $tenantId)) {
+            $slug = $base.'-'.$suffix;
+            $suffix++;
+        }
+
+        return $slug;
+    }
+
+    protected function roleSlugExists(string $slug, ?int $tenantId): bool
+    {
+        $query = Role::withoutGlobalScopes()->where('slug', $slug);
+
+        if ($tenantId !== null) {
+            // Same tenant’s roles — and platform template rows (tenant_id null) — must not share a slug
+            // when creating tenant-scoped roles. Omitting templates caused "Cashier" → cashier to miss the
+            // seeded template row and collide with legacy UNIQUE(slug) / composite (tenant_id, slug) rules.
+            $query->where(function ($q) use ($tenantId) {
+                $q->where('tenant_id', $tenantId)
+                    ->orWhereNull('tenant_id');
+            });
+        } else {
+            $query->whereNull('tenant_id');
+        }
+
+        return $query->exists();
+    }
+
+    protected function ensureCanManageRole(Role $role): void
+    {
+        if (! auth()->user()->canAccessRole($role)) {
+            abort(403);
         }
     }
 
     protected function generateRandomPassword(int $length = 12): string
     {
         $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+
         return substr(str_shuffle($chars), 0, $length);
     }
 }

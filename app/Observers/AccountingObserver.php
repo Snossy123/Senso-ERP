@@ -2,10 +2,9 @@
 
 namespace App\Observers;
 
-use App\Models\Sale;
 use App\Models\PurchaseOrder;
+use App\Models\Sale;
 use App\Services\AccountingService;
-use App\Models\AccountSetting;
 use Exception;
 
 class AccountingObserver
@@ -55,4 +54,3 @@ class AccountingObserver
         }
     }
 }
-

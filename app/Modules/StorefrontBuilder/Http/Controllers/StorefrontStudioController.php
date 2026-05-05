@@ -24,8 +24,7 @@ class StorefrontStudioController extends Controller
         private readonly PageSchemaService $pageSchemaService,
         private readonly TemplateRegistryService $templateRegistry,
         private readonly UomoFragmentService $uomoFragments
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): View
     {
@@ -85,14 +84,14 @@ class StorefrontStudioController extends Controller
                 ->paginate($perPage, ['*'], 'page', $page);
 
             return [
-                'data' => $paginator->getCollection()->map(fn(Product $p) => [
+                'data' => $paginator->getCollection()->map(fn (Product $p) => [
                     'id' => $p->id,
                     'name' => $p->name,
                     'slug' => $p->slug,
                     'sku' => $p->sku,
                     'selling_price' => (float) $p->selling_price,
                     'stock_quantity' => (int) $p->stock_quantity,
-                    'image' => $p->image ? asset('storage/' . $p->image) : null,
+                    'image' => $p->image ? asset('storage/'.$p->image) : null,
                     'category' => $p->category?->name,
                 ])->values()->all(),
                 'meta' => [
@@ -114,7 +113,7 @@ class StorefrontStudioController extends Controller
 
         $categories = Cache::remember($cacheKey, 120, function () {
             return Category::query()
-                ->whereHas('products', fn($q) => $q->where('is_ecommerce', true)->where('is_active', true))
+                ->whereHas('products', fn ($q) => $q->where('is_ecommerce', true)->where('is_active', true))
                 ->orderBy('name')
                 ->get(['id', 'name']);
         });
@@ -131,7 +130,7 @@ class StorefrontStudioController extends Controller
 
         foreach ($cart as $productId => $item) {
             $product = Product::query()->find((int) $productId);
-            if (!$product || !$product->is_ecommerce || !$product->is_active) {
+            if (! $product || ! $product->is_ecommerce || ! $product->is_active) {
                 continue;
             }
             $qty = max(1, (int) ($item['qty'] ?? 1));
@@ -194,7 +193,7 @@ class StorefrontStudioController extends Controller
 
     private function assertPageType(string $pageType): void
     {
-        if (!in_array($pageType, $this->templateRegistry->pageTypes(), true)) {
+        if (! in_array($pageType, $this->templateRegistry->pageTypes(), true)) {
             abort(404, 'Unknown page type.');
         }
     }

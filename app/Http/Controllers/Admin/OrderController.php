@@ -8,7 +8,10 @@ use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
-    public function __construct() { $this->middleware('auth'); }
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
 
     public function index(Request $request)
     {
@@ -20,16 +23,18 @@ class OrderController extends Controller
             $q = $request->search;
             $query->where(function ($query) use ($q) {
                 $query->where('order_number', 'like', "%{$q}%")
-                      ->orWhere('customer_name', 'like', "%{$q}%");
+                    ->orWhere('customer_name', 'like', "%{$q}%");
             });
         }
         $orders = $query->paginate(20)->withQueryString();
+
         return view('admin.orders.index', compact('orders'));
     }
 
     public function show(Order $order)
     {
         $order->load('items.product', 'customer');
+
         return view('admin.orders.show', compact('order'));
     }
 
@@ -39,6 +44,7 @@ class OrderController extends Controller
             'status' => 'required|in:pending,processing,shipped,delivered,cancelled',
         ]);
         $order->update(['status' => $request->status]);
+
         return back()->with('success', 'Order status updated.');
     }
 }

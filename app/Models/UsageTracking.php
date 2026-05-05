@@ -36,6 +36,7 @@ class UsageTracking extends Model
         if ($this->capacity_limit <= 0) {
             return 0;
         }
+
         return (int) (($this->current_usage / $this->capacity_limit) * 100);
     }
 

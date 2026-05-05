@@ -6,11 +6,27 @@ use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Str;
 
 class Role extends Model
 {
     use BelongsToTenant;
+
+    /**
+     * Tenant users may only resolve roles belonging to their tenant; platform operators resolve template roles (tenant_id null).
+     */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        $role = static::withoutGlobalScopes()
+            ->where($field ?? $this->getRouteKeyName(), $value)
+            ->firstOrFail();
+
+        $user = auth()->user();
+        if ($user && ! $user->canAccessRole($role)) {
+            abort(403);
+        }
+
+        return $role;
+    }
 
     protected $fillable = [
         'name', 'slug', 'description', 'guard_name', 'is_active', 'tenant_id',

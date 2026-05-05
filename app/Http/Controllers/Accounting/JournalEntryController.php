@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Accounting;
 use App\Http\Controllers\Controller;
 use App\Models\JournalEntry;
 use App\Services\AccountingService;
-use Illuminate\Http\Request;
 use Exception;
+use Illuminate\Http\Request;
 
 class JournalEntryController extends Controller
 {
@@ -25,8 +25,8 @@ class JournalEntryController extends Controller
         $tenantId = $request->user()->tenant_id ?? null;
 
         $entries = JournalEntry::when($tenantId, function ($query, $tenantId) {
-                return $query->where('tenant_id', $tenantId);
-            })
+            return $query->where('tenant_id', $tenantId);
+        })
             ->with('lines.account')
             ->orderBy('date', 'desc')
             ->orderBy('id', 'desc')
@@ -34,7 +34,7 @@ class JournalEntryController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'data' => $entries
+            'data' => $entries,
         ]);
     }
 
@@ -66,13 +66,13 @@ class JournalEntryController extends Controller
             return response()->json([
                 'status' => 'success',
                 'message' => 'Journal entry created and posted successfully.',
-                'data' => $entry->load('lines.account')
+                'data' => $entry->load('lines.account'),
             ], 201);
-            
+
         } catch (Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 422);
         }
     }
@@ -86,7 +86,7 @@ class JournalEntryController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'data' => $entry
+            'data' => $entry,
         ]);
     }
 }

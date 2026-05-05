@@ -154,11 +154,11 @@ class InventorySeeder extends Seeder
             $warehouse = $warehouses[array_rand($warehouses)];
 
             Product::firstOrCreate(
-                ['sku' => strtoupper($type) . '-' . strtoupper(substr(md5($product['name']), 0, 6)), 'tenant_id' => $tenantId],
+                ['sku' => strtoupper($type).'-'.strtoupper(substr(md5($product['name']), 0, 6)), 'tenant_id' => $tenantId],
                 [
                     'name' => $product['name'],
                     'slug' => Str::slug($product['name']),
-                    'description' => 'High quality ' . strtolower($product['name']) . ' for everyday use.',
+                    'description' => 'High quality '.strtolower($product['name']).' for everyday use.',
                     'category_id' => $category?->id,
                     'supplier_id' => $supplier['id'] ?? null,
                     'warehouse_id' => $warehouse['id'] ?? null,
@@ -175,7 +175,7 @@ class InventorySeeder extends Seeder
 
     private function getProductsData(string $type): array
     {
-        return match($type) {
+        return match ($type) {
             'tech' => [
                 ['name' => 'Gaming Pro Laptop X15', 'category' => 'Gaming Laptops', 'purchase_price' => 1200, 'selling_price' => 1599],
                 ['name' => 'Business Elite Laptop', 'category' => 'Business Laptops', 'purchase_price' => 800, 'selling_price' => 1099],

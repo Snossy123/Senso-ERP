@@ -85,7 +85,7 @@ class PageSchemaService
         foreach ($nodes as $node) {
             $type = (string) ($node['type'] ?? '');
             $sectionKey = (string) ($node['props']['section_key'] ?? '');
-            if ($sectionKey === '' || !str_contains($sectionKey, '-')) {
+            if ($sectionKey === '' || ! str_contains($sectionKey, '-')) {
                 continue;
             }
 
@@ -94,7 +94,7 @@ class PageSchemaService
                 ->where('section_key', $sectionKey)
                 ->first();
 
-            if (!$section) {
+            if (! $section) {
                 continue;
             }
 

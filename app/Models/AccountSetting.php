@@ -30,7 +30,7 @@ class AccountSetting extends Model
     public static function getAccountId(string $key, $tenantId = null): ?int
     {
         $tenantId = $tenantId ?? auth()->user()?->tenant_id;
-        
+
         return self::where('tenant_id', $tenantId)
             ->where('key', $key)
             ->value('account_id');
@@ -42,7 +42,7 @@ class AccountSetting extends Model
     public static function getAccount(string $key, $tenantId = null): ?Account
     {
         $tenantId = $tenantId ?? auth()->user()?->tenant_id;
-        
+
         $setting = self::where('tenant_id', $tenantId)
             ->where('key', $key)
             ->with('account')

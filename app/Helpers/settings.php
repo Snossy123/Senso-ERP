@@ -1,6 +1,6 @@
 <?php
 
-if (!function_exists('setting')) {
+if (! function_exists('setting')) {
     /**
      * Get or set a setting value.
      */
@@ -16,6 +16,7 @@ if (!function_exists('setting')) {
             foreach ($key as $k => $v) {
                 $service->set($k, $v, 'general', $tenantId);
             }
+
             return true;
         }
 

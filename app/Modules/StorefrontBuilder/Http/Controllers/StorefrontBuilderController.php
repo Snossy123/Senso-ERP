@@ -20,8 +20,7 @@ class StorefrontBuilderController extends Controller
         private readonly StorefrontBuilderService $builderService,
         private readonly TemplateRegistryService $templateRegistry,
         private readonly LayoutSlotService $layoutSlotService
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): View
     {

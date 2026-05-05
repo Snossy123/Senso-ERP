@@ -2,26 +2,26 @@
 
 namespace App\Services\Accounting\Generators;
 
-use App\Models\PurchaseOrder;
 use App\Models\AccountSetting;
+use App\Models\PurchaseOrder;
 use App\Services\Accounting\JournalEntryGeneratorInterface;
-use Illuminate\Database\Eloquent\Model;
 use Exception;
+use Illuminate\Database\Eloquent\Model;
 
 class PurchaseJournalEntryGenerator implements JournalEntryGeneratorInterface
 {
     public function generate(Model $order): array
     {
-        if (!$order instanceof PurchaseOrder) {
+        if (! $order instanceof PurchaseOrder) {
             throw new Exception("Expected instance of App\Models\PurchaseOrder");
         }
 
         $tenantId = $order->tenant_id;
-        
+
         $inventoryAccountId = AccountSetting::getAccountId('inventory_account', $tenantId);
         $payableAccountId = AccountSetting::getAccountId('supplier_payable', $tenantId);
 
-        if (!$inventoryAccountId || !$payableAccountId) {
+        if (! $inventoryAccountId || ! $payableAccountId) {
             throw new Exception("Accounting Mapping Missing for Purchase Order #{$order->reference_no}");
         }
 
@@ -37,7 +37,7 @@ class PurchaseJournalEntryGenerator implements JournalEntryGeneratorInterface
                 'description' => "Purchase Order #{$order->reference_no}",
                 'debit' => 0,
                 'credit' => $order->total_amount,
-            ]
+            ],
         ];
 
         return [
@@ -49,7 +49,7 @@ class PurchaseJournalEntryGenerator implements JournalEntryGeneratorInterface
                 'source_type' => get_class($order),
                 'source_id' => $order->id,
             ],
-            'lines' => $lines
+            'lines' => $lines,
         ];
     }
 }

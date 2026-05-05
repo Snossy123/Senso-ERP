@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         // 1. Ensure Units table is correct
-        if (!Schema::hasTable('units')) {
+        if (! Schema::hasTable('units')) {
             Schema::create('units', function (Blueprint $table) {
                 $table->id();
                 $table->string('name');
@@ -25,19 +25,19 @@ return new class extends Migration
 
         // 2. Modify Products table
         Schema::table('products', function (Blueprint $table) {
-            if (!Schema::hasColumn('products', 'has_variants')) {
+            if (! Schema::hasColumn('products', 'has_variants')) {
                 $table->boolean('has_variants')->default(false)->after('is_ecommerce');
             }
-            if (!Schema::hasColumn('products', 'valuation_method')) {
+            if (! Schema::hasColumn('products', 'valuation_method')) {
                 $table->enum('valuation_method', ['fifo', 'average', 'standard'])->default('average')->after('has_variants');
             }
-            if (!Schema::hasColumn('products', 'unit_id')) {
+            if (! Schema::hasColumn('products', 'unit_id')) {
                 $table->foreignId('unit_id')->nullable()->after('weight')->constrained('units')->onDelete('set null');
             }
         });
 
         // 3. Product Variants
-        if (!Schema::hasTable('product_variants')) {
+        if (! Schema::hasTable('product_variants')) {
             Schema::create('product_variants', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('product_id')->constrained()->onDelete('cascade');
@@ -54,7 +54,7 @@ return new class extends Migration
         }
 
         // 4. Warehouse Stock
-        if (!Schema::hasTable('product_warehouse_stocks')) {
+        if (! Schema::hasTable('product_warehouse_stocks')) {
             Schema::create('product_warehouse_stocks', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('product_id')->constrained()->onDelete('cascade');
@@ -68,7 +68,7 @@ return new class extends Migration
         }
 
         // 5. Purchase Orders
-        if (!Schema::hasTable('purchase_orders')) {
+        if (! Schema::hasTable('purchase_orders')) {
             Schema::create('purchase_orders', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('supplier_id')->constrained()->onDelete('restrict');
@@ -99,7 +99,7 @@ return new class extends Migration
         }
 
         // 6. Stock Transfers
-        if (!Schema::hasTable('stock_transfers')) {
+        if (! Schema::hasTable('stock_transfers')) {
             Schema::create('stock_transfers', function (Blueprint $table) {
                 $table->id();
                 $table->string('reference_no')->unique();
@@ -125,25 +125,25 @@ return new class extends Migration
 
         // 7. Stock Movements
         Schema::table('stock_movements', function (Blueprint $table) {
-            if (!Schema::hasColumn('stock_movements', 'product_variant_id')) {
+            if (! Schema::hasColumn('stock_movements', 'product_variant_id')) {
                 $table->foreignId('product_variant_id')->nullable()->after('product_id')->constrained()->onDelete('set null');
             }
-            if (!Schema::hasColumn('stock_movements', 'purchase_order_id')) {
+            if (! Schema::hasColumn('stock_movements', 'purchase_order_id')) {
                 $table->foreignId('purchase_order_id')->nullable()->after('reference')->constrained()->onDelete('set null');
             }
-            if (!Schema::hasColumn('stock_movements', 'stock_transfer_id')) {
+            if (! Schema::hasColumn('stock_movements', 'stock_transfer_id')) {
                 $table->foreignId('stock_transfer_id')->nullable()->after('purchase_order_id')->constrained()->onDelete('set null');
             }
-            if (!Schema::hasColumn('stock_movements', 'before_quantity')) {
+            if (! Schema::hasColumn('stock_movements', 'before_quantity')) {
                 $table->integer('before_quantity')->default(0)->after('quantity');
             }
-            if (!Schema::hasColumn('stock_movements', 'after_quantity')) {
+            if (! Schema::hasColumn('stock_movements', 'after_quantity')) {
                 $table->integer('after_quantity')->default(0)->after('before_quantity');
             }
-            if (!Schema::hasColumn('stock_movements', 'unit_cost')) {
+            if (! Schema::hasColumn('stock_movements', 'unit_cost')) {
                 $table->decimal('unit_cost', 12, 2)->default(0)->after('after_quantity');
             }
-            if (!Schema::hasColumn('stock_movements', 'total_value')) {
+            if (! Schema::hasColumn('stock_movements', 'total_value')) {
                 $table->decimal('total_value', 15, 2)->default(0)->after('unit_cost');
             }
         });

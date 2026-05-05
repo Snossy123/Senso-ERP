@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
 use App\Models\Tenant;
-use App\Models\UsageTracking;
 use App\Services\TenantService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,13 +21,14 @@ class TenantApiController extends Controller
     public function index(): JsonResponse
     {
         $tenants = Tenant::with('plan')->paginate(20);
+
         return response()->json($tenants);
     }
 
     public function show(Tenant $tenant): JsonResponse
     {
         $tenant->load(['plan', 'usageTrackings']);
-        
+
         return response()->json([
             'tenant' => $tenant,
             'usage' => $this->tenantService->checkLimits($tenant),
@@ -40,14 +40,14 @@ class TenantApiController extends Controller
         $plans = Plan::where('is_active', true)
             ->orderBy('sort_order')
             ->get();
-        
+
         return response()->json($plans);
     }
 
     public function usage(Tenant $tenant): JsonResponse
     {
         $usage = $this->tenantService->checkLimits($tenant);
-        
+
         return response()->json([
             'tenant' => $tenant->only(['id', 'name', 'status']),
             'usage' => $usage,
@@ -63,7 +63,7 @@ class TenantApiController extends Controller
 
         $tenant = Tenant::findOrFail($request->tenant_id);
         $withinLimits = $this->tenantService->isWithinLimits($tenant, $request->resource);
-        
+
         return response()->json([
             'allowed' => $withinLimits,
             'resource' => $request->resource,
@@ -79,7 +79,7 @@ class TenantApiController extends Controller
 
         $plan = Plan::findOrFail($request->plan_id);
         $this->tenantService->assignPlan($tenant, $plan);
-        
+
         return response()->json([
             'message' => "Upgraded to {$plan->name}",
             'tenant' => $tenant->fresh(['plan']),
@@ -93,7 +93,7 @@ class TenantApiController extends Controller
         ]);
 
         $this->tenantService->suspendTenant($tenant, $request->reason);
-        
+
         return response()->json([
             'message' => 'Tenant suspended',
             'tenant' => $tenant->fresh(),
@@ -103,7 +103,7 @@ class TenantApiController extends Controller
     public function activate(Tenant $tenant): JsonResponse
     {
         $this->tenantService->activateTenant($tenant);
-        
+
         return response()->json([
             'message' => 'Tenant activated',
             'tenant' => $tenant->fresh(),
@@ -113,7 +113,7 @@ class TenantApiController extends Controller
     public function syncUsage(Tenant $tenant): JsonResponse
     {
         $this->tenantService->syncUsage($tenant);
-        
+
         return response()->json([
             'message' => 'Usage synchronized',
             'usage' => $this->tenantService->checkLimits($tenant),
@@ -130,7 +130,7 @@ class TenantApiController extends Controller
         ]);
 
         $tenant->update($request->only(['currency', 'language', 'timezone', 'tax_settings']));
-        
+
         return response()->json([
             'message' => 'Settings updated',
             'tenant' => $tenant->fresh(),

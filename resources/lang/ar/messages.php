@@ -47,6 +47,7 @@ return [
         'category_external' => 'خارجي',
         'view_storefront' => 'عرض المتجر',
         'erp_administrator' => 'مسؤول نظام ERP',
+        'platform_operator' => 'مشغّل المنصة',
     ],
     'header' => [
         'search_placeholder' => 'ابحث عن أي شيء...',
@@ -60,6 +61,9 @@ return [
         'profile' => 'الملف الشخصي',
         'sign_out' => 'تسجيل الخروج',
         'staff_member' => 'عضو فريق',
+    ],
+    'errors' => [
+        'platform_only' => 'هذا الإجراء مخصص لمشغّلي المنصة فقط (حسابات غير مرتبطة بمستأجر).',
     ],
     'footer' => [
         'copyright' => 'حقوق النشر © :year Senso ERP. جميع الحقوق محفوظة.',

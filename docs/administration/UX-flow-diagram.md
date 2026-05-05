@@ -78,7 +78,9 @@ flowchart TD
 ```mermaid
 flowchart TD
   TL[Tenant list] --> TC[Create tenant trial]
-  TL --> TS[Tenant detail]
+  TC --> TPA[Provision tenant admin user]
+  TPA --> TS[Tenant detail]
+  TL --> TS
   TS --> TE[Edit tenant plan dates]
   TS --> TT[Toggle active]
   TS --> TSU[Suspend / Activate]

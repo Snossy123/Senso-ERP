@@ -10,41 +10,41 @@ return new class extends Migration
     {
         // 1. Upgrade Sales table
         Schema::table('sales', function (Blueprint $table) {
-            if (!Schema::hasColumn('sales', 'status')) {
+            if (! Schema::hasColumn('sales', 'status')) {
                 $table->enum('status', ['completed', 'held', 'voided', 'refunded'])->default('completed')->after('payment_status');
             }
-            if (!Schema::hasColumn('sales', 'customer_name')) {
+            if (! Schema::hasColumn('sales', 'customer_name')) {
                 $table->string('customer_name')->nullable()->after('customer_id');
             }
-            if (!Schema::hasColumn('sales', 'customer_email')) {
+            if (! Schema::hasColumn('sales', 'customer_email')) {
                 $table->string('customer_email')->nullable()->after('customer_name');
             }
-            if (!Schema::hasColumn('sales', 'amount_tendered')) {
+            if (! Schema::hasColumn('sales', 'amount_tendered')) {
                 $table->decimal('amount_tendered', 12, 2)->default(0)->after('payment_method');
             }
-            if (!Schema::hasColumn('sales', 'change_due')) {
+            if (! Schema::hasColumn('sales', 'change_due')) {
                 $table->decimal('change_due', 12, 2)->default(0)->after('amount_tendered');
             }
-            if (!Schema::hasColumn('sales', 'void_reason')) {
+            if (! Schema::hasColumn('sales', 'void_reason')) {
                 $table->string('void_reason')->nullable()->after('notes');
             }
-            if (!Schema::hasColumn('sales', 'voided_by')) {
+            if (! Schema::hasColumn('sales', 'voided_by')) {
                 $table->foreignId('voided_by')->nullable()->constrained('users')->nullOnDelete();
             }
-            if (!Schema::hasColumn('sales', 'voided_at')) {
+            if (! Schema::hasColumn('sales', 'voided_at')) {
                 $table->timestamp('voided_at')->nullable();
             }
-            if (!Schema::hasColumn('sales', 'shift_id')) {
+            if (! Schema::hasColumn('sales', 'shift_id')) {
                 $table->unsignedBigInteger('shift_id')->nullable()->after('user_id');
             }
         });
 
         // 2. Upgrade sale_items table with item-level discounts
         Schema::table('sale_items', function (Blueprint $table) {
-            if (!Schema::hasColumn('sale_items', 'discount_pct')) {
+            if (! Schema::hasColumn('sale_items', 'discount_pct')) {
                 $table->decimal('discount_pct', 5, 2)->default(0)->after('discount');
             }
-            if (!Schema::hasColumn('sale_items', 'discount_amount')) {
+            if (! Schema::hasColumn('sale_items', 'discount_amount')) {
                 $table->decimal('discount_amount', 10, 2)->default(0)->after('discount_pct');
             }
         });

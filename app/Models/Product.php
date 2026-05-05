@@ -3,31 +3,30 @@
 namespace App\Models;
 
 use App\Traits\BelongsToTenant;
+use App\Traits\Loggable;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
-
-use App\Traits\Loggable;
 
 class Product extends Model
 {
-    use SoftDeletes, BelongsToTenant, Loggable;
+    use BelongsToTenant, Loggable, SoftDeletes;
 
     protected $fillable = [
         'tenant_id', 'sku', 'name', 'slug', 'description', 'category_id', 'supplier_id', 'warehouse_id',
         'purchase_price', 'selling_price', 'stock_quantity', 'min_stock_alert',
         'weight', 'unit', 'unit_id', 'barcode', 'image', 'is_active', 'is_ecommerce',
-        'has_variants', 'valuation_method'
+        'has_variants', 'valuation_method',
     ];
 
     protected $casts = [
-        'is_active'      => 'boolean',
-        'is_ecommerce'   => 'boolean',
-        'has_variants'   => 'boolean',
+        'is_active' => 'boolean',
+        'is_ecommerce' => 'boolean',
+        'has_variants' => 'boolean',
         'purchase_price' => 'decimal:2',
-        'selling_price'  => 'decimal:2',
+        'selling_price' => 'decimal:2',
     ];
 
     protected static function boot(): void
@@ -103,7 +102,7 @@ class Product extends Model
     public function getImageUrlAttribute(): string
     {
         return $this->image
-            ? asset('storage/' . $this->image)
-            : 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="#f4f5f8"/><path d="M70 70 L130 130 M130 70 L70 130" stroke="#d0d0d0" stroke-width="2"/><text x="100" y="150" font-family="sans-serif" font-size="14" fill="#a0a0a0" text-anchor="middle">No Image</text></svg>');
+            ? asset('storage/'.$this->image)
+            : 'data:image/svg+xml;base64,'.base64_encode('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="#f4f5f8"/><path d="M70 70 L130 130 M130 70 L70 130" stroke="#d0d0d0" stroke-width="2"/><text x="100" y="150" font-family="sans-serif" font-size="14" fill="#a0a0a0" text-anchor="middle">No Image</text></svg>');
     }
 }

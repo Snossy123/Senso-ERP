@@ -2,21 +2,18 @@
 
 namespace Database\Seeders;
 
-use App\Models\Branch;
+use App\Models\Tenant;
+use App\Services\BranchProvisioningService;
 use Illuminate\Database\Seeder;
 
 class BranchSeeder extends Seeder
 {
     public function run(): void
     {
-        $branches = [
-            ['name' => 'Main Branch', 'code' => 'HQ', 'address' => '123 Main Street, Downtown', 'phone' => '555-0100', 'email' => 'hq@company.com'],
-            ['name' => 'Branch North', 'code' => 'NORTH', 'address' => '456 North Avenue, Uptown', 'phone' => '555-0200', 'email' => 'north@company.com'],
-            ['name' => 'Branch South', 'code' => 'SOUTH', 'address' => '789 South Blvd, Suburb', 'phone' => '555-0300', 'email' => 'south@company.com'],
-        ];
+        $service = app(BranchProvisioningService::class);
 
-        foreach ($branches as $branch) {
-            Branch::firstOrCreate(['code' => $branch['code']], array_merge($branch, ['is_active' => true]));
+        foreach (Tenant::query()->orderBy('id')->cursor() as $tenant) {
+            $service->ensureDefaultBranchesForTenant($tenant);
         }
     }
 }

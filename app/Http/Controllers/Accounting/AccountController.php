@@ -16,8 +16,8 @@ class AccountController extends Controller
         $tenantId = $request->user()->tenant_id ?? null;
 
         $accounts = Account::when($tenantId, function ($query, $tenantId) {
-                return $query->where('tenant_id', $tenantId);
-            })
+            return $query->where('tenant_id', $tenantId);
+        })
             ->with(['children', 'parent'])
             ->get();
 
@@ -31,7 +31,7 @@ class AccountController extends Controller
             'data' => [
                 'list' => $accounts,
                 'tree' => $tree->values(),
-            ]
+            ],
         ]);
     }
 
@@ -40,7 +40,7 @@ class AccountController extends Controller
         $children = $allAccounts->where('parent_id', $account->id)->map(function ($child) use ($allAccounts) {
             return $this->buildTree($child, $allAccounts);
         });
-        
+
         $accountArray = $account->toArray();
         $accountArray['children'] = $children->values();
         $accountArray['balance'] = $account->balance; // calculated attribute
@@ -55,9 +55,9 @@ class AccountController extends Controller
     {
         $validated = $request->validate([
             'parent_id' => 'nullable|exists:accounts,id',
-            'code'      => 'required|string',
-            'name'      => 'required|string',
-            'type'      => 'required|in:asset,liability,equity,revenue,expense',
+            'code' => 'required|string',
+            'name' => 'required|string',
+            'type' => 'required|in:asset,liability,equity,revenue,expense',
             'description' => 'nullable|string',
         ]);
 
@@ -68,7 +68,7 @@ class AccountController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Account created successfully',
-            'data' => $account
+            'data' => $account,
         ], 201);
     }
 }

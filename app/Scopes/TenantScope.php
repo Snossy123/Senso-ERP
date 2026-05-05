@@ -2,10 +2,10 @@
 
 namespace App\Scopes;
 
+use App\Services\TenantManager;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Scope;
-use App\Services\TenantManager;
 
 class TenantScope implements Scope
 {
@@ -16,8 +16,8 @@ class TenantScope implements Scope
 
         if ($tenantId) {
             $builder->where(function ($query) use ($tenantId, $model) {
-                $query->where($model->getTable() . '.tenant_id', $tenantId)
-                      ->orWhereNull($model->getTable() . '.tenant_id');
+                $query->where($model->getTable().'.tenant_id', $tenantId)
+                    ->orWhereNull($model->getTable().'.tenant_id');
             });
         }
     }

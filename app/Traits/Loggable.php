@@ -11,9 +11,9 @@ trait Loggable
     {
         static::created(function (Model $model) {
             Activity::log(
-                'crud', 
-                'created', 
-                "Created " . class_basename($model) . " #{$model->id}",
+                'crud',
+                'created',
+                'Created '.class_basename($model)." #{$model->id}",
                 [],
                 $model,
                 'info',
@@ -26,14 +26,16 @@ trait Loggable
             $changes = $model->getChanges();
             // Don't log if only timestamps changed
             unset($changes['updated_at']);
-            if (empty($changes)) return;
+            if (empty($changes)) {
+                return;
+            }
 
             $before = array_intersect_key($model->getOriginal(), $changes);
 
             Activity::log(
-                'crud', 
-                'updated', 
-                "Updated " . class_basename($model) . " #{$model->id}",
+                'crud',
+                'updated',
+                'Updated '.class_basename($model)." #{$model->id}",
                 ['changes' => array_keys($changes)],
                 $model,
                 'info',
@@ -44,9 +46,9 @@ trait Loggable
 
         static::deleted(function (Model $model) {
             Activity::log(
-                'crud', 
-                'deleted', 
-                "Deleted " . class_basename($model) . " #{$model->id}",
+                'crud',
+                'deleted',
+                'Deleted '.class_basename($model)." #{$model->id}",
                 [],
                 $model,
                 'warning',

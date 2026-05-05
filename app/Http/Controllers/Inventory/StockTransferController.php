@@ -3,22 +3,26 @@
 namespace App\Http\Controllers\Inventory;
 
 use App\Http\Controllers\Controller;
+use App\Models\Product;
+use App\Models\ProductWarehouseStock;
+use App\Models\StockMovement;
 use App\Models\StockTransfer;
 use App\Models\Warehouse;
-use App\Models\Product;
-use App\Models\StockMovement;
-use App\Models\ProductWarehouseStock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class StockTransferController extends Controller
 {
-    public function __construct() { $this->middleware('auth'); }
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
 
     public function index()
     {
         $transfers = StockTransfer::with('fromWarehouse', 'toWarehouse', 'creator')->latest()->get();
+
         return view('inventory.transfers.index', compact('transfers'));
     }
 
@@ -26,6 +30,7 @@ class StockTransferController extends Controller
     {
         $warehouses = Warehouse::where('is_active', true)->get();
         $products = Product::with('variants')->where('is_active', true)->get();
+
         return view('inventory.transfers.create', compact('warehouses', 'products'));
     }
 
@@ -44,7 +49,7 @@ class StockTransferController extends Controller
             $transfer = StockTransfer::create([
                 'from_warehouse_id' => $request->from_warehouse_id,
                 'to_warehouse_id' => $request->to_warehouse_id,
-                'reference_no' => 'TR-' . strtoupper(uniqid()),
+                'reference_no' => 'TR-'.strtoupper(uniqid()),
                 'transfer_date' => $request->transfer_date,
                 'status' => 'completed',
                 'created_by' => Auth::id(),
@@ -52,7 +57,7 @@ class StockTransferController extends Controller
 
             foreach ($request->items as $item) {
                 $variantId = $item['product_variant_id'] ?? null;
-                
+
                 $transfer->items()->create([
                     'product_id' => $item['product_id'],
                     'product_variant_id' => $variantId,
@@ -76,7 +81,7 @@ class StockTransferController extends Controller
                     'warehouse_id' => $request->to_warehouse_id,
                 ], [
                     'tenant_id' => Auth::user()->tenant_id,
-                    'quantity' => 0
+                    'quantity' => 0,
                 ]);
                 $toStock->increment('quantity', $item['quantity']);
 
@@ -115,6 +120,7 @@ class StockTransferController extends Controller
     public function show(StockTransfer $transfer)
     {
         $transfer->load('items.product', 'items.variant', 'fromWarehouse', 'toWarehouse');
+
         return view('inventory.transfers.show', compact('transfer'));
     }
 }

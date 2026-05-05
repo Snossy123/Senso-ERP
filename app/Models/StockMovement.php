@@ -11,7 +11,7 @@ class StockMovement extends Model
     use BelongsToTenant;
 
     protected $fillable = [
-        'tenant_id', 'product_id', 'product_variant_id', 'warehouse_id', 'purchase_order_id', 
+        'tenant_id', 'product_id', 'product_variant_id', 'warehouse_id', 'purchase_order_id',
         'stock_transfer_id', 'type', 'quantity', 'before_quantity', 'after_quantity',
         'unit_cost', 'total_value', 'notes', 'reference', 'user_id',
     ];

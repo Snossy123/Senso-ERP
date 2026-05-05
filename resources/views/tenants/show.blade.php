@@ -49,6 +49,27 @@
 @section('content')
 <div class="container-fluid">
 
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+    @if(session('tenant_support_password'))
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <strong>{{ __('tenants.support_password_alert_title') }}</strong>
+            <p class="mb-2 small">{{ __('tenants.support_password_alert_body') }}</p>
+            <code class="user-select-all d-block p-2 bg-light rounded border">{{ session('tenant_support_password') }}</code>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     <!-- Status & Plan Cards -->
     <div class="row">
         <div class="col-md-3 mb-4">

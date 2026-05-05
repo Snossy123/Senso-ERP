@@ -6,13 +6,13 @@ return [
             'name' => 'English',
             'native' => 'English',
             'dir' => 'ltr',
-            'flag' => 'us_flag.jpg',
+            'flag' => 'assets/plugins/flag-icon-css/flags/4x3/us.svg',
         ],
         'ar' => [
             'name' => 'Arabic',
             'native' => 'العربية',
             'dir' => 'rtl',
-            'flag' => 'sa_flag.jpg',
+            'flag' => 'assets/plugins/flag-icon-css/flags/4x3/sa.svg',
         ],
     ],
 ];

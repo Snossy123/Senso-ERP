@@ -12,7 +12,7 @@ class Unit extends Model
     use BelongsToTenant;
 
     protected $fillable = [
-        'tenant_id', 'name', 'short_name', 'base_unit_id', 'operator', 'operator_value', 'is_active'
+        'tenant_id', 'name', 'short_name', 'base_unit_id', 'operator', 'operator_value', 'is_active',
     ];
 
     public function baseUnit(): BelongsTo

@@ -13,7 +13,7 @@ class ProductWarehouseStock extends Model
     protected $table = 'product_warehouse_stocks';
 
     protected $fillable = [
-        'tenant_id', 'product_id', 'product_variant_id', 'warehouse_id', 'quantity'
+        'tenant_id', 'product_id', 'product_variant_id', 'warehouse_id', 'quantity',
     ];
 
     public function product(): BelongsTo

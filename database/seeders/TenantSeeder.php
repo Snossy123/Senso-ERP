@@ -38,12 +38,15 @@ class TenantSeeder extends Seeder
         $tenantService = app(\App\Services\TenantService::class);
         $plan = \App\Models\Plan::where('slug', 'premium')->first();
 
+        $roleProvisioning = app(\App\Services\RoleProvisioningService::class);
+
         foreach ($tenants as $tenantData) {
             $tenant = Tenant::updateOrCreate(['slug' => $tenantData['slug']], $tenantData);
             if ($plan) {
                 $tenantService->assignPlan($tenant, $plan);
             }
             $tenantService->initializeUsageTracking($tenant);
+            $roleProvisioning->cloneDefaultRolesForTenant($tenant);
         }
     }
 }

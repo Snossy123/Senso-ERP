@@ -3,13 +3,13 @@
 namespace App\Models;
 
 use App\Traits\BelongsToTenant;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class Customer extends Authenticatable
 {
-    use Notifiable, BelongsToTenant;
+    use BelongsToTenant, Notifiable;
 
     protected $fillable = [
         'name', 'email', 'phone', 'address', 'city', 'tax_number', 'password', 'is_active', 'tenant_id',
@@ -19,7 +19,7 @@ class Customer extends Authenticatable
 
     protected $casts = [
         'is_active' => 'boolean',
-        'password'  => 'hashed',
+        'password' => 'hashed',
     ];
 
     public function orders(): HasMany

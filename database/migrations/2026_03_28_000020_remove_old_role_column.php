@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            if (Schema::hasColumn('users', 'role') && !Schema::hasColumn('users', 'role_id')) {
+            if (Schema::hasColumn('users', 'role') && ! Schema::hasColumn('users', 'role_id')) {
                 $table->dropColumn('role');
             }
         });
@@ -18,7 +18,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'role') && Schema::hasColumn('users', 'role_id')) {
+            if (! Schema::hasColumn('users', 'role') && Schema::hasColumn('users', 'role_id')) {
                 $table->string('role', 50)->default('staff')->after('email');
             }
         });

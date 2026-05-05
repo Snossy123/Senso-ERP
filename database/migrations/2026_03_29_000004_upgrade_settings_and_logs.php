@@ -10,16 +10,16 @@ return new class extends Migration
     {
         // 1. Upgrade Activity Logs
         Schema::table('activities', function (Blueprint $table) {
-            if (!Schema::hasColumn('activities', 'tenant_id')) {
+            if (! Schema::hasColumn('activities', 'tenant_id')) {
                 $table->foreignId('tenant_id')->nullable()->after('id')->constrained()->cascadeOnDelete();
             }
-            if (!Schema::hasColumn('activities', 'severity')) {
+            if (! Schema::hasColumn('activities', 'severity')) {
                 $table->enum('severity', ['info', 'warning', 'critical', 'danger'])->default('info')->after('description');
             }
-            if (!Schema::hasColumn('activities', 'before_values')) {
+            if (! Schema::hasColumn('activities', 'before_values')) {
                 $table->json('before_values')->nullable()->after('properties');
             }
-            if (!Schema::hasColumn('activities', 'after_values')) {
+            if (! Schema::hasColumn('activities', 'after_values')) {
                 $table->json('after_values')->nullable()->after('before_values');
             }
         });

@@ -2,6 +2,10 @@
 
 > **Note**: In this folder, **TDD** means **Technical Design Document** (solution architecture). It is not “test-driven development.”
 
+**Testing (automated)**: Feature and unit coverage for this module lives under `tests/Feature/Administration/` and `tests/Unit/Services/` (e.g. `UserManagementServiceRolesTest`), using the shared `Tests\Support\AdministrationFixtures` trait. Run the focused suite with:
+
+`./vendor/bin/phpunit --group administration`
+
 ## 1. Purpose
 
 Describe how the **Administration** module is implemented in Senso-ERP: **routing**, **controllers**, **services**, **authorization**, **persistence**, and **extension points**. Paths refer to the repository root.
@@ -125,7 +129,7 @@ Unique: `email` (global in base migration; confirm product rules for cross-tenan
 
 ### 5.2 `roles`
 
-`id`, `tenant_id` (nullable FK, cascade), `name`, `slug` (unique), `description`, `guard_name`, `is_active`, timestamps.
+`id`, `tenant_id` (nullable FK, cascade), `name`, `slug`, `description`, `guard_name`, `is_active`, timestamps. Unique composite **`(tenant_id, slug)`** (templates use `tenant_id` null).
 
 ### 5.3 `permissions` and pivots
 
@@ -162,7 +166,15 @@ Upgrades: `tenant_id` (FK), `severity` enum (`info`, `warning`, `critical`, `dan
 
 ### 6.2 `TenantService`
 
-- Encapsulates tenant creation, plan assignment, suspension/activation, usage limits, and usage synchronization used by `TenantController`.
+- Encapsulates tenant creation (including persisting optional JSON `settings`, **`RoleProvisioningService`** clone of template roles for the new tenant, provisioning a default **tenant administrator** user bound to that tenant’s `admin` role when not opted out, and `syncUsage`), plan assignment, suspension/activation, usage limits, and usage synchronization used by `TenantController`.
+
+### 6.2b `RoleProvisioningService`
+
+- Clones platform template roles (`roles.tenant_id` null) into rows for a given tenant and copies `role_permissions`; used at tenant creation and in data backfills.
+
+### 6.2c Platform routing
+
+- `EnsurePlatformOperator` middleware (`tenant_id` must be null) protects all `tenants.*` web routes.
 
 ### 6.3 `SettingService`
 
@@ -172,7 +184,7 @@ Upgrades: `tenant_id` (FK), `severity` enum (`info`, `warning`, `critical`, `dan
 
 ## 7. UI
 
-- Layout sidebar category **Administration** links: `admin.users.index`, `admin.roles.index`, `tenants.index`, `admin.settings`, `admin.activity.index`.
+- Layout sidebar category **Administration** links: `admin.users.index`, `admin.roles.index`, `tenants.index` (shown only for platform operators), `admin.settings`, `admin.activity.index`.
 - Views live under `resources/views/admin/users`, `admin/roles`, `admin/settings`, `admin/activity-log`, and `resources/views/tenants` for tenant CRUD.
 
 ---

@@ -62,7 +62,10 @@ class RolePermissionSeeder extends Seeder
             $permissions = array_filter($roleData['permissions']);
             unset($roleData['permissions']);
 
-            $role = Role::firstOrCreate(['slug' => $roleData['slug']], array_merge($roleData, ['is_active' => true]));
+            $role = Role::firstOrCreate(
+                ['tenant_id' => null, 'slug' => $roleData['slug']],
+                array_merge($roleData, ['is_active' => true, 'tenant_id' => null])
+            );
             $role->permissions()->sync($permissions);
         }
     }

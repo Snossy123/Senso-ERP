@@ -11,9 +11,7 @@ class LowStockAlertNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public $product)
-    {
-    }
+    public function __construct(public $product) {}
 
     public function via(object $notifiable): array
     {
@@ -23,7 +21,7 @@ class LowStockAlertNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         $product = $this->product;
-        
+
         return (new MailMessage)
             ->subject("Low Stock Alert - {$product->name}")
             ->markdown('vendor.notifications.low-stock-alert', [

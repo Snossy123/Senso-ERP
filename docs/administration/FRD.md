@@ -16,7 +16,8 @@ This document specifies **functional behavior** of the Administration module: **
 | Role | Named bundle of permissions; may be tenant-scoped |
 | Direct permission | Permission attached to a user outside the role (override / supplement) |
 | Activity | A persisted audit row describing an action, actor, target model, and metadata |
-| Platform admin | User with unrestricted admin capabilities (e.g. `isAdmin()`), including full Activity Log |
+| Platform operator | SaaS staff account with `tenant_id` null; may use **Tenant Management** and manage global role templates |
+| Company admin | User with `tenant_id` set and administrator role; admin **within that tenant only** (no tenant lifecycle UI) |
 
 ---
 
@@ -64,13 +65,19 @@ Exact permission slugs are defined in seed data; controllers gate **User** and *
 
 **FR-ADM-RM-005** The system shall expose a **read permissions for role** JSON endpoint for integrations or UI hydration.
 
+**FR-ADM-RM-006** **Role** rows shall be **tenant-scoped** for company operations: a company’s role list and CRUD apply only to roles with `tenant_id` equal to that company. Global template roles (`tenant_id` null) are used for seeding and platform configuration; they are not mixed into a company’s role list.
+
 ---
 
 ## 6. Tenant Management
 
+**FR-ADM-TM-013** **Tenant Management** (routes, API, and sidebar) shall be exposed only to **platform operators** (`users.tenant_id` is null). Company users shall receive 403 for those routes even if they have an administrator role within their tenant.
+
 **FR-ADM-TM-001** The system shall list tenants with plan relationship and pagination.
 
-**FR-ADM-TM-002** The system shall allow **create tenant** with name (slug derived), optional domain (unique), optional settings payload, optional plan, trial days, currency, language, timezone; initial status shall follow product rules (e.g. trial).
+**FR-ADM-TM-002** The system shall allow **create tenant** with name (slug derived), optional domain (unique), optional settings payload (JSON, validated server-side and stored on the tenant), optional plan, trial days, currency, language, timezone, and optional **tenant administrator** contact fields; initial status shall follow product rules (e.g. trial).
+
+**FR-ADM-TM-012** On successful **create tenant**, the system shall provision at least one **tenant-scoped user** with the **administrator** role (same permission model as seeded `admin`), unless the operator explicitly opts out. A one-time generated password may be shown to the platform operator for handoff; the user should be required to change password on first login when that flow is enabled.
 
 **FR-ADM-TM-003** The system shall present a **tenant detail** view including related users, products, sales, orders, usage tracking summaries, and computed limit checks where the tenant service provides them.
 
@@ -114,7 +121,7 @@ Exact permission slugs are defined in seed data; controllers gate **User** and *
 
 **FR-ADM-AL-004** The system shall provide a **detail** view for a single activity including loaded user relation.
 
-**FR-ADM-AL-005** Access shall be restricted to **platform admin** in the current implementation (non-admin users receive 403).
+**FR-ADM-AL-005** Access shall be restricted to **administrators**; company admins shall see only activities for their **tenant**; platform operators may see the full log when their account is not bound to a tenant.
 
 ---
 
