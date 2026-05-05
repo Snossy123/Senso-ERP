@@ -12,7 +12,7 @@ class StockTransfer extends Model
     use BelongsToTenant;
 
     protected $fillable = [
-        'tenant_id', 'reference_no', 'from_warehouse_id', 'to_warehouse_id', 'status', 'transfer_date', 'notes', 'created_by'
+        'tenant_id', 'reference_no', 'from_warehouse_id', 'to_warehouse_id', 'status', 'transfer_date', 'notes', 'created_by',
     ];
 
     protected $casts = [

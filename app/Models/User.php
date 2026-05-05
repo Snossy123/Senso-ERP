@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\BelongsToTenant;
+use App\Traits\Loggable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -11,11 +12,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 
-use App\Traits\Loggable;
-
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, BelongsToTenant, Loggable;
+    use BelongsToTenant, HasFactory, Loggable, Notifiable;
 
     protected $fillable = [
         'name', 'email', 'password', 'phone', 'avatar', 'language', 'is_active', 'tenant_id',
@@ -78,6 +77,20 @@ class User extends Authenticatable
         return $this->role?->slug === 'admin';
     }
 
+    public function isPlatformOperator(): bool
+    {
+        return $this->tenant_id === null;
+    }
+
+    public function canAccessRole(Role $role): bool
+    {
+        if ($this->tenant_id !== null) {
+            return (int) $role->tenant_id === (int) $this->tenant_id;
+        }
+
+        return $role->tenant_id === null;
+    }
+
     public function isManager(): bool
     {
         return $this->role?->slug === 'manager';
@@ -90,9 +103,10 @@ class User extends Authenticatable
 
     public function isPasswordExpired(int $days = 90): bool
     {
-        if (!$this->password_changed_at) {
+        if (! $this->password_changed_at) {
             return true;
         }
+
         return $this->password_changed_at->addDays($days)->isPast();
     }
 
@@ -153,27 +167,29 @@ class User extends Authenticatable
                 return true;
             }
         }
+
         return false;
     }
 
     public function hasAllPermissions(array $permissions): bool
     {
         foreach ($permissions as $permission) {
-            if (!$this->hasPermission($permission)) {
+            if (! $this->hasPermission($permission)) {
                 return false;
             }
         }
+
         return true;
     }
 
     public function getAllPermissions(): array
     {
         $rolePermissions = $this->role?->permissions->pluck('slug')->toArray() ?? [];
-        
+
         $overrides = $this->permissions()->get();
         $grants = $overrides->where('pivot.granted', true)->pluck('slug')->toArray();
         $denies = $overrides->where('pivot.granted', false)->pluck('slug')->toArray();
-        
+
         return array_values(array_diff(array_unique(array_merge($rolePermissions, $grants)), $denies));
     }
 
@@ -185,7 +201,7 @@ class User extends Authenticatable
     public function grantPermission(string|array $permissions): void
     {
         $permissions = Permission::whereIn('slug', is_array($permissions) ? $permissions : [$permissions])->pluck('id');
-        $this->permissions()->syncWithoutDetaching($permissions->mapWithKeys(fn($id) => [$id => ['granted' => true]])->toArray());
+        $this->permissions()->syncWithoutDetaching($permissions->mapWithKeys(fn ($id) => [$id => ['granted' => true]])->toArray());
     }
 
     public function revokePermission(string|array $permissions): void
@@ -197,7 +213,7 @@ class User extends Authenticatable
     public function denyPermission(string|array $permissions): void
     {
         $permissions = Permission::whereIn('slug', is_array($permissions) ? $permissions : [$permissions])->pluck('id');
-        $this->permissions()->syncWithoutDetaching($permissions->mapWithKeys(fn($id) => [$id => ['granted' => false]])->toArray());
+        $this->permissions()->syncWithoutDetaching($permissions->mapWithKeys(fn ($id) => [$id => ['granted' => false]])->toArray());
     }
 
     public function sales()

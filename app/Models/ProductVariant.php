@@ -11,7 +11,7 @@ class ProductVariant extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'product_id', 'name', 'sku', 'barcode', 'purchase_price', 'selling_price', 'image', 'is_active'
+        'product_id', 'name', 'sku', 'barcode', 'purchase_price', 'selling_price', 'image', 'is_active',
     ];
 
     public function product(): BelongsTo

@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Accounting;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\JournalEntryLine;
-use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class ReportController extends Controller
 {
@@ -18,7 +18,7 @@ class ReportController extends Controller
         $tenantId = $request->user()->tenant_id ?? null;
 
         $lines = JournalEntryLine::selectRaw('account_id, SUM(debit) as total_debit, SUM(credit) as total_credit')
-            ->whereHas('journalEntry', function($q) use ($tenantId) {
+            ->whereHas('journalEntry', function ($q) use ($tenantId) {
                 if ($tenantId) {
                     $q->where('tenant_id', $tenantId);
                 }
@@ -31,7 +31,7 @@ class ReportController extends Controller
         $accounts = $lines->map(function ($line) {
             $balance = 0;
             $type = $line->account->type;
-            
+
             if (in_array($type, ['asset', 'expense'])) {
                 $balance = $line->total_debit - $line->total_credit;
             } else {
@@ -44,7 +44,7 @@ class ReportController extends Controller
                 'type' => $type,
                 'debit' => $line->total_debit,
                 'credit' => $line->total_credit,
-                'balance' => $balance
+                'balance' => $balance,
             ];
         });
 
@@ -57,8 +57,8 @@ class ReportController extends Controller
                 'accounts' => $accounts,
                 'total_debit' => $totalDebit,
                 'total_credit' => $totalCredit,
-                'is_balanced' => abs($totalDebit - $totalCredit) < 0.0001
-            ]
+                'is_balanced' => abs($totalDebit - $totalCredit) < 0.0001,
+            ],
         ]);
     }
 
@@ -72,13 +72,13 @@ class ReportController extends Controller
         $endDate = $request->input('end_date', Carbon::now()->endOfYear());
 
         $revenues = Account::where('type', 'revenue')
-            ->when($tenantId, fn($q) => $q->where('tenant_id', $tenantId))
+            ->when($tenantId, fn ($q) => $q->where('tenant_id', $tenantId))
             ->get()->map(function ($account) {
                 return ['name' => $account->name, 'balance' => $account->balance];
             });
 
         $expenses = Account::where('type', 'expense')
-            ->when($tenantId, fn($q) => $q->where('tenant_id', $tenantId))
+            ->when($tenantId, fn ($q) => $q->where('tenant_id', $tenantId))
             ->get()->map(function ($account) {
                 return ['name' => $account->name, 'balance' => $account->balance];
             });
@@ -94,8 +94,8 @@ class ReportController extends Controller
                 'expenses' => $expenses,
                 'total_revenue' => $totalRevenue,
                 'total_expense' => $totalExpense,
-                'net_income' => $netIncome
-            ]
+                'net_income' => $netIncome,
+            ],
         ]);
     }
 
@@ -107,14 +107,14 @@ class ReportController extends Controller
         $tenantId = $request->user()->tenant_id ?? null;
 
         $assets = Account::where('type', 'asset')
-                    ->when($tenantId, fn($q) => $q->where('tenant_id', $tenantId))
-                    ->get();
+            ->when($tenantId, fn ($q) => $q->where('tenant_id', $tenantId))
+            ->get();
         $liabilities = Account::where('type', 'liability')
-                    ->when($tenantId, fn($q) => $q->where('tenant_id', $tenantId))
-                    ->get();
+            ->when($tenantId, fn ($q) => $q->where('tenant_id', $tenantId))
+            ->get();
         $equities = Account::where('type', 'equity')
-                    ->when($tenantId, fn($q) => $q->where('tenant_id', $tenantId))
-                    ->get();
+            ->when($tenantId, fn ($q) => $q->where('tenant_id', $tenantId))
+            ->get();
 
         $totalAssets = $assets->sum('balance');
         $totalLiabilities = $liabilities->sum('balance');
@@ -123,14 +123,14 @@ class ReportController extends Controller
         return response()->json([
             'status' => 'success',
             'data' => [
-                'assets' => $assets->map(fn($a) => ['name' => $a->name, 'balance' => $a->balance]),
-                'liabilities' => $liabilities->map(fn($a) => ['name' => $a->name, 'balance' => $a->balance]),
-                'equities' => $equities->map(fn($a) => ['name' => $a->name, 'balance' => $a->balance]),
+                'assets' => $assets->map(fn ($a) => ['name' => $a->name, 'balance' => $a->balance]),
+                'liabilities' => $liabilities->map(fn ($a) => ['name' => $a->name, 'balance' => $a->balance]),
+                'equities' => $equities->map(fn ($a) => ['name' => $a->name, 'balance' => $a->balance]),
                 'total_assets' => $totalAssets,
                 'total_liabilities' => $totalLiabilities,
                 'total_equity' => $totalEquity,
-                'is_balanced' => abs($totalAssets - ($totalLiabilities + $totalEquity)) < 0.0001
-            ]
+                'is_balanced' => abs($totalAssets - ($totalLiabilities + $totalEquity)) < 0.0001,
+            ],
         ]);
     }
 
@@ -141,22 +141,24 @@ class ReportController extends Controller
     {
         $account_id = $request->input('account_id');
         $tenantId = $request->user()->tenant_id ?? null;
-        
+
         $query = JournalEntryLine::with('journalEntry')
-            ->whereHas('journalEntry', function($q) use ($tenantId) {
-                if ($tenantId) $q->where('tenant_id', $tenantId);
+            ->whereHas('journalEntry', function ($q) use ($tenantId) {
+                if ($tenantId) {
+                    $q->where('tenant_id', $tenantId);
+                }
                 $q->where('status', 'posted');
             });
-            
+
         if ($account_id) {
             $query->where('account_id', $account_id);
         }
-        
+
         $entries = $query->orderBy('created_at', 'asc')->get();
 
         return response()->json([
             'status' => 'success',
-            'data' => $entries
+            'data' => $entries,
         ]);
     }
 }

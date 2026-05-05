@@ -91,12 +91,43 @@
                     </div>
                 </div>
 
+                <div class="card border mb-3">
+                    <div class="card-body">
+                        <h6 class="card-title">{{ __('tenants.support_section_title') }}</h6>
+                        <p class="card-text small text-muted mb-3">{{ __('tenants.support_section_hint') }}</p>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="support_name" class="form-label">{{ __('tenants.support_name') }}</label>
+                                <input type="text" class="form-control @error('support_name') is-invalid @enderror" id="support_name" name="support_name" value="{{ old('support_name') }}" autocomplete="off">
+                                @error('support_name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="support_email" class="form-label">{{ __('tenants.support_email') }}</label>
+                                <input type="email" class="form-control @error('support_email') is-invalid @enderror" id="support_email" name="support_email" value="{{ old('support_email') }}" placeholder="admin@example.com" autocomplete="off">
+                                <small class="text-muted">{{ __('tenants.support_email_optional') }}</small>
+                                @error('support_email')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="mb-0">
+                            <label for="create_support_user" class="form-label">{{ __('tenants.create_support_user') }}</label>
+                            <select class="form-select" id="create_support_user" name="create_support_user">
+                                <option value="1" {{ old('create_support_user', '1') == '1' ? 'selected' : '' }}>{{ __('messages.common.yes') }}</option>
+                                <option value="0" {{ old('create_support_user') === '0' ? 'selected' : '' }}>{{ __('messages.common.no') }}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="mb-3">
-                    <label for="settings" class="form-label">Initial Settings (Optional Metadata)</label>
-                    <textarea class="form-control @error('settings') is-invalid @enderror" id="settings" name="settings" rows="2" placeholder='{"key": "value"}'>{{ old('settings') }}</textarea>
-                    <small class="text-muted">Enter valid JSON or leave blank.</small>
+                    <label for="settings" class="form-label">{{ __('tenants.initial_settings') }}</label>
+                    <textarea class="form-control font-monospace @error('settings') is-invalid @enderror" id="settings" name="settings" rows="3" placeholder='{"key": "value"}'>{{ old('settings') }}</textarea>
+                    <small class="text-muted">{{ __('tenants.json_hint') }}</small>
                     @error('settings')
-                        <div class="invalid-feedback">{{ $message }}</div>
+                        <div class="invalid-feedback d-block">{{ $message }}</div>
                     @enderror
                 </div>
 

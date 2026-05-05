@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Scopes\TenantScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -57,47 +58,47 @@ class Tenant extends Model
 
     public function users(): HasMany
     {
-        return $this->hasMany(User::class);
+        return $this->hasMany(User::class)->withoutGlobalScope(TenantScope::class);
     }
 
     public function products(): HasMany
     {
-        return $this->hasMany(Product::class);
+        return $this->hasMany(Product::class)->withoutGlobalScope(TenantScope::class);
     }
 
     public function categories(): HasMany
     {
-        return $this->hasMany(Category::class);
+        return $this->hasMany(Category::class)->withoutGlobalScope(TenantScope::class);
     }
 
     public function suppliers(): HasMany
     {
-        return $this->hasMany(Supplier::class);
+        return $this->hasMany(Supplier::class)->withoutGlobalScope(TenantScope::class);
     }
 
     public function warehouses(): HasMany
     {
-        return $this->hasMany(Warehouse::class);
+        return $this->hasMany(Warehouse::class)->withoutGlobalScope(TenantScope::class);
     }
 
     public function customers(): HasMany
     {
-        return $this->hasMany(Customer::class);
+        return $this->hasMany(Customer::class)->withoutGlobalScope(TenantScope::class);
     }
 
     public function sales(): HasMany
     {
-        return $this->hasMany(Sale::class);
+        return $this->hasMany(Sale::class)->withoutGlobalScope(TenantScope::class);
     }
 
     public function orders(): HasMany
     {
-        return $this->hasMany(Order::class);
+        return $this->hasMany(Order::class)->withoutGlobalScope(TenantScope::class);
     }
 
     public function activities(): HasMany
     {
-        return $this->hasMany(Activity::class);
+        return $this->hasMany(Activity::class)->withoutGlobalScope(TenantScope::class);
     }
 
     public function isOnTrial(): bool
@@ -112,24 +113,24 @@ class Tenant extends Model
 
     public function isExpired(): bool
     {
-        return $this->status === 'expired' || 
+        return $this->status === 'expired' ||
                ($this->subscription_ends_at && $this->subscription_ends_at->isPast());
     }
 
     public function isSuspended(): bool
     {
-        return $this->status === 'suspended' || 
+        return $this->status === 'suspended' ||
                ($this->suspended_at !== null && $this->suspended_at->isPast() === false);
     }
 
     public function isSubscriptionActive(): bool
     {
-        return !$this->subscription_ends_at || $this->subscription_ends_at->isFuture();
+        return ! $this->subscription_ends_at || $this->subscription_ends_at->isFuture();
     }
 
     public function getStatusLabelAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'trial' => 'Trial',
             'active' => 'Active',
             'expired' => 'Expired',
@@ -140,7 +141,7 @@ class Tenant extends Model
 
     public function getStatusColorAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'trial' => 'warning',
             'active' => 'success',
             'expired' => 'danger',
@@ -177,22 +178,24 @@ class Tenant extends Model
     public function canAddUser(): bool
     {
         $usage = $this->getUsersUsage();
-        if (!$usage) {
+        if (! $usage) {
             return true;
         }
-        return !$usage->isAtLimit();
+
+        return ! $usage->isAtLimit();
     }
 
     public function canAddProduct(): bool
     {
         $usage = $this->getProductsUsage();
-        if (!$usage) {
+        if (! $usage) {
             return true;
         }
-        return !$usage->isAtLimit();
+
+        return ! $usage->isAtLimit();
     }
 
-    public function suspend(string $reason = null): void
+    public function suspend(?string $reason = null): void
     {
         $this->update([
             'status' => 'suspended',
@@ -228,8 +231,8 @@ class Tenant extends Model
             'billing_cycle' => $plan->billing_cycle,
             'status' => 'active',
             'subscription_start_at' => now(),
-            'subscription_ends_at' => $plan->billing_cycle === 'yearly' 
-                ? now()->addYear() 
+            'subscription_ends_at' => $plan->billing_cycle === 'yearly'
+                ? now()->addYear()
                 : now()->addMonth(),
             'next_billing_at' => $plan->billing_cycle === 'yearly'
                 ? now()->addYear()
@@ -241,11 +244,11 @@ class Tenant extends Model
             $this->usageTrackings()->updateOrCreate(
                 ['resource' => $resource],
                 [
-                    'capacity_limit' => match($resource) {
+                    'capacity_limit' => match ($resource) {
                         'users' => $plan->max_users,
                         'products' => $plan->max_products,
                         'orders' => $plan->max_orders_per_month,
-                    }
+                    },
                 ]
             );
         }

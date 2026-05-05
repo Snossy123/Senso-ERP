@@ -17,7 +17,7 @@
 						</div>
 					</div>
 					<div class="main-header-right">
-						<ul class="nav">
+						<ul class="nav align-items-center flex-shrink-0" style="overflow: visible;">
 							@include('layouts.partials.lang-switcher')
 						</ul>
 						<div class="nav nav-item  navbar-nav-right ml-auto">

@@ -10,6 +10,25 @@ class Activity extends Model
 {
     use BelongsToTenant;
 
+    /**
+     * Company admins only see activities for their tenant.
+     */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        $activity = static::withoutGlobalScopes()
+            ->where($field ?? $this->getRouteKeyName(), $value)
+            ->firstOrFail();
+
+        $user = auth()->user();
+        if ($user && $user->tenant_id !== null) {
+            if ((int) $activity->tenant_id !== (int) $user->tenant_id) {
+                abort(403);
+            }
+        }
+
+        return $activity;
+    }
+
     protected $fillable = [
         'user_id', 'tenant_id',
         'type',
@@ -26,9 +45,9 @@ class Activity extends Model
     ];
 
     protected $casts = [
-        'properties'    => 'array',
+        'properties' => 'array',
         'before_values' => 'array',
-        'after_values'  => 'array',
+        'after_values' => 'array',
     ];
 
     public function user(): BelongsTo
@@ -41,33 +60,34 @@ class Activity extends Model
         if ($this->model_type && $this->model_id) {
             return $this->model_type::find($this->model_id);
         }
+
         return null;
     }
 
     public static function log(
-        string $type, 
-        string $action, 
-        string $description, 
-        array $properties = [], 
-        $model = null, 
+        string $type,
+        string $action,
+        string $description,
+        array $properties = [],
+        $model = null,
         string $severity = 'info',
-        array $before = null,
-        array $after = null
+        ?array $before = null,
+        ?array $after = null
     ): self {
         return self::create([
-            'user_id'       => auth()->id(),
-            'tenant_id'     => app(\App\Services\TenantManager::class)->getCurrentId(),
-            'type'          => $type,
-            'action'        => $action,
-            'description'   => $description,
-            'severity'      => $severity,
-            'properties'    => $properties,
+            'user_id' => auth()->id(),
+            'tenant_id' => app(\App\Services\TenantManager::class)->getCurrentId(),
+            'type' => $type,
+            'action' => $action,
+            'description' => $description,
+            'severity' => $severity,
+            'properties' => $properties,
             'before_values' => $before,
-            'after_values'  => $after,
-            'model_type'    => $model ? get_class($model) : null,
-            'model_id'      => $model?->id,
-            'ip_address'    => request()->ip(),
-            'user_agent'    => request()->userAgent(),
+            'after_values' => $after,
+            'model_type' => $model ? get_class($model) : null,
+            'model_id' => $model?->id,
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
         ]);
     }
 
@@ -98,7 +118,7 @@ class Activity extends Model
 
     public static function logSale($sale): self
     {
-        return self::log('sale', 'create', "New sale {$sale->sale_number} for " . config('app.currency_symbol') . number_format($sale->total, 2), [
+        return self::log('sale', 'create', "New sale {$sale->sale_number} for ".config('app.currency_symbol').number_format($sale->total, 2), [
             'sale_id' => $sale->id,
             'total' => $sale->total,
         ], $sale);
@@ -106,7 +126,7 @@ class Activity extends Model
 
     public static function logOrder($order): self
     {
-        return self::log('order', 'create', "New order {$order->order_number} for " . config('app.currency_symbol') . number_format($order->total, 2), [
+        return self::log('order', 'create', "New order {$order->order_number} for ".config('app.currency_symbol').number_format($order->total, 2), [
             'order_id' => $order->id,
             'total' => $order->total,
         ], $order);

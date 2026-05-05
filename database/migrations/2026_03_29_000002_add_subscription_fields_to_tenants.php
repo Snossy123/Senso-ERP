@@ -32,7 +32,7 @@ return new class extends Migration
             $columns = [
                 'plan_id', 'status', 'subscription_start_at', 'price', 'billing_cycle',
                 'next_billing_at', 'payment_status', 'currency', 'language', 'timezone',
-                'tax_settings', 'notes', 'suspended_at', 'suspension_reason'
+                'tax_settings', 'notes', 'suspended_at', 'suspension_reason',
             ];
             $table->dropColumn($columns);
         });

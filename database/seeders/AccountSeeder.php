@@ -17,7 +17,7 @@ class AccountSeeder extends Seeder
     {
         // Get all tenants or create a default if none exist
         $tenants = Tenant::all();
-        
+
         if ($tenants->isEmpty()) {
             // If No tenants, we can't seed accounts meaningfully in a multi-tenant app
             // But for testing purposes, we might want to skip or handle global accounts
@@ -72,40 +72,40 @@ class AccountSeeder extends Seeder
             // 1. Create Accounts
             foreach ($coa as $item) {
                 $parent = $item['parent_code'] ? ($accountMap[$item['parent_code']] ?? null) : null;
-                
+
                 $account = Account::updateOrCreate(
                     [
                         'tenant_id' => $tenant->id,
-                        'code'      => $item['code'],
+                        'code' => $item['code'],
                     ],
                     [
-                        'name'      => $item['name'],
-                        'type'      => $item['type'],
+                        'name' => $item['name'],
+                        'type' => $item['type'],
                         'parent_id' => $parent?->id,
                         'is_active' => true,
                     ]
                 );
-                
+
                 $accountMap[$item['code']] = $account;
             }
 
             // 2. Define Mappings
             $mappings = [
-                'pos_cash'            => '1120',
-                'pos_card'            => '1210',
-                'pos_bank'            => '1220',
-                'pos_variance'        => '5400',
-                'bank_payment'        => '1200',
-                'sales_revenue'       => '4100',
-                'sales_discount'      => '4200',
-                'tax_payable'         => '2200',
-                'cogs_account'        => '5100',
-                'inventory_account'   => '1400',
-                'supplier_payable'    => '2100',
+                'pos_cash' => '1120',
+                'pos_card' => '1210',
+                'pos_bank' => '1220',
+                'pos_variance' => '5400',
+                'bank_payment' => '1200',
+                'sales_revenue' => '4100',
+                'sales_discount' => '4200',
+                'tax_payable' => '2200',
+                'cogs_account' => '5100',
+                'inventory_account' => '1400',
+                'supplier_payable' => '2100',
                 'customer_receivable' => '1300',
-                'cash_customer'       => '1110',
-                'refund_account'      => '4100', // Usually reverses sales revenue
-                'payment_fees'        => '5300',
+                'cash_customer' => '1110',
+                'refund_account' => '4100', // Usually reverses sales revenue
+                'payment_fees' => '5300',
             ];
 
             // 3. Seed Settings
@@ -114,7 +114,7 @@ class AccountSeeder extends Seeder
                     AccountSetting::updateOrCreate(
                         [
                             'tenant_id' => $tenant->id,
-                            'key'       => $key,
+                            'key' => $key,
                         ],
                         [
                             'account_id' => $accountMap[$code]->id,

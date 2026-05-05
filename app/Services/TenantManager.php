@@ -28,7 +28,7 @@ class TenantManager
     public function getFromRequest(): ?Tenant
     {
         $user = Auth::user();
-        
+
         if ($user && $user->tenant_id) {
             return Tenant::find($user->tenant_id);
         }

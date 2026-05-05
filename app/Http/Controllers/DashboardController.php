@@ -37,6 +37,7 @@ class DashboardController extends Controller
     {
         try {
             $data = $this->dashboardService->getWidget($widget);
+
             return response()->json(['success' => true, 'data' => $data]);
         } catch (\InvalidArgumentException $e) {
             return response()->json(['success' => false, 'error' => $e->getMessage()], 400);
@@ -47,7 +48,7 @@ class DashboardController extends Controller
     {
         $widgets = $request->input('widgets', [
             'products', 'todaySales', 'pendingOrders', 'lowStock', 'stockValue',
-            'recentSales', 'topProducts', 'topCustomers', 'salesChart', 'alerts'
+            'recentSales', 'topProducts', 'topCustomers', 'salesChart', 'alerts',
         ]);
 
         $data = [];

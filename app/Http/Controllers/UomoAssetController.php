@@ -20,8 +20,8 @@ class UomoAssetController extends Controller
             abort(404);
         }
 
-        $full = realpath($base . DIRECTORY_SEPARATOR . $path);
-        if ($full === false || !str_starts_with($full, $base)) {
+        $full = realpath($base.DIRECTORY_SEPARATOR.$path);
+        if ($full === false || ! str_starts_with($full, $base)) {
             abort(404);
         }
 
@@ -67,7 +67,7 @@ class UomoAssetController extends Controller
         if (stripos($html, '<base') !== false) {
             return preg_replace(
                 '/<base\b[^>]*>/i',
-                '<base href="' . $escaped . '">',
+                '<base href="'.$escaped.'">',
                 $html,
                 1
             ) ?? $html;
@@ -77,10 +77,10 @@ class UomoAssetController extends Controller
             $tag = $m[0][0];
             $pos = $m[0][1] + strlen($tag);
 
-            return substr($html, 0, $pos) . "\n<base href=\"{$escaped}\">" . substr($html, $pos);
+            return substr($html, 0, $pos)."\n<base href=\"{$escaped}\">".substr($html, $pos);
         }
 
-        return "<!DOCTYPE html>\n<html><head><base href=\"{$escaped}\"></head><body>\n" . $html . "\n</body></html>\n";
+        return "<!DOCTYPE html>\n<html><head><base href=\"{$escaped}\"></head><body>\n".$html."\n</body></html>\n";
     }
 
     private function uomoHtmlBaseHref(string $path): string
@@ -88,10 +88,10 @@ class UomoAssetController extends Controller
         $normalized = str_replace('\\', '/', $path);
         $dir = dirname($normalized);
         if ($dir === '.' || $dir === '') {
-            return rtrim(url('/__uomo/'), '/') . '/';
+            return rtrim(url('/__uomo/'), '/').'/';
         }
 
-        return rtrim(url('/__uomo/' . trim($dir, '/')), '/') . '/';
+        return rtrim(url('/__uomo/'.trim($dir, '/')), '/').'/';
     }
 
     private function guessMimeType(string $absolutePath): string

@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Sale;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
-use App\Models\Customer;
-use App\Models\Activity;
+use App\Models\Sale;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ExportController extends Controller
 {
@@ -39,7 +38,7 @@ class ExportController extends Controller
             'dateTo' => $request->date_to,
         ]);
 
-        return $pdf->download('sales-report-' . date('Y-m-d') . '.pdf');
+        return $pdf->download('sales-report-'.date('Y-m-d').'.pdf');
     }
 
     public function salesExcel(Request $request)
@@ -55,7 +54,7 @@ class ExportController extends Controller
 
         $sales = $query->latest()->get();
 
-        return Excel::download(new \App\Exports\SalesExport($sales), 'sales-report-' . date('Y-m-d') . '.xlsx');
+        return Excel::download(new \App\Exports\SalesExport($sales), 'sales-report-'.date('Y-m-d').'.xlsx');
     }
 
     public function inventoryPdf()
@@ -68,13 +67,14 @@ class ExportController extends Controller
             'lowStock' => $lowStock,
         ]);
 
-        return $pdf->download('inventory-report-' . date('Y-m-d') . '.pdf');
+        return $pdf->download('inventory-report-'.date('Y-m-d').'.pdf');
     }
 
     public function inventoryExcel()
     {
         $products = Product::with('category', 'warehouse')->get();
-        return Excel::download(new \App\Exports\InventoryExport($products), 'inventory-report-' . date('Y-m-d') . '.xlsx');
+
+        return Excel::download(new \App\Exports\InventoryExport($products), 'inventory-report-'.date('Y-m-d').'.xlsx');
     }
 
     public function ordersPdf(Request $request)
@@ -97,13 +97,14 @@ class ExportController extends Controller
             'orders' => $orders,
         ]);
 
-        return $pdf->download('orders-report-' . date('Y-m-d') . '.pdf');
+        return $pdf->download('orders-report-'.date('Y-m-d').'.pdf');
     }
 
     public function customersExcel()
     {
         $customers = Customer::with('orders')->get();
-        return Excel::download(new \App\Exports\CustomersExport($customers), 'customers-report-' . date('Y-m-d') . '.xlsx');
+
+        return Excel::download(new \App\Exports\CustomersExport($customers), 'customers-report-'.date('Y-m-d').'.xlsx');
     }
 
     public function receiptPdf(Sale $sale)
@@ -114,7 +115,7 @@ class ExportController extends Controller
             'sale' => $sale,
         ]);
 
-        return $pdf->download('receipt-' . $sale->sale_number . '.pdf');
+        return $pdf->download('receipt-'.$sale->sale_number.'.pdf');
     }
 
     public function invoicePdf(Order $order)
@@ -125,6 +126,6 @@ class ExportController extends Controller
             'order' => $order,
         ]);
 
-        return $pdf->download('invoice-' . $order->order_number . '.pdf');
+        return $pdf->download('invoice-'.$order->order_number.'.pdf');
     }
 }

@@ -6,15 +6,13 @@ use App\Modules\StorefrontBuilder\Models\Storefront;
 
 class LayoutSlotService
 {
-    public function __construct(private readonly TemplateRegistryService $templates)
-    {
-    }
+    public function __construct(private readonly TemplateRegistryService $templates) {}
 
     /** @return list<string> */
     public function allowedHomeTemplateKeys(): array
     {
         return array_values(array_map(
-            static fn(array $t) => (string) $t['key'],
+            static fn (array $t) => (string) $t['key'],
             $this->templates->allHomeTemplates()
         ));
     }
@@ -110,7 +108,7 @@ class LayoutSlotService
     public function ensureLayoutSlotsOnStorefront(Storefront $storefront): void
     {
         $settings = $storefront->settings ?? [];
-        if (!isset($settings['layout_slots']) || !is_array($settings['layout_slots'])) {
+        if (! isset($settings['layout_slots']) || ! is_array($settings['layout_slots'])) {
             $settings['layout_slots'] = $this->mergeLayoutSlots(
                 $this->defaultLayoutSlotsStructure(),
                 []

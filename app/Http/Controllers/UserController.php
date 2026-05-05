@@ -2,43 +2,65 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AssertsAdminOrPermission;
 use App\Models\User;
 use App\Services\UserManagementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
+    use AssertsAdminOrPermission;
+
     public function __construct(
         protected UserManagementService $userService
     ) {
         $this->middleware('auth');
+
         $this->middleware(function ($request, $next) {
-            if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('users.view')) {
-                abort(403, 'Access denied.');
-            }
+            $this->assertAdminOrPermission('users.view');
+
             return $next($request);
-        })->only('index', 'show');
+        })->only(['index', 'show']);
+
+        $this->middleware(function ($request, $next) {
+            $this->assertAdminOrPermission('users.create');
+
+            return $next($request);
+        })->only(['create', 'store']);
+
+        $this->middleware(function ($request, $next) {
+            $this->assertAdminOrPermission('users.edit');
+
+            return $next($request);
+        })->only(['edit', 'update', 'toggleStatus', 'lock', 'unlock', 'resetPassword', 'forceChangePassword']);
+
+        $this->middleware(function ($request, $next) {
+            $this->assertAdminOrPermission('users.delete');
+
+            return $next($request);
+        })->only(['destroy']);
     }
 
     public function index(Request $request)
     {
         $filters = $request->only(['search', 'role', 'branch', 'is_active', 'locked']);
-        
+
         $query = User::with(['role:id,name,slug', 'branch:id,name']);
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $query->where(function ($q) use ($filters) {
                 $q->where('name', 'like', "%{$filters['search']}%")
                     ->orWhere('email', 'like', "%{$filters['search']}%");
             });
         }
 
-        if (!empty($filters['role'])) {
-            $query->whereHas('role', fn($q) => $q->where('slug', $filters['role']));
+        if (! empty($filters['role'])) {
+            $query->whereHas('role', fn ($q) => $q->where('slug', $filters['role']));
         }
 
-        if (!empty($filters['branch'])) {
+        if (! empty($filters['branch'])) {
             $query->where('branch_id', $filters['branch']);
         }
 
@@ -48,7 +70,7 @@ class UserController extends Controller
 
         $users = $query->latest()->paginate(15);
         $roles = \App\Models\Role::active()->get(['id', 'name', 'slug']);
-        $branches = \App\Models\Branch::active()->get();
+        $branches = $this->userService->getBranches()['branches'];
 
         return view('admin.users.index', compact('users', 'roles', 'branches'));
     }
@@ -57,7 +79,7 @@ class UserController extends Controller
     {
         $user->load(['role', 'branch', 'creator', 'permissions']);
         $activity = $this->userService->getUserActivity($user);
-        
+
         return view('admin.users.show', compact('user', 'activity'));
     }
 
@@ -72,21 +94,12 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
+        $validated = $request->validate(array_merge($this->baseUserRules(), [
             'email' => 'required|email|unique:users,email',
-            'password' => 'nullable|min:8|confirmed',
-            'phone' => 'nullable|string|max:50',
-            'role_id' => 'nullable|exists:roles,id',
-            'branch_id' => 'nullable|exists:branches,id',
-            'permissions' => 'nullable|array',
-            'permissions.*' => 'exists:permissions,id',
-            'is_active' => 'boolean',
-            'must_change_password' => 'boolean',
-        ]);
+        ]));
 
         $validated['permissions'] = $request->input('permissions', []);
-        
+
         $user = $this->userService->createUser($validated);
 
         return redirect()->route('admin.users.index')->with('success', 'User created successfully.');
@@ -105,21 +118,12 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
-            'password' => 'nullable|min:8|confirmed',
-            'phone' => 'nullable|string|max:50',
-            'role_id' => 'nullable|exists:roles,id',
-            'branch_id' => 'nullable|exists:branches,id',
-            'permissions' => 'nullable|array',
-            'permissions.*' => 'exists:permissions,id',
-            'is_active' => 'boolean',
-            'must_change_password' => 'boolean',
-        ]);
+        $validated = $request->validate(array_merge($this->baseUserRules(), [
+            'email' => 'required|email|unique:users,email,'.$user->id,
+        ]));
 
         $validated['permissions'] = $request->input('permissions', []);
-        
+
         $user = $this->userService->updateUser($user, $validated);
 
         return redirect()->route('admin.users.index')->with('success', 'User updated successfully.');
@@ -129,6 +133,7 @@ class UserController extends Controller
     {
         try {
             $this->userService->deleteUser($user);
+
             return response()->json(['success' => true, 'message' => 'User deleted.']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'error' => $e->getMessage()], 400);
@@ -138,39 +143,78 @@ class UserController extends Controller
     public function toggleStatus(User $user): JsonResponse
     {
         $this->userService->toggleStatus($user);
+
         return response()->json([
             'success' => true,
             'message' => 'Status updated.',
-            'is_active' => $user->fresh()->is_active
+            'is_active' => $user->fresh()->is_active,
         ]);
     }
 
     public function lock(User $user): JsonResponse
     {
         $this->userService->lockUser($user);
+
         return response()->json(['success' => true, 'message' => 'User locked.']);
     }
 
     public function unlock(User $user): JsonResponse
     {
         $this->userService->unlockUser($user);
+
         return response()->json(['success' => true, 'message' => 'User unlocked.']);
     }
 
     public function resetPassword(Request $request, User $user): JsonResponse
     {
         $password = $this->userService->resetPassword($user, $request->input('password'));
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Password reset.',
-            'password' => $password
+            'password' => $password,
         ]);
     }
 
     public function forceChangePassword(User $user): JsonResponse
     {
         $this->userService->forcePasswordChange($user);
+
         return response()->json(['success' => true, 'message' => 'User must change password on next login.']);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function baseUserRules(): array
+    {
+        $branchRules = ['nullable'];
+        if (auth()->user()->tenant_id !== null) {
+            $branchRules[] = Rule::exists('branches', 'id')->where(
+                'tenant_id',
+                auth()->user()->tenant_id
+            );
+        } else {
+            $branchRules[] = 'exists:branches,id';
+        }
+
+        $roleRules = ['nullable'];
+        if (auth()->user()->tenant_id !== null) {
+            $roleRules[] = Rule::exists('roles', 'id')->where('tenant_id', auth()->user()->tenant_id);
+        } else {
+            $roleRules[] = Rule::exists('roles', 'id')->whereNull('tenant_id');
+        }
+
+        return [
+            'name' => 'required|string|max:255',
+            'password' => 'nullable|min:8|confirmed',
+            'phone' => 'nullable|string|max:50',
+            'role_id' => $roleRules,
+            'branch_id' => $branchRules,
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'exists:permissions,id',
+            'is_active' => 'boolean',
+            'must_change_password' => 'boolean',
+        ];
     }
 }

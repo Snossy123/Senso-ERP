@@ -17,7 +17,7 @@ return new class extends Migration
 
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
             $table->foreign('account_id')->references('id')->on('accounts')->onDelete('cascade');
-            
+
             // Each tenant has one account per key
             $table->unique(['tenant_id', 'key']);
         });

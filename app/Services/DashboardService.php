@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Activity;
-use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Sale;
@@ -124,7 +122,7 @@ class DashboardService
         $cacheKey = "dashboard_top_products_{$period}";
 
         return Cache::remember($cacheKey, $this->cacheMinutes * 60, function () use ($period) {
-            $days = match($period) {
+            $days = match ($period) {
                 '7days' => 7,
                 '30days' => 30,
                 '90days' => 90,
@@ -132,12 +130,12 @@ class DashboardService
             };
 
             $products = SaleItem::select('product_id', DB::raw('SUM(quantity) as total_sold'), DB::raw('SUM(total) as total_revenue'))
-                ->whereHas('sale', fn($q) => $q->where('created_at', '>=', now()->subDays($days)))
+                ->whereHas('sale', fn ($q) => $q->where('created_at', '>=', now()->subDays($days)))
                 ->groupBy('product_id')
                 ->orderByDesc('total_sold')
                 ->limit(10)
                 ->get()
-                ->map(fn($item) => [
+                ->map(fn ($item) => [
                     'id' => $item->product_id,
                     'name' => $item->product?->name ?? 'Unknown',
                     'sku' => $item->product?->sku ?? 'N/A',
@@ -158,7 +156,7 @@ class DashboardService
         $cacheKey = "dashboard_top_customers_{$period}";
 
         return Cache::remember($cacheKey, $this->cacheMinutes * 60, function () use ($period) {
-            $days = match($period) {
+            $days = match ($period) {
                 '7days' => 7,
                 '30days' => 30,
                 '90days' => 90,
@@ -172,7 +170,7 @@ class DashboardService
                 ->orderByDesc('total_spent')
                 ->limit(10)
                 ->get()
-                ->map(fn($sale) => [
+                ->map(fn ($sale) => [
                     'id' => $sale->customer_id,
                     'name' => $sale->customer?->name ?? 'Unknown',
                     'email' => $sale->customer?->email ?? 'N/A',
@@ -217,7 +215,7 @@ class DashboardService
                     ->groupBy('date')
                     ->orderBy('date')
                     ->get()
-                    ->map(fn($row) => [
+                    ->map(fn ($row) => [
                         'label' => \Carbon\Carbon::parse($row->date)->format('M d'),
                         'revenue' => round($row->revenue, 2),
                         'orders' => $row->orders,
@@ -231,7 +229,7 @@ class DashboardService
                 ];
             }
 
-            $months = collect(range(1, 12))->map(fn($m) => date('M', mktime(0, 0, 0, $m, 1)));
+            $months = collect(range(1, 12))->map(fn ($m) => date('M', mktime(0, 0, 0, $m, 1)));
             $sales = Sale::selectRaw('MONTH(created_at) as month, COUNT(*) as orders, SUM(total) as revenue')
                 ->whereYear('created_at', now()->year)
                 ->groupBy('month')
@@ -239,8 +237,8 @@ class DashboardService
                 ->get()
                 ->keyBy('month');
 
-            $revenue = collect(range(1, 12))->map(fn($m) => round($sales[$m]->revenue ?? 0, 2));
-            $orders = collect(range(1, 12))->map(fn($m) => $sales[$m]->orders ?? 0);
+            $revenue = collect(range(1, 12))->map(fn ($m) => round($sales[$m]->revenue ?? 0, 2));
+            $orders = collect(range(1, 12))->map(fn ($m) => $sales[$m]->orders ?? 0);
 
             return [
                 'type' => $type,
@@ -258,7 +256,7 @@ class DashboardService
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get()
-            ->map(fn($sale) => [
+            ->map(fn ($sale) => [
                 'id' => $sale->id,
                 'sale_number' => $sale->sale_number,
                 'customer' => $sale->customer?->name ?? 'Walk-in Customer',
@@ -361,7 +359,7 @@ class DashboardService
 
     public function getWidget(string $widget): array
     {
-        return match($widget) {
+        return match ($widget) {
             'products' => $this->getProductsOverview(),
             'today_sales' => $this->getTodaySales(),
             'pending_orders' => $this->getPendingOrders(),

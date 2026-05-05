@@ -20,7 +20,7 @@ class TemplateRegistryService
 
     public function uomoAssetUrl(string $pathInsideUomoFolder): string
     {
-        return '/__uomo/' . ltrim($pathInsideUomoFolder, '/');
+        return '/__uomo/'.ltrim($pathInsideUomoFolder, '/');
     }
 
     public function previewUrlFromSourcePath(string $sourcePath): string

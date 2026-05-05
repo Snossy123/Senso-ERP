@@ -21,8 +21,9 @@ class ImportUomoStorefrontTemplates extends Command
 
         /** @var Storefront|null $storefront */
         $storefront = Storefront::withoutGlobalScopes()->where('slug', $slug)->first();
-        if (!$storefront) {
+        if (! $storefront) {
             $this->error("Storefront not found for slug: {$slug}");
+
             return self::FAILURE;
         }
 

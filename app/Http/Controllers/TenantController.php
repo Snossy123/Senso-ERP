@@ -24,53 +24,87 @@ class TenantController extends Controller
         $tenants = Tenant::with('plan')
             ->orderBy('created_at', 'desc')
             ->paginate(10);
-        
+
         return view('tenants.index', compact('tenants'));
     }
 
     public function create()
     {
         $plans = Plan::where('is_active', true)->orderBy('sort_order')->get();
+
         return view('tenants.create', compact('plans'));
     }
 
     public function store(Request $request)
     {
+        $parsedSettings = [];
+        $settingsRaw = $request->input('settings');
+        if ($settingsRaw !== null && $settingsRaw !== '') {
+            if (is_array($settingsRaw)) {
+                $parsedSettings = $settingsRaw;
+            } else {
+                $decoded = json_decode((string) $settingsRaw, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    return redirect()->back()
+                        ->withErrors(['settings' => __('tenants.settings_json_invalid')])
+                        ->withInput();
+                }
+                if (! is_array($decoded)) {
+                    return redirect()->back()
+                        ->withErrors(['settings' => __('tenants.settings_json_invalid')])
+                        ->withInput();
+                }
+                $parsedSettings = $decoded;
+            }
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'domain' => 'nullable|string|max:255|unique:tenants,domain',
-            'settings' => 'nullable|array',
             'plan_id' => 'nullable|exists:plans,id',
             'trial_days' => 'nullable|integer|min:0|max:60',
             'currency' => 'nullable|string|size:3',
             'language' => ['nullable', 'string', 'max:10', Rule::in(Locale::supportedCodes())],
             'timezone' => 'nullable|string|max:50',
+            'support_name' => 'nullable|string|max:255',
+            'support_email' => 'nullable|email|max:255|unique:users,email',
+            'create_support_user' => 'nullable|in:0,1',
         ]);
 
+        $validated['settings'] = $parsedSettings;
         $validated['slug'] = Str::slug($validated['name']);
         $validated['is_active'] = true;
         $validated['status'] = 'trial';
+        $validated['create_support_user'] = ($validated['create_support_user'] ?? '1') === '1';
 
-        $tenant = $this->tenantService->createTenant($validated);
+        $result = $this->tenantService->createTenant($validated);
+        $tenant = $result['tenant'];
 
-        return redirect()->route('tenants.show', $tenant)
-            ->with('success', 'Tenant created successfully. Trial period started.');
+        $redirect = redirect()->route('tenants.show', $tenant)
+            ->with('success', __('tenants.created_success'));
+
+        if (! empty($result['support_password'])) {
+            $redirect->with('tenant_support_password', $result['support_password']);
+        }
+
+        return $redirect;
     }
 
     public function show(Tenant $tenant)
     {
         $tenant->load(['plan', 'users', 'products', 'sales', 'orders', 'usageTrackings']);
-        
+
         $usage = $this->tenantService->checkLimits($tenant);
         $daysUntilTrial = $this->tenantService->getDaysUntilTrialEnds($tenant);
         $daysUntilSubscription = $this->tenantService->getDaysUntilSubscriptionEnds($tenant);
-        
+
         return view('tenants.show', compact('tenant', 'usage', 'daysUntilTrial', 'daysUntilSubscription'));
     }
 
     public function edit(Tenant $tenant)
     {
         $plans = Plan::where('is_active', true)->orderBy('sort_order')->get();
+
         return view('tenants.edit', compact('tenant', 'plans'));
     }
 
@@ -93,7 +127,7 @@ class TenantController extends Controller
         ]);
 
         $validated['slug'] = Str::slug($validated['name']);
-        
+
         if (isset($validated['plan_id'])) {
             $plan = Plan::find($validated['plan_id']);
             if ($plan && $plan->id !== $tenant->plan_id) {
@@ -101,7 +135,7 @@ class TenantController extends Controller
                 unset($validated['plan_id']);
             }
         }
-        
+
         $tenant->update($validated);
 
         return redirect()->route('tenants.show', $tenant)
@@ -115,12 +149,14 @@ class TenantController extends Controller
         }
 
         $tenant->delete();
+
         return redirect()->route('tenants.index')->with('success', 'Tenant deleted successfully.');
     }
 
     public function toggleStatus(Tenant $tenant)
     {
-        $tenant->update(['is_active' => !$tenant->is_active]);
+        $tenant->update(['is_active' => ! $tenant->is_active]);
+
         return redirect()->back()->with('success', 'Tenant status updated.');
     }
 
@@ -131,7 +167,7 @@ class TenantController extends Controller
         ]);
 
         $this->tenantService->suspendTenant($tenant, $validated['reason'] ?? null);
-        
+
         return redirect()->route('tenants.show', $tenant)
             ->with('success', 'Tenant has been suspended.');
     }
@@ -139,7 +175,7 @@ class TenantController extends Controller
     public function activate(Tenant $tenant)
     {
         $this->tenantService->activateTenant($tenant);
-        
+
         return redirect()->route('tenants.show', $tenant)
             ->with('success', 'Tenant has been activated.');
     }
@@ -152,7 +188,7 @@ class TenantController extends Controller
 
         $plan = Plan::findOrFail($validated['plan_id']);
         $this->tenantService->assignPlan($tenant, $plan);
-        
+
         return redirect()->route('tenants.show', $tenant)
             ->with('success', "Tenant has been upgraded to {$plan->name} plan.");
     }
@@ -164,21 +200,21 @@ class TenantController extends Controller
         ]);
 
         $user = $tenant->users()->first();
-        
-        if (!$user) {
+
+        if (! $user) {
             return redirect()->back()->with('error', 'No users found for this tenant.');
         }
 
         if ($request->user_id) {
             $user = $tenant->users()->find($request->user_id);
-            if (!$user) {
+            if (! $user) {
                 return redirect()->back()->with('error', 'User not found in this tenant.');
             }
         }
 
         session(['admin_logged_in_as_tenant' => $tenant->id]);
         session(['admin_logged_in_as_user' => $user->id]);
-        
+
         auth()->login($user);
 
         return redirect('/dashboard')->with('success', "Logged in as {$tenant->name}");
@@ -187,7 +223,7 @@ class TenantController extends Controller
     public function syncUsage(Tenant $tenant)
     {
         $this->tenantService->syncUsage($tenant);
-        
+
         return redirect()->route('tenants.show', $tenant)
             ->with('success', 'Usage statistics synchronized.');
     }

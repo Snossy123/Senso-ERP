@@ -2,11 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Tenant;
+use App\Services\TenantManager;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-use App\Services\TenantManager;
-use App\Models\Tenant;
 
 class TenantMiddleware
 {

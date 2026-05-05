@@ -58,14 +58,14 @@ class SalesSeeder extends Seeder
         for ($i = 0; $i < 15; $i++) {
             $firstName = $firstNames[array_rand($firstNames)];
             $lastName = $lastNames[array_rand($lastNames)];
-            $email = strtolower($firstName) . '.' . strtolower($lastName) . ($i + 1) . '@' . $type . 'customer.com';
+            $email = strtolower($firstName).'.'.strtolower($lastName).($i + 1).'@'.$type.'customer.com';
 
             Customer::firstOrCreate(
                 ['email' => $email, 'tenant_id' => $tenantId],
                 [
                     'name' => "$firstName $lastName",
-                    'phone' => '555-' . rand(1000, 9999),
-                    'address' => rand(100, 9999) . ' ' . ucfirst($type) . ' Street',
+                    'phone' => '555-'.rand(1000, 9999),
+                    'address' => rand(100, 9999).' '.ucfirst($type).' Street',
                     'city' => $cities[array_rand($cities)],
                     'password' => Hash::make('password'),
                     'is_active' => true,
@@ -112,7 +112,7 @@ class SalesSeeder extends Seeder
             $paymentMethods = ['cash', 'card', 'bank_transfer'];
             $paymentStatuses = ['paid', 'paid', 'paid', 'partial'];
 
-            $saleNumber = 'SL-' . now()->format('Ymd') . '-' . strtoupper(substr(md5($tenantId . $i . time()), 0, 6));
+            $saleNumber = 'SL-'.now()->format('Ymd').'-'.strtoupper(substr(md5($tenantId.$i.time()), 0, 6));
 
             $sale = Sale::create([
                 'sale_number' => $saleNumber,
@@ -176,14 +176,14 @@ class SalesSeeder extends Seeder
             $taxAmount = $subtotal * $taxRate;
             $total = $subtotal + $shippingCost + $taxAmount;
 
-            $orderNumber = 'ORD-' . now()->format('Ymd') . '-' . strtoupper(substr(md5($tenantId . $i . uniqid()), 0, 6));
+            $orderNumber = 'ORD-'.now()->format('Ymd').'-'.strtoupper(substr(md5($tenantId.$i.uniqid()), 0, 6));
 
             $order = Order::create([
                 'order_number' => $orderNumber,
-                'customer_name' => $customerName . ' ' . ($i + 1),
-                'customer_email' => 'order' . ($i + 1) . '@example.com',
-                'customer_phone' => '555-' . rand(1000, 9999),
-                'shipping_address' => rand(100, 9999) . ' Main Street',
+                'customer_name' => $customerName.' '.($i + 1),
+                'customer_email' => 'order'.($i + 1).'@example.com',
+                'customer_phone' => '555-'.rand(1000, 9999),
+                'shipping_address' => rand(100, 9999).' Main Street',
                 'city' => $cities[array_rand($cities)],
                 'status' => $statuses[array_rand($statuses)],
                 'subtotal' => $subtotal,
@@ -231,8 +231,8 @@ class SalesSeeder extends Seeder
                 'tenant_id' => $tenantId,
                 'type' => $action['type'],
                 'action' => $action['action'],
-                'description' => $user->name . ' ' . strtolower($action['description']),
-                'ip_address' => '192.168.1.' . rand(1, 255),
+                'description' => $user->name.' '.strtolower($action['description']),
+                'ip_address' => '192.168.1.'.rand(1, 255),
                 'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
                 'created_at' => now()->subDays(rand(0, 14))->subHours(rand(0, 23)),
             ]);

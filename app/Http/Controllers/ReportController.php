@@ -2,29 +2,31 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Sale;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
-use App\Models\Customer;
-use App\Models\StockMovement;
-use Illuminate\Http\Request;
+use App\Models\Sale;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class ReportController extends Controller
 {
-    public function __construct() { $this->middleware('auth'); }
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
 
     public function index()
     {
         $stats = [
-            'totalSales'      => Sale::sum('total'),
-            'totalOrders'     => Order::count(),
-            'totalProducts'   => Product::count(),
-            'totalCustomers'  => Customer::count(),
-            'lowStockCount'   => Product::whereColumn('stock_quantity', '<=', 'min_stock_alert')->count(),
-            'todaySales'      => Sale::whereDate('created_at', today())->sum('total'),
-            'monthlySales'    => Sale::whereMonth('created_at', now()->month)->sum('total'),
-            'pendingOrders'   => Order::where('status', 'pending')->count(),
+            'totalSales' => Sale::sum('total'),
+            'totalOrders' => Order::count(),
+            'totalProducts' => Product::count(),
+            'totalCustomers' => Customer::count(),
+            'lowStockCount' => Product::whereColumn('stock_quantity', '<=', 'min_stock_alert')->count(),
+            'todaySales' => Sale::whereDate('created_at', today())->sum('total'),
+            'monthlySales' => Sale::whereMonth('created_at', now()->month)->sum('total'),
+            'pendingOrders' => Order::where('status', 'pending')->count(),
         ];
 
         return view('reports.index', compact('stats'));
@@ -55,8 +57,8 @@ class ReportController extends Controller
             ->orderBy('month')
             ->get();
 
-        $chartLabels = collect(range(1, 12))->map(fn($m) => date('M', mktime(0, 0, 0, $m, 1)));
-        $chartData = collect(range(1, 12))->map(fn($m) => $monthlyData->firstWhere('month', $m)?->total ?? 0);
+        $chartLabels = collect(range(1, 12))->map(fn ($m) => date('M', mktime(0, 0, 0, $m, 1)));
+        $chartData = collect(range(1, 12))->map(fn ($m) => $monthlyData->firstWhere('month', $m)?->total ?? 0);
 
         return view('reports.sales', compact('sales', 'totalRevenue', 'totalTax', 'totalDiscount', 'chartLabels', 'chartData'));
     }
@@ -101,7 +103,7 @@ class ReportController extends Controller
         $avgOrderValue = $orderCount > 0 ? $totalSales / $orderCount : 0;
 
         $topProducts = Product::withCount([
-            'saleItems as total_sold' => fn($q) => $q->whereHas('sale', fn($s) => $s->whereBetween('created_at', [$dateFrom, $dateTo]))
+            'saleItems as total_sold' => fn ($q) => $q->whereHas('sale', fn ($s) => $s->whereBetween('created_at', [$dateFrom, $dateTo])),
         ])
             ->having('total_sold', '>', 0)
             ->orderByDesc('total_sold')
@@ -120,10 +122,10 @@ class ReportController extends Controller
         $dateTo = $request->filled('date_to') ? Carbon::parse($request->date_to) : now()->endOfMonth();
 
         $topCustomers = Customer::withCount([
-            'orders as order_count' => fn($q) => $q->whereBetween('created_at', [$dateFrom, $dateTo]),
+            'orders as order_count' => fn ($q) => $q->whereBetween('created_at', [$dateFrom, $dateTo]),
         ])
             ->withSum([
-                'orders as total_spent' => fn($q) => $q->whereBetween('created_at', [$dateFrom, $dateTo])->where('status', '!=', 'cancelled')
+                'orders as total_spent' => fn ($q) => $q->whereBetween('created_at', [$dateFrom, $dateTo])->where('status', '!=', 'cancelled'),
             ], 'total')
             ->orderByDesc('total_spent')
             ->limit(20)

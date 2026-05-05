@@ -79,19 +79,19 @@ class UomoFragmentService
     public function listNavbarPresets(): array
     {
         $dir = storage_path('app/uomo-fragments');
-        if (!is_dir($dir)) {
+        if (! is_dir($dir)) {
             return [];
         }
 
         $out = [];
-        foreach (glob($dir . '/navbar-uomo-home-*.html') ?: [] as $path) {
+        foreach (glob($dir.'/navbar-uomo-home-*.html') ?: [] as $path) {
             $base = basename($path, '.html');
-            if (!preg_match('/^navbar-(uomo-home-\d+)$/', $base, $m)) {
+            if (! preg_match('/^navbar-(uomo-home-\d+)$/', $base, $m)) {
                 continue;
             }
             $out[] = [
                 'key' => $m[1],
-                'fragment_file' => $base . '.html',
+                'fragment_file' => $base.'.html',
                 'has_html' => is_file($path) && (int) @filesize($path) > 0,
             ];
         }
@@ -103,12 +103,12 @@ class UomoFragmentService
 
     public function navbarHtml(string $uomoHomeKey): ?string
     {
-        if (!preg_match('/^uomo-home-\d+$/', $uomoHomeKey)) {
+        if (! preg_match('/^uomo-home-\d+$/', $uomoHomeKey)) {
             return null;
         }
 
-        $path = storage_path('app/uomo-fragments/navbar-' . $uomoHomeKey . '.html');
-        if (!is_file($path)) {
+        $path = storage_path('app/uomo-fragments/navbar-'.$uomoHomeKey.'.html');
+        if (! is_file($path)) {
             return null;
         }
 
@@ -122,29 +122,29 @@ class UomoFragmentService
 
     private function sanitizeHtml(string $html): ?string
     {
-        $dom = new \DOMDocument();
+        $dom = new \DOMDocument;
         libxml_use_internal_errors(true);
         $loaded = $dom->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
         libxml_clear_errors();
-        if (!$loaded) {
+        if (! $loaded) {
             return null;
         }
 
         $xpath = new \DOMXPath($dom);
 
         foreach ($xpath->query('//*') ?: [] as $node) {
-            if (!$node instanceof \DOMElement) {
+            if (! $node instanceof \DOMElement) {
                 continue;
             }
 
             $tagName = strtolower($node->tagName);
-            if (!isset(self::ALLOWED_TAGS[$tagName])) {
+            if (! isset(self::ALLOWED_TAGS[$tagName])) {
                 $node->parentNode?->removeChild($node);
             }
         }
 
         foreach ($xpath->query('//*') ?: [] as $el) {
-            if (!$el instanceof \DOMElement) {
+            if (! $el instanceof \DOMElement) {
                 continue;
             }
             $removeAttrs = [];
@@ -153,21 +153,24 @@ class UomoFragmentService
                 $value = trim((string) $attr->nodeValue);
                 $tagName = strtolower($el->tagName);
 
-                if (!isset(self::ALLOWED_GLOBAL_ATTRIBUTES[$name])) {
+                if (! isset(self::ALLOWED_GLOBAL_ATTRIBUTES[$name])) {
                     $removeAttrs[] = $attr->nodeName;
+
                     continue;
                 }
 
                 if (str_starts_with($name, 'on')) {
                     $removeAttrs[] = $attr->nodeName;
+
                     continue;
                 }
 
                 if (
                     in_array($name, ['href', 'src', 'action', 'formaction'], true)
-                    && !$this->isSafeUrl($value, $name, $tagName)
+                    && ! $this->isSafeUrl($value, $name, $tagName)
                 ) {
                     $removeAttrs[] = $attr->nodeName;
+
                     continue;
                 }
             }

@@ -11,8 +11,8 @@ class BuilderDraftController extends Controller
     public function latest()
     {
         $draft = BuilderDraft::latest()->first();
-        
-        if (!$draft) {
+
+        if (! $draft) {
             return response()->json([
                 'success' => false,
                 'message' => 'No drafts found',
@@ -33,7 +33,7 @@ class BuilderDraftController extends Controller
         ]);
 
         $draft = BuilderDraft::create([
-            'name' => $validated['name'] ?? 'Saved Draft ' . now()->toDateTimeString(),
+            'name' => $validated['name'] ?? 'Saved Draft '.now()->toDateTimeString(),
             'content' => $validated['content'],
         ]);
 

@@ -2,9 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\SettingService;
 use Closure;
 use Illuminate\Http\Request;
-use App\Services\SettingService;
 use Symfony\Component\HttpFoundation\Response;
 
 class LoadTenantSettings
@@ -23,11 +23,15 @@ class LoadTenantSettings
                 foreach ($items as $item) {
                     // Load into Laravel config: tenant.group.key
                     config(["tenant.{$group}.{$item->key}" => $item->value]);
-                    
+
                     // Specific overrides for Laravel core
                     if ($group === 'localization') {
-                        if ($item->key === 'language') app()->setLocale($item->value);
-                        if ($item->key === 'timezone') config(['app.timezone' => $item->value]);
+                        if ($item->key === 'language') {
+                            app()->setLocale($item->value);
+                        }
+                        if ($item->key === 'timezone') {
+                            config(['app.timezone' => $item->value]);
+                        }
                     }
                 }
             }

@@ -2,24 +2,38 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AssertsAdminOrPermission;
 use App\Services\SettingService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class SettingsController extends Controller
 {
+    use AssertsAdminOrPermission;
+
     protected SettingService $settings;
 
     public function __construct(SettingService $settings)
     {
         $this->settings = $settings;
         $this->middleware('auth');
+
+        $this->middleware(function ($request, $next) {
+            $this->assertAdminOrPermission('settings.view');
+
+            return $next($request);
+        })->only(['index']);
+
+        $this->middleware(function ($request, $next) {
+            $this->assertAdminOrPermission('settings.edit');
+
+            return $next($request);
+        })->only(['store']);
     }
 
     public function index()
     {
         $groups = $this->settings->allGrouped();
-        
+
         // Define default structure for grouped settings
         $settingsConfig = [
             'business' => [
@@ -85,8 +99,12 @@ class SettingsController extends Controller
             }
 
             // Handle checkbox/boolean
-            if ($value === 'on') $value = true;
-            if ($value === 'off') $value = false;
+            if ($value === 'on') {
+                $value = true;
+            }
+            if ($value === 'off') {
+                $value = false;
+            }
 
             $this->settings->set($key, $value, $group);
         }

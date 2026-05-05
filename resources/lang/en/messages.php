@@ -47,6 +47,7 @@ return [
         'category_external' => 'External',
         'view_storefront' => 'View Storefront',
         'erp_administrator' => 'ERP Administrator',
+        'platform_operator' => 'Platform operator',
     ],
     'header' => [
         'search_placeholder' => 'Search for anything...',
@@ -60,6 +61,9 @@ return [
         'profile' => 'Profile',
         'sign_out' => 'Sign Out',
         'staff_member' => 'Staff Member',
+    ],
+    'errors' => [
+        'platform_only' => 'This action is restricted to platform operators (accounts not bound to a tenant).',
     ],
     'footer' => [
         'copyright' => 'Copyright © :year Senso ERP. All rights reserved.',

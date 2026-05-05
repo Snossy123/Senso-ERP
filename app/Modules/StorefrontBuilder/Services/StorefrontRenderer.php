@@ -13,12 +13,11 @@ class StorefrontRenderer
     public function __construct(
         private readonly StorefrontBuilderService $builderService,
         private readonly PageSchemaService $pageSchemaService
-    ) {
-    }
+    ) {}
 
     public function forPage(string $pageType): array
     {
-        if (!Schema::hasTable('storefronts')) {
+        if (! Schema::hasTable('storefronts')) {
             return $this->fallback(null, null, []);
         }
 
@@ -48,12 +47,12 @@ class StorefrontRenderer
                         ->where('is_enabled', true)
                         ->sortBy('sort_order')
                         ->values()
-                        ->map(fn($section) => [
+                        ->map(fn ($section) => [
                             'section_key' => $section['section_key'] ?? null,
                             'section_type' => $section['section_type'] ?? null,
                             'payload' => $section['payload'] ?? [],
                         ])
-                        ->filter(fn($section) => $section['section_key'] && $section['section_type'])
+                        ->filter(fn ($section) => $section['section_key'] && $section['section_type'])
                         ->values()
                         ->all();
 
@@ -76,7 +75,7 @@ class StorefrontRenderer
             $page = $storefront->pages
                 ->firstWhere('page_type', $pageType);
 
-            if (!$page instanceof StorefrontPage) {
+            if (! $page instanceof StorefrontPage) {
                 return $this->fallback($storefront->active_template_key, $pageType, $builderSettings);
             }
 
@@ -84,7 +83,7 @@ class StorefrontRenderer
                 ->where('is_enabled', true)
                 ->sortBy('sort_order')
                 ->values()
-                ->map(fn($section) => [
+                ->map(fn ($section) => [
                     'section_key' => $section->section_key,
                     'section_type' => $section->section_type,
                     'payload' => $section->payload ?? [],

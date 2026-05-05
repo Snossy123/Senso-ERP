@@ -13,9 +13,10 @@ class ActivityLogController extends Controller
     {
         $this->middleware('auth');
         $this->middleware(function ($request, $next) {
-            if (!auth()->user()->isAdmin()) {
+            if (! auth()->user()->isAdmin()) {
                 abort(403, 'Access denied. Admin only.');
             }
+
             return $next($request);
         });
     }
@@ -23,6 +24,10 @@ class ActivityLogController extends Controller
     public function index(Request $request)
     {
         $query = Activity::with('user')->orderBy('created_at', 'desc');
+
+        if ($request->user()->tenant_id !== null) {
+            $query->where('tenant_id', $request->user()->tenant_id);
+        }
 
         // Search/Filters
         if ($request->filled('user_id')) {
@@ -35,7 +40,7 @@ class ActivityLogController extends Controller
             $query->where('severity', $request->severity);
         }
         if ($request->filled('model_type')) {
-            $query->where('model_type', 'like', "%" . $request->model_type . "%");
+            $query->where('model_type', 'like', '%'.$request->model_type.'%');
         }
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
@@ -49,7 +54,12 @@ class ActivityLogController extends Controller
         }
 
         $activities = $query->paginate(30)->withQueryString();
-        $users = User::pluck('name', 'id');
+
+        $usersQuery = User::query();
+        if ($request->user()->tenant_id !== null) {
+            $usersQuery->where('tenant_id', $request->user()->tenant_id);
+        }
+        $users = $usersQuery->pluck('name', 'id');
         $types = Activity::distinct('type')->pluck('type');
 
         return view('admin.activity-log.index', compact('activities', 'users', 'types'));
@@ -58,12 +68,13 @@ class ActivityLogController extends Controller
     public function show(Activity $activity)
     {
         $activity->load('user');
+
         return view('admin.activity-log.show', compact('activity'));
     }
 
     protected function exportCSV($logs)
     {
-        $filename = "activity_logs_" . now()->format('Y-m-d_H-i-s') . ".csv";
+        $filename = 'activity_logs_'.now()->format('Y-m-d_H-i-s').'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv',
@@ -72,7 +83,7 @@ class ActivityLogController extends Controller
 
         return Response::stream(function () use ($logs) {
             $handle = fopen('php://output', 'w');
-            
+
             // Add headers
             fputcsv($handle, ['ID', 'Date', 'User', 'Type', 'Action', 'Severity', 'Description', 'Model', 'IP Address']);
 
@@ -85,7 +96,7 @@ class ActivityLogController extends Controller
                     $log->action,
                     $log->severity,
                     $log->description,
-                    $log->model_type ? basename($log->model_type) . " #{$log->model_id}" : 'N/A',
+                    $log->model_type ? basename($log->model_type)." #{$log->model_id}" : 'N/A',
                     $log->ip_address,
                 ]);
             }

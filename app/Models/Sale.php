@@ -19,13 +19,13 @@ class Sale extends Model
     ];
 
     protected $casts = [
-        'subtotal'        => 'decimal:2',
+        'subtotal' => 'decimal:2',
         'discount_amount' => 'decimal:2',
-        'tax_amount'      => 'decimal:2',
-        'total'           => 'decimal:2',
+        'tax_amount' => 'decimal:2',
+        'total' => 'decimal:2',
         'amount_tendered' => 'decimal:2',
-        'change_due'      => 'decimal:2',
-        'voided_at'       => 'datetime',
+        'change_due' => 'decimal:2',
+        'voided_at' => 'datetime',
     ];
 
     public function customer(): BelongsTo
@@ -61,10 +61,10 @@ class Sale extends Model
     public function void(string $reason, int $userId): void
     {
         $this->update([
-            'status'      => 'voided',
+            'status' => 'voided',
             'void_reason' => $reason,
-            'voided_by'   => $userId,
-            'voided_at'   => now(),
+            'voided_by' => $userId,
+            'voided_at' => now(),
         ]);
     }
 
@@ -80,8 +80,9 @@ class Sale extends Model
 
     public static function generateSaleNumber(): string
     {
-        $date  = now()->format('Ymd');
+        $date = now()->format('Ymd');
         $count = self::whereDate('created_at', today())->count() + 1;
-        return 'SL-' . $date . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+
+        return 'SL-'.$date.'-'.str_pad($count, 4, '0', STR_PAD_LEFT);
     }
 }

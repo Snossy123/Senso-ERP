@@ -1,4 +1,5 @@
 <?php
+
 /*
 Project        :   Valex – Laravel Admin Template A PHP Framework
 @package       :   Laravel

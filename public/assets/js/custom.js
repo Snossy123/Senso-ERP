@@ -19,8 +19,8 @@ $(function() {
 		$(this).parent().siblings().removeClass('show');
 		$(this).find('.drop-flag').removeClass('show');
 	});
-	$('.country-flag1').on('click', function(e){
-		$('.main-header .dropdown > a').parent().siblings().removeClass('show');
+	$('.country-flag1').on('click', function () {
+		$('.main-header-right .navbar-nav-right .dropdown').removeClass('show');
 	});
 	
 	

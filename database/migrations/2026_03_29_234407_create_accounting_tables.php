@@ -17,7 +17,7 @@ return new class extends Migration
             $table->date('end_date');
             $table->enum('status', ['open', 'closed'])->default('open');
             $table->timestamps();
-            
+
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
         });
 
@@ -33,10 +33,10 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->timestamps();
             $table->softDeletes();
-            
+
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
             $table->foreign('parent_id')->references('id')->on('accounts')->onDelete('set null');
-            
+
             $table->unique(['tenant_id', 'code']); // Code must be unique per tenant
         });
 
@@ -52,7 +52,7 @@ return new class extends Migration
             $table->string('source_type')->nullable(); // e.g., 'App\Models\Sale'
             $table->unsignedBigInteger('source_id')->nullable(); // sale_id
             $table->timestamps();
-            
+
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
             $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
         });
@@ -66,7 +66,7 @@ return new class extends Migration
             $table->decimal('debit', 15, 4)->default(0);
             $table->decimal('credit', 15, 4)->default(0);
             $table->timestamps();
-            
+
             $table->foreign('journal_entry_id')->references('id')->on('journal_entries')->onDelete('cascade');
             $table->foreign('account_id')->references('id')->on('accounts')->onDelete('cascade');
         });

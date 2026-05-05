@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Setting extends Model
 {
@@ -46,7 +45,7 @@ class Setting extends Model
     public static function get(string $key, $default = null, $tenantId = null)
     {
         $tenantId = $tenantId ?? app(\App\Services\TenantManager::class)->getCurrentId();
-        
+
         $setting = self::where('tenant_id', $tenantId)
             ->where('key', $key)
             ->first();

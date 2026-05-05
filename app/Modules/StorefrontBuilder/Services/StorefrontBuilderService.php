@@ -17,8 +17,7 @@ class StorefrontBuilderService
         private readonly TemplateRegistryService $templateRegistry,
         private readonly LayoutSlotService $layoutSlotService,
         private readonly PageSchemaService $pageSchemaService
-    ) {
-    }
+    ) {}
 
     public function getOrCreateDefaultStorefront(): Storefront
     {
@@ -109,7 +108,7 @@ class StorefrontBuilderService
                 ->where('section_key', $sectionData['section_key'])
                 ->first();
 
-            if (!$section) {
+            if (! $section) {
                 continue;
             }
 
@@ -142,7 +141,7 @@ class StorefrontBuilderService
             $nextVersion = (int) $storefront->versions()->max('version') + 1;
 
             $pages = $storefront->pages()->with('sections')->get();
-            $layoutDigest = hash('sha256', $pages->map(fn(StorefrontPage $p) => json_encode($p->layout_schema))->implode('|'));
+            $layoutDigest = hash('sha256', $pages->map(fn (StorefrontPage $p) => json_encode($p->layout_schema))->implode('|'));
 
             $snapshot = [
                 'storefront' => $storefront->only(['id', 'name', 'slug', 'active_template_key', 'settings']),
@@ -156,7 +155,7 @@ class StorefrontBuilderService
                         'page_type' => $page->page_type,
                         'title' => $page->title,
                         'layout_schema' => $page->layout_schema,
-                        'sections' => $page->sections->map(fn(StorefrontSection $section) => [
+                        'sections' => $page->sections->map(fn (StorefrontSection $section) => [
                             'section_key' => $section->section_key,
                             'section_type' => $section->section_type,
                             'is_enabled' => $section->is_enabled,
@@ -195,8 +194,9 @@ class StorefrontBuilderService
 
         foreach ($requiredPages as $pageType) {
             $page = $storefront->pages()->where('page_type', $pageType)->with('sections')->first();
-            if (!$page) {
+            if (! $page) {
                 $errors[] = "Missing page schema for {$pageType}.";
+
                 continue;
             }
 
@@ -205,7 +205,7 @@ class StorefrontBuilderService
             }
         }
 
-        if (!$this->templateRegistry->findTemplate((string) $storefront->active_template_key)) {
+        if (! $this->templateRegistry->findTemplate((string) $storefront->active_template_key)) {
             $errors[] = 'Selected template is not in Uomo registry.';
         }
 

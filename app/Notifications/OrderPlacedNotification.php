@@ -11,9 +11,7 @@ class OrderPlacedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public $order)
-    {
-    }
+    public function __construct(public $order) {}
 
     public function via(object $notifiable): array
     {
@@ -23,7 +21,7 @@ class OrderPlacedNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         $order = $this->order;
-        
+
         return (new MailMessage)
             ->subject("Order Confirmed - {$order->order_number}")
             ->markdown('vendor.notifications.order-placed', [

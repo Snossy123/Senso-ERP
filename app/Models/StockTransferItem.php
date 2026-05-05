@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class StockTransferItem extends Model
 {
     protected $fillable = [
-        'stock_transfer_id', 'product_id', 'product_variant_id', 'quantity'
+        'stock_transfer_id', 'product_id', 'product_variant_id', 'quantity',
     ];
 
     public function stockTransfer(): BelongsTo

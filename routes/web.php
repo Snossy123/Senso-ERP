@@ -1,36 +1,35 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ExportController;
+use App\Http\Controllers\Inventory\CategoryController;
+use App\Http\Controllers\Inventory\ProductController;
+use App\Http\Controllers\Inventory\PurchaseOrderController;
+use App\Http\Controllers\Inventory\StockMovementController;
+use App\Http\Controllers\Inventory\StockTransferController;
+use App\Http\Controllers\Inventory\SupplierController;
+use App\Http\Controllers\Inventory\UnitController;
+use App\Http\Controllers\Inventory\WarehouseController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\POS\POSController;
 use App\Http\Controllers\POS\SaleController;
-use App\Http\Controllers\Inventory\ProductController;
-use App\Http\Controllers\Inventory\CategoryController;
-use App\Http\Controllers\Inventory\SupplierController;
-use App\Http\Controllers\Inventory\WarehouseController;
-use App\Http\Controllers\Inventory\StockMovementController;
-use App\Http\Controllers\Inventory\PurchaseOrderController;
-use App\Http\Controllers\Inventory\StockTransferController;
-use App\Http\Controllers\Inventory\UnitController;
-use App\Http\Controllers\Admin\OrderController as AdminOrderController;
-
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\Store\AccountController;
 use App\Http\Controllers\Store\AuthController as StoreAuthController;
-use App\Http\Controllers\Store\ShopController;
 use App\Http\Controllers\Store\CartController;
 use App\Http\Controllers\Store\CheckoutController;
-use App\Http\Controllers\Store\AccountController;
+use App\Http\Controllers\Store\ShopController;
+use App\Http\Controllers\TenantController;
+use App\Http\Controllers\UomoAssetController;
+use App\Http\Controllers\UserController;
 use App\Modules\StorefrontBuilder\Http\Controllers\StorefrontBuilderController;
 use App\Modules\StorefrontBuilder\Http\Controllers\StorefrontStudioController;
-use App\Http\Controllers\ReportController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\SettingsController;
-use App\Http\Controllers\ActivityLogController;
-use App\Http\Controllers\ExportController;
-use App\Http\Controllers\TenantController;
-use App\Http\Controllers\RoleController;
-use App\Http\Controllers\UomoAssetController;
-use App\Http\Controllers\LocaleController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
 
@@ -95,15 +94,17 @@ Route::middleware('auth')->group(function () {
     // Admin — Role Management
     Route::resource('admin/roles', RoleController::class)->names('admin.roles');
 
-    // Admin — Tenant Management
-    Route::resource('tenants', TenantController::class);
-    Route::post('tenants/{tenant}/toggle', [TenantController::class, 'toggleStatus'])->name('tenants.toggle');
-    Route::post('tenants/{tenant}/suspend', [TenantController::class, 'suspend'])->name('tenants.suspend');
-    Route::post('tenants/{tenant}/activate', [TenantController::class, 'activate'])->name('tenants.activate');
-    Route::post('tenants/{tenant}/upgrade-plan', [TenantController::class, 'upgradePlan'])->name('tenants.upgrade-plan');
-    Route::post('tenants/{tenant}/login-as', [TenantController::class, 'loginAs'])->name('tenants.login-as');
-    Route::post('tenants/{tenant}/sync-usage', [TenantController::class, 'syncUsage'])->name('tenants.sync-usage');
-    Route::patch('tenants/{tenant}/settings', [TenantController::class, 'updateSettings'])->name('tenants.settings');
+    // Admin — Tenant Management (platform operators only: tenant_id must be null)
+    Route::middleware('platform')->group(function () {
+        Route::resource('tenants', TenantController::class);
+        Route::post('tenants/{tenant}/toggle', [TenantController::class, 'toggleStatus'])->name('tenants.toggle');
+        Route::post('tenants/{tenant}/suspend', [TenantController::class, 'suspend'])->name('tenants.suspend');
+        Route::post('tenants/{tenant}/activate', [TenantController::class, 'activate'])->name('tenants.activate');
+        Route::post('tenants/{tenant}/upgrade-plan', [TenantController::class, 'upgradePlan'])->name('tenants.upgrade-plan');
+        Route::post('tenants/{tenant}/login-as', [TenantController::class, 'loginAs'])->name('tenants.login-as');
+        Route::post('tenants/{tenant}/sync-usage', [TenantController::class, 'syncUsage'])->name('tenants.sync-usage');
+        Route::patch('tenants/{tenant}/settings', [TenantController::class, 'updateSettings'])->name('tenants.settings');
+    });
 
     // Admin — Settings
     Route::get('/admin/settings', [SettingsController::class, 'index'])->name('admin.settings');
@@ -162,14 +163,14 @@ Route::middleware('auth')->group(function () {
     // Accounting Web
     Route::prefix('accounting')->name('accounting.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'dashboard'])->name('dashboard');
-        
+
         Route::get('/accounts', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'accounts'])->name('accounts');
         Route::post('/accounts', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'storeAccount'])->name('accounts.store');
-        
+
         Route::get('/journal-entries', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'journalEntries'])->name('journal-entries');
         Route::get('/journal-entries/create', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'createJournalEntry'])->name('journal-entries.create');
         Route::post('/journal-entries', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'storeJournalEntry'])->name('journal-entries.store');
-        
+
         Route::get('/reports', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'reports'])->name('reports');
         Route::get('/settings', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'settings'])->name('settings');
         Route::post('/settings', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'updateSettings'])->name('settings.update');

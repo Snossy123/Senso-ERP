@@ -13,13 +13,12 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class StorefrontBuilderApiController extends Controller
 {
-    public function __construct(private readonly StorefrontBuilderService $builderService)
-    {
-    }
+    public function __construct(private readonly StorefrontBuilderService $builderService) {}
 
     public function show(): JsonResource
     {
         $storefront = $this->builderService->getOrCreateDefaultStorefront();
+
         return new StorefrontResource($storefront->load('pages.sections', 'versions'));
     }
 
@@ -27,6 +26,7 @@ class StorefrontBuilderApiController extends Controller
     {
         $storefront = $this->builderService->getOrCreateDefaultStorefront();
         $storefront->load('versions');
+
         return new StorefrontResource($storefront);
     }
 
@@ -36,7 +36,7 @@ class StorefrontBuilderApiController extends Controller
 
         /** @var Storefront|null $storefront */
         $storefront = Storefront::query()->where('slug', $slug)->first();
-        if (!$storefront) {
+        if (! $storefront) {
             return response()->json(['message' => 'Storefront not found.'], 404);
         }
 

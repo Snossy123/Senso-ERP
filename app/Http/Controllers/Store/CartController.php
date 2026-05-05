@@ -9,9 +9,7 @@ use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
-    public function __construct(private readonly StorefrontRenderer $storefrontRenderer)
-    {
-    }
+    public function __construct(private readonly StorefrontRenderer $storefrontRenderer) {}
 
     private function getCart(): array
     {
@@ -25,31 +23,32 @@ class CartController extends Controller
 
     public function index()
     {
-        $cart     = $this->getCart();
+        $cart = $this->getCart();
         $products = [];
         $subtotal = 0;
 
         foreach ($cart as $id => $item) {
             $product = Product::find($id);
             if ($product) {
-                $lineTotal  = $product->selling_price * $item['qty'];
-                $subtotal  += $lineTotal;
+                $lineTotal = $product->selling_price * $item['qty'];
+                $subtotal += $lineTotal;
                 $products[] = [
-                    'product'   => $product,
-                    'qty'       => $item['qty'],
+                    'product' => $product,
+                    'qty' => $item['qty'],
                     'lineTotal' => $lineTotal,
                 ];
             }
         }
 
         $storefrontRender = $this->storefrontRenderer->forPage('cart');
+
         return view('store.cart.index', compact('products', 'subtotal', 'storefrontRender'));
     }
 
     public function add(Request $request, Product $product)
     {
-        abort_if(!$product->is_ecommerce || !$product->is_active, 404);
-        $qty  = max(1, (int) $request->input('qty', 1));
+        abort_if(! $product->is_ecommerce || ! $product->is_active, 404);
+        $qty = max(1, (int) $request->input('qty', 1));
         $cart = $this->getCart();
 
         $cart[$product->id] = [
@@ -62,7 +61,7 @@ class CartController extends Controller
 
     public function update(Request $request, Product $product)
     {
-        $qty  = max(0, (int) $request->input('qty', 1));
+        $qty = max(0, (int) $request->input('qty', 1));
         $cart = $this->getCart();
 
         if ($qty === 0) {
@@ -80,6 +79,7 @@ class CartController extends Controller
         $cart = $this->getCart();
         unset($cart[$product->id]);
         $this->saveCart($cart);
+
         return redirect()->route('store.cart.index')->with('success', 'Item removed from cart.');
     }
 }

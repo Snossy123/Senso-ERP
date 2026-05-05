@@ -1,10 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\TenantApiController;
+use App\Http\Controllers\DashboardController;
+use App\Modules\StorefrontBuilder\Http\Controllers\StorefrontBuilderApiController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\Api\TenantApiController;
-use App\Modules\StorefrontBuilder\Http\Controllers\StorefrontBuilderApiController;
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();

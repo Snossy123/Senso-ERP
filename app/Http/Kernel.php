@@ -68,5 +68,6 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'tenant' => \App\Http\Middleware\TenantMiddleware::class,
         'storefront.boot' => \App\Http\Middleware\VerifyStorefrontBootToken::class,
+        'platform' => \App\Http\Middleware\EnsurePlatformOperator::class,
     ];
 }

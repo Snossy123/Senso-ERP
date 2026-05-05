@@ -33,8 +33,9 @@ class SaleRefund extends Model
 
     public static function generateRefundNumber(): string
     {
-        $date  = now()->format('Ymd');
+        $date = now()->format('Ymd');
         $count = self::whereDate('created_at', today())->count() + 1;
-        return 'REF-' . $date . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+
+        return 'REF-'.$date.'-'.str_pad($count, 4, '0', STR_PAD_LEFT);
     }
 }

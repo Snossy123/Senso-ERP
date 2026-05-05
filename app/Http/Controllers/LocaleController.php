@@ -20,6 +20,8 @@ class LocaleController extends Controller
             Auth::user()->forceFill(['language' => $locale])->saveQuietly();
         }
 
-        return redirect()->back();
+        $fallback = Auth::check() ? route('dashboard') : route('login');
+
+        return redirect()->back(fallback: $fallback);
     }
 }

@@ -38,7 +38,10 @@
                             <th>{{ __('tenants.plan') }}</th>
                             <th>{{ __('tenants.status') }}</th>
                             <th>{{ __('tenants.billing') }}</th>
-                            <th>{{ __('tenants.users') }}</th>
+                            <th>
+                                <span class="d-block">{{ __('tenants.users') }}</span>
+                                <small class="text-muted fw-normal">{{ __('tenants.users_usage_column_hint') }}</small>
+                            </th>
                             <th>{{ __('tenants.expires') }}</th>
                             <th>{{ __('tenants.actions') }}</th>
                         </tr>
@@ -70,9 +73,9 @@
                                     @endif
                                 </td>
                                 <td>
-                                    {{ $tenant->users()->count() }}
+                                    <span class="fw-medium">{{ $tenant->users()->count() }}</span>
                                     @if($tenant->plan)
-                                        <small class="text-muted">/ {{ $tenant->plan->max_users }}</small>
+                                        <span class="text-muted"> / {{ $tenant->plan->max_users }}</span>
                                     @endif
                                 </td>
                                 <td>
@@ -86,8 +89,8 @@
                                         -
                                     @endif
                                 </td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
+                                <td class="text-nowrap">
+                                    <div class="btn-group btn-group-sm flex-wrap gap-1" role="group" style="max-width: 100%;">
                                         <a href="{{ route('tenants.show', $tenant) }}" class="btn btn-info" title="{{ __('tenants.view') }}">
                                             <i class="fas fa-eye"></i>
                                         </a>

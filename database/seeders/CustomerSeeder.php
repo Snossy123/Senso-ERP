@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Customer;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class CustomerSeeder extends Seeder
@@ -17,7 +17,7 @@ class CustomerSeeder extends Seeder
 
         foreach ($customers as $c) {
             Customer::create(array_merge($c, [
-                'password'  => Hash::make('password'),
+                'password' => Hash::make('password'),
                 'is_active' => true,
             ]));
         }

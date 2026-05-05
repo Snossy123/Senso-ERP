@@ -12,10 +12,11 @@ class CheckPermission
     {
         $user = auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             if ($request->expectsJson()) {
                 return response()->json(['error' => 'Unauthenticated'], 401);
             }
+
             return redirect()->route('login');
         }
 
@@ -23,7 +24,7 @@ class CheckPermission
             return $next($request);
         }
 
-        if (!empty($permissions)) {
+        if (! empty($permissions)) {
             $hasPermission = false;
 
             foreach ($permissions as $permission) {
@@ -33,7 +34,7 @@ class CheckPermission
                 }
             }
 
-            if (!$hasPermission) {
+            if (! $hasPermission) {
                 if ($request->expectsJson()) {
                     return response()->json(['error' => 'Forbidden. You do not have permission.'], 403);
                 }

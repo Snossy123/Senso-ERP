@@ -8,11 +8,15 @@ use Illuminate\Http\Request;
 
 class WarehouseController extends Controller
 {
-    public function __construct() { $this->middleware('auth'); }
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
 
     public function index()
     {
         $warehouses = Warehouse::with('products')->latest()->get();
+
         return view('inventory.warehouses.index', compact('warehouses'));
     }
 
@@ -24,13 +28,14 @@ class WarehouseController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name'         => 'required|string|max:255',
-            'location'     => 'nullable|string|max:255',
+            'name' => 'required|string|max:255',
+            'location' => 'nullable|string|max:255',
             'manager_name' => 'nullable|string|max:255',
-            'phone'        => 'nullable|string|max:50',
+            'phone' => 'nullable|string|max:50',
         ]);
         $data['is_active'] = $request->boolean('is_active', true);
         Warehouse::create($data);
+
         return redirect()->route('inventory.warehouses.index')->with('success', 'Warehouse created.');
     }
 
@@ -42,19 +47,21 @@ class WarehouseController extends Controller
     public function update(Request $request, Warehouse $warehouse)
     {
         $data = $request->validate([
-            'name'         => 'required|string|max:255',
-            'location'     => 'nullable|string|max:255',
+            'name' => 'required|string|max:255',
+            'location' => 'nullable|string|max:255',
             'manager_name' => 'nullable|string|max:255',
-            'phone'        => 'nullable|string|max:50',
+            'phone' => 'nullable|string|max:50',
         ]);
         $data['is_active'] = $request->boolean('is_active');
         $warehouse->update($data);
+
         return redirect()->route('inventory.warehouses.index')->with('success', 'Warehouse updated.');
     }
 
     public function destroy(Warehouse $warehouse)
     {
         $warehouse->delete();
+
         return redirect()->route('inventory.warehouses.index')->with('success', 'Warehouse deleted.');
     }
 }

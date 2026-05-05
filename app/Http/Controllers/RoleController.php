@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AssertsAdminOrPermission;
 use App\Models\Role;
 use App\Services\UserManagementService;
 use Illuminate\Http\JsonResponse;
@@ -9,30 +10,50 @@ use Illuminate\Http\Request;
 
 class RoleController extends Controller
 {
+    use AssertsAdminOrPermission;
+
     public function __construct(
         protected UserManagementService $userService
     ) {
         $this->middleware('auth');
+
         $this->middleware(function ($request, $next) {
-            if (!auth()->user()->isAdmin() && !auth()->user()->hasPermission('roles.view')) {
-                abort(403, 'Access denied.');
-            }
+            $this->assertAdminOrPermission('roles.view');
+
             return $next($request);
-        });
+        })->only(['index', 'edit', 'permissions']);
+
+        $this->middleware(function ($request, $next) {
+            $this->assertAdminOrPermission('roles.create');
+
+            return $next($request);
+        })->only(['create', 'store']);
+
+        $this->middleware(function ($request, $next) {
+            $this->assertAdminOrPermission('roles.edit');
+
+            return $next($request);
+        })->only(['update']);
+
+        $this->middleware(function ($request, $next) {
+            $this->assertAdminOrPermission('roles.delete');
+
+            return $next($request);
+        })->only(['destroy']);
     }
 
     public function index()
     {
         $result = $this->userService->getRoles();
         $roles = $result['roles'];
-        
+
         return view('admin.roles.index', compact('roles'));
     }
 
     public function create()
     {
         $permissionsGrouped = $this->userService->getPermissionsGrouped();
-        
+
         return view('admin.roles.create', compact('permissionsGrouped'));
     }
 
@@ -52,7 +73,7 @@ class RoleController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Role created successfully.',
-            'data' => ['id' => $role->id]
+            'data' => ['id' => $role->id],
         ]);
     }
 
@@ -60,7 +81,7 @@ class RoleController extends Controller
     {
         $role->load('permissions');
         $permissionsGrouped = $this->userService->getPermissionsGrouped();
-        
+
         return view('admin.roles.edit', compact('role', 'permissionsGrouped'));
     }
 
@@ -87,6 +108,7 @@ class RoleController extends Controller
     {
         try {
             $this->userService->deleteRole($role);
+
             return response()->json(['success' => true, 'message' => 'Role deleted.']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'error' => $e->getMessage()], 400);
@@ -96,10 +118,10 @@ class RoleController extends Controller
     public function permissions(Role $role): JsonResponse
     {
         $permissions = $role->permissions()->pluck('id');
-        
+
         return response()->json([
             'success' => true,
-            'permissions' => $permissions
+            'permissions' => $permissions,
         ]);
     }
 }

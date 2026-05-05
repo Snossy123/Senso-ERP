@@ -14,7 +14,7 @@ return new class extends Migration
 
         $users = \DB::table('users')->whereNotNull('role')->get();
         foreach ($users as $user) {
-            $roleId = match($user->role) {
+            $roleId = match ($user->role) {
                 'admin' => $adminRole?->id,
                 'manager' => $managerRole?->id,
                 default => $cashierRole?->id,
@@ -32,7 +32,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'role')) {
+            if (! Schema::hasColumn('users', 'role')) {
                 $table->string('role', 50)->default('staff')->after('email');
             }
         });

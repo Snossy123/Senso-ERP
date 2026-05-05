@@ -3,21 +3,25 @@
 namespace App\Http\Controllers\Inventory;
 
 use App\Http\Controllers\Controller;
+use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\Supplier;
 use App\Models\Warehouse;
-use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class PurchaseOrderController extends Controller
 {
-    public function __construct() { $this->middleware('auth'); }
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
 
     public function index()
     {
         $orders = PurchaseOrder::with('supplier', 'warehouse', 'creator')->latest()->get();
+
         return view('inventory.purchase-orders.index', compact('orders'));
     }
 
@@ -26,6 +30,7 @@ class PurchaseOrderController extends Controller
         $suppliers = Supplier::where('is_active', true)->get();
         $warehouses = Warehouse::where('is_active', true)->get();
         $products = Product::with('variants')->where('is_active', true)->get();
+
         return view('inventory.purchase-orders.create', compact('suppliers', 'warehouses', 'products'));
     }
 
@@ -45,7 +50,7 @@ class PurchaseOrderController extends Controller
             $order = PurchaseOrder::create([
                 'supplier_id' => $request->supplier_id,
                 'warehouse_id' => $request->warehouse_id,
-                'reference_no' => 'PO-' . strtoupper(uniqid()),
+                'reference_no' => 'PO-'.strtoupper(uniqid()),
                 'order_date' => $request->order_date,
                 'status' => 'draft',
                 'created_by' => Auth::id(),
@@ -74,6 +79,7 @@ class PurchaseOrderController extends Controller
     public function show(PurchaseOrder $order)
     {
         $order->load('items.product', 'items.variant', 'supplier', 'warehouse');
+
         return view('inventory.purchase-orders.show', compact('order'));
     }
 
@@ -92,7 +98,7 @@ class PurchaseOrderController extends Controller
                     'warehouse_id' => $order->warehouse_id,
                 ], [
                     'tenant_id' => $order->tenant_id,
-                    'quantity' => 0
+                    'quantity' => 0,
                 ]);
                 $warehouseStock->increment('quantity', $item->quantity);
 

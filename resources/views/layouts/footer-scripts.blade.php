@@ -33,6 +33,8 @@
 <script src="{{URL::asset('assets/plugins/sidebar/sidebar-custom.js')}}"></script>
 <!-- Eva-icons js -->
 <script src="{{URL::asset('assets/js/eva-icons.min.js')}}"></script>
+{{-- SweetAlert2: admin/roles and other pages use Swal.fire() --}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @yield('js')
 <!-- Sticky js -->
 <script src="{{URL::asset('assets/js/sticky.js')}}"></script>
