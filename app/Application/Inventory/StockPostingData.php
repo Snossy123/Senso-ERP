@@ -131,4 +131,70 @@ final readonly class StockPostingData
             reason: StockMovementReason::PosSale,
         );
     }
+
+    /**
+     * POS void: full line quantity inbound (warehouse slice when shift had warehouse).
+     */
+    public static function forPosVoidLine(
+        int $tenantId,
+        int $productId,
+        ?int $productVariantId,
+        ?int $warehouseId,
+        int $quantity,
+        float $unitCost,
+        float $totalValue,
+        string $reference,
+        int $userId,
+        string $notes = 'Voided POS Sale',
+    ): self {
+        return new self(
+            tenantId: $tenantId,
+            productId: $productId,
+            productVariantId: $productVariantId,
+            warehouseId: $warehouseId,
+            quantity: $quantity,
+            type: 'in',
+            unitCost: $unitCost,
+            totalValue: $totalValue,
+            reference: $reference,
+            notes: $notes,
+            userId: $userId,
+            purchaseOrderId: null,
+            stockTransferId: null,
+            reason: StockMovementReason::Void,
+        );
+    }
+
+    /**
+     * POS refund restock: prorated quantity inbound (same warehouse/variant semantics as the sale line).
+     */
+    public static function forPosRefundLine(
+        int $tenantId,
+        int $productId,
+        ?int $productVariantId,
+        ?int $warehouseId,
+        int $quantity,
+        float $unitCost,
+        float $totalValue,
+        string $reference,
+        int $userId,
+        string $notes = 'POS Refund',
+    ): self {
+        return new self(
+            tenantId: $tenantId,
+            productId: $productId,
+            productVariantId: $productVariantId,
+            warehouseId: $warehouseId,
+            quantity: $quantity,
+            type: 'in',
+            unitCost: $unitCost,
+            totalValue: $totalValue,
+            reference: $reference,
+            notes: $notes,
+            userId: $userId,
+            purchaseOrderId: null,
+            stockTransferId: null,
+            reason: StockMovementReason::Refund,
+        );
+    }
 }

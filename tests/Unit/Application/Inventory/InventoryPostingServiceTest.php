@@ -344,4 +344,54 @@ class InventoryPostingServiceTest extends TestCase
                 ->value('quantity')
         );
     }
+
+    public function test_post_inbound_for_pos_void_line_restores_warehouse_slice(): void
+    {
+        $warehouse = Warehouse::create([
+            'tenant_id' => $this->foundationTenantId,
+            'name' => 'Void restore WH',
+            'is_active' => true,
+        ]);
+
+        $product = Product::factory()->create([
+            'tenant_id' => $this->foundationTenantId,
+            'stock_quantity' => 10,
+            'purchase_price' => 8,
+        ]);
+
+        ProductWarehouseStock::query()->withoutGlobalScopes()->create([
+            'tenant_id' => $this->foundationTenantId,
+            'product_id' => $product->id,
+            'product_variant_id' => null,
+            'warehouse_id' => $warehouse->id,
+            'quantity' => 7,
+        ]);
+
+        $payload = StockPostingData::forPosVoidLine(
+            tenantId: $this->foundationTenantId,
+            productId: $product->id,
+            productVariantId: null,
+            warehouseId: $warehouse->id,
+            quantity: 3,
+            unitCost: 8,
+            totalValue: 24,
+            reference: 'VOID-SN-99',
+            userId: $this->foundationUser->id,
+        );
+        $this->assertSame(StockMovementReason::Void, $payload->reason);
+
+        $m = $this->service->postInbound($payload);
+
+        $this->assertSame('Voided POS Sale', $m->notes);
+        $this->assertSame('VOID-SN-99', $m->reference);
+        $this->assertSame($warehouse->id, $m->warehouse_id);
+        $this->assertSame(13, $product->fresh()->stock_quantity);
+        $this->assertSame(
+            10,
+            (int) ProductWarehouseStock::query()->withoutGlobalScopes()
+                ->where('product_id', $product->id)
+                ->where('warehouse_id', $warehouse->id)
+                ->value('quantity')
+        );
+    }
 }

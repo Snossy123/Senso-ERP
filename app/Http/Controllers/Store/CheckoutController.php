@@ -2,12 +2,9 @@
 
 namespace App\Http\Controllers\Store;
 
-use App\Application\Inventory\InventoryPostingService;
-use App\Application\Inventory\StockPostingData;
+use App\Application\Sales\RecordWebOrderService;
 use App\Http\Controllers\Controller;
 use App\Models\Activity;
-use App\Models\Order;
-use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
 use App\Modules\StorefrontBuilder\Services\StorefrontRenderer;
@@ -15,13 +12,12 @@ use App\Notifications\LowStockAlertNotification;
 use App\Notifications\OrderPlacedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class CheckoutController extends Controller
 {
     public function __construct(
         private readonly StorefrontRenderer $storefrontRenderer,
-        private readonly InventoryPostingService $inventoryPostingService,
+        private readonly RecordWebOrderService $recordWebOrderService,
     ) {}
 
     private function getCart(): array
@@ -72,10 +68,6 @@ class CheckoutController extends Controller
         ]);
 
         $customer = Auth::guard('customer')->user();
-        $orderNumber = null;
-
-        $order = null;
-        $lowStockProducts = [];
 
         $tenant = app(\App\Services\TenantManager::class)->getCurrent();
         $usage = $tenant?->getOrdersUsage();
@@ -83,77 +75,18 @@ class CheckoutController extends Controller
             return redirect()->back()->with('error', 'Monthly order limit reached for this store. Please contact support.');
         }
 
-        DB::transaction(function () use ($cart, $data, $customer, &$orderNumber, &$order, &$lowStockProducts) {
-            $subtotal = 0;
-            $lines = [];
+        $result = $this->recordWebOrderService->record($cart, $data, $customer);
 
-            foreach ($cart as $id => $item) {
-                $product = Product::lockForUpdate()->findOrFail($id);
-                $lineTotal = $product->selling_price * $item['qty'];
-                $subtotal += $lineTotal;
-                $lines[] = ['product' => $product, 'qty' => $item['qty'], 'lineTotal' => $lineTotal];
-            }
+        $order = $result->order;
+        $orderNumber = $order->order_number;
 
-            $order = Order::create([
-                'order_number' => Order::generateOrderNumber(),
-                'customer_id' => $customer?->id,
-                'customer_name' => $data['customer_name'],
-                'customer_email' => $data['customer_email'],
-                'customer_phone' => $data['customer_phone'],
-                'shipping_address' => $data['shipping_address'],
-                'city' => $data['city'],
-                'subtotal' => $subtotal,
-                'total' => $subtotal,
-                'payment_method' => $data['payment_method'],
-                'payment_status' => 'pending',
-                'status' => 'pending',
-                'notes' => $data['notes'],
-            ]);
+        Activity::logOrder($order);
 
-            foreach ($lines as $line) {
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'product_id' => $line['product']->id,
-                    'product_name' => $line['product']->name,
-                    'quantity' => $line['qty'],
-                    'unit_price' => $line['product']->selling_price,
-                    'total' => $line['lineTotal'],
-                ]);
-
-                $product = $line['product'];
-
-                $newStock = $product->stock_quantity - $line['qty'];
-
-                if ($newStock <= $product->min_stock_alert) {
-                    $lowStockProducts[] = $product;
-                }
-
-                $this->inventoryPostingService->postOutbound(
-                    StockPostingData::forEcommerceOrderLine(
-                        tenantId: (int) $order->tenant_id,
-                        productId: $product->id,
-                        quantity: $line['qty'],
-                        orderNumber: $order->order_number,
-                    )
-                );
-
-                $product->refresh();
-            }
-
-            $orderNumber = $order->order_number;
-        });
-
-        if ($order) {
-            $order->load('items');
-
-            Activity::logOrder($order);
-
-            if ($customer) {
-                $customer->notify(new OrderPlacedNotification($order));
-            }
+        if ($customer) {
+            $customer->notify(new OrderPlacedNotification($order));
         }
 
-        foreach ($lowStockProducts as $product) {
+        foreach ($result->lowStockProducts as $product) {
             $admins = User::whereHas('role', fn ($q) => $q->where('slug', 'admin'))->get();
             foreach ($admins as $admin) {
                 $admin->notify(new LowStockAlertNotification($product));

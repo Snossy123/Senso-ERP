@@ -2,12 +2,14 @@
 
 namespace Tests\Feature\Foundation;
 
+use App\Events\Domain\Sales\SaleRecorded;
 use App\Models\JournalEntry;
 use App\Models\Product;
 use App\Models\ProductWarehouseStock;
 use App\Models\Sale;
 use App\Models\StockMovement;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Tests\Support\FoundationBaselineFixtures;
 use Tests\TestCase;
@@ -141,7 +143,7 @@ class PosSaleCharacterizationTest extends TestCase
         ]);
     }
 
-    public function test_pos_sale_journal_entry_duplicate_paths_current_baseline(): void
+    public function test_pos_sale_creates_single_journal_entry_after_accounting_extraction(): void
     {
         $shift = \App\Models\PosShift::factory()->create([
             'user_id' => $this->foundationUser->id,
@@ -173,11 +175,64 @@ class PosSaleCharacterizationTest extends TestCase
             ->where('source_id', $saleId)
             ->count();
 
+        $this->assertSame(1, $journalRowsForSale);
+    }
+
+    public function test_sale_recorded_listener_is_idempotent(): void
+    {
+        $shift = \App\Models\PosShift::factory()->create([
+            'user_id' => $this->foundationUser->id,
+            'tenant_id' => $this->foundationTenantId,
+        ]);
+
+        $product = Product::factory()->create([
+            'tenant_id' => $this->foundationTenantId,
+            'stock_quantity' => 5,
+            'selling_price' => 100,
+        ]);
+
+        $response = $this->actingAs($this->foundationUser)->postJson(route('pos.sale.store'), [
+            'items' => [
+                ['id' => $product->id, 'qty' => 1, 'price' => 100, 'discount_pct' => 0],
+            ],
+            'payment_method' => 'cash',
+            'amount_tendered' => 100,
+            'shift_id' => $shift->id,
+            'tax_rate' => 0,
+            'discount' => 0,
+        ]);
+
+        $response->assertOk();
+        $saleId = $response->json('sale_id');
+
         $this->assertSame(
-            2,
-            $journalRowsForSale,
-            'Current behavior: AccountingObserver::created(Sale) plus SaleController journal creation both run.'
+            1,
+            JournalEntry::query()->where('source_type', Sale::class)->where('source_id', $saleId)->count()
         );
+
+        event(new SaleRecorded(saleId: $saleId, tenantId: $this->foundationTenantId));
+        event(new SaleRecorded(saleId: $saleId, tenantId: $this->foundationTenantId));
+
+        $this->assertSame(
+            1,
+            JournalEntry::query()->where('source_type', Sale::class)->where('source_id', $saleId)->count()
+        );
+    }
+
+    public function test_db_after_commit_callbacks_not_run_when_transaction_rolls_back(): void
+    {
+        $ran = false;
+        try {
+            DB::transaction(function () use (&$ran) {
+                DB::afterCommit(function () use (&$ran) {
+                    $ran = true;
+                });
+                throw new \RuntimeException('forced rollback');
+            });
+        } catch (\RuntimeException) {
+        }
+
+        $this->assertFalse($ran);
     }
 
     public function test_pos_sale_idempotency_key_prevents_duplicate_sale(): void
@@ -237,5 +292,14 @@ class PosSaleCharacterizationTest extends TestCase
             ->where('type', 'out')
             ->count();
         $this->assertSame(1, $movementsForSale);
+
+        $this->assertSame(
+            1,
+            JournalEntry::query()
+                ->where('source_type', Sale::class)
+                ->where('source_id', $first->json('sale_id'))
+                ->count(),
+            'Idempotent duplicate HTTP response must not create a second journal entry.'
+        );
     }
 }

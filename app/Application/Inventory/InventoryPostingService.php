@@ -11,6 +11,7 @@ use InvalidArgumentException;
  * Single write path for inventory ledger rows (stock_movements, product_warehouse_stocks, products.stock_quantity).
  * Slice B: PO receive uses {@see postInbound}. Slice C: ecommerce checkout uses {@see postOutbound}.
  * Slice D: POS sale lines use {@see postOutbound} ({@see StockPostingData::forPosSaleLine}).
+ * Slice F: POS void/refund restock uses {@see postInbound} ({@see StockPostingData::forPosVoidLine}, {@see StockPostingData::forPosRefundLine}).
  */
 class InventoryPostingService
 {

@@ -4,6 +4,7 @@ namespace Tests\Feature\Foundation;
 
 use App\Models\JournalEntry;
 use App\Models\Product;
+use App\Models\ProductWarehouseStock;
 use App\Models\Sale;
 use App\Models\SaleRefund;
 use App\Models\StockMovement;
@@ -143,5 +144,79 @@ class PosRefundCharacterizationTest extends TestCase
             $sale->status,
             'Legacy: totalRefunded uses sum(refunds)+current amount, double-counting the new refund so partial payment can mark sale as refunded.'
         );
+    }
+
+    public function test_pos_refund_full_restock_restores_warehouse_slice_when_shift_has_warehouse(): void
+    {
+        $warehouse = \App\Models\Warehouse::create([
+            'tenant_id' => $this->foundationTenantId,
+            'name' => 'Refund WH',
+            'is_active' => true,
+        ]);
+
+        $shift = \App\Models\PosShift::factory()->create([
+            'user_id' => $this->foundationUser->id,
+            'tenant_id' => $this->foundationTenantId,
+            'warehouse_id' => $warehouse->id,
+        ]);
+
+        $product = Product::factory()->create([
+            'tenant_id' => $this->foundationTenantId,
+            'stock_quantity' => 10,
+            'selling_price' => 100,
+            'purchase_price' => 40,
+        ]);
+
+        ProductWarehouseStock::create([
+            'tenant_id' => $this->foundationTenantId,
+            'product_id' => $product->id,
+            'warehouse_id' => $warehouse->id,
+            'quantity' => 10,
+        ]);
+
+        $saleResponse = $this->actingAs($this->foundationUser)->postJson(route('pos.sale.store'), [
+            'items' => [
+                ['id' => $product->id, 'qty' => 2, 'price' => 100, 'discount_pct' => 0],
+            ],
+            'payment_method' => 'cash',
+            'amount_tendered' => 200,
+            'shift_id' => $shift->id,
+            'tax_rate' => 0,
+            'discount' => 0,
+        ]);
+
+        $saleResponse->assertOk();
+        $sale = Sale::findOrFail($saleResponse->json('sale_id'));
+
+        $this->assertSame(8, $product->fresh()->stock_quantity);
+        $this->assertSame(
+            8,
+            (int) ProductWarehouseStock::where('warehouse_id', $warehouse->id)->where('product_id', $product->id)->value('quantity')
+        );
+
+        $this->actingAs($this->foundationUser)->postJson(route('pos.sales.refund', $sale), [
+            'amount' => 200,
+            'reason' => 'Full return WH',
+            'method' => 'cash',
+            'restock' => true,
+        ])->assertOk();
+
+        $this->assertSame(10, $product->fresh()->stock_quantity);
+        $this->assertSame(
+            10,
+            (int) ProductWarehouseStock::where('warehouse_id', $warehouse->id)->where('product_id', $product->id)->value('quantity')
+        );
+
+        $inMovement = \App\Models\StockMovement::query()
+            ->where('product_id', $product->id)
+            ->where('type', 'in')
+            ->where('reference', 'like', 'REF-%')
+            ->latest('id')
+            ->first();
+
+        $this->assertNotNull($inMovement);
+        $this->assertSame($warehouse->id, (int) $inMovement->warehouse_id);
+        $this->assertNull($inMovement->product_variant_id);
+        $this->assertSame('POS Refund', $inMovement->notes);
     }
 }
