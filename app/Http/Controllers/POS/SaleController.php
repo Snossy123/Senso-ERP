@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\POS;
 
+use App\Application\Inventory\InventoryPostingService;
+use App\Application\Inventory\StockPostingData;
 use App\Events\POS\InventoryBulkUpdated;
 use App\Events\POS\PosSaleCompleted;
 use App\Http\Controllers\Controller;
 use App\Models\PosShift;
 use App\Models\Product;
-use App\Models\ProductWarehouseStock;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SaleRefund;
@@ -21,8 +22,9 @@ use Illuminate\Support\Facades\Schema;
 
 class SaleController extends Controller
 {
-    public function __construct()
-    {
+    public function __construct(
+        private readonly InventoryPostingService $inventoryPostingService
+    ) {
         $this->middleware('auth');
     }
 
@@ -198,44 +200,25 @@ class SaleController extends Controller
                     'total' => $lineTotal - $lineDisc,
                 ]);
 
-                // 1. Decrement Global Stock
-                $product->decrement('stock_quantity', $item['qty']);
-                $product->refresh();
+                $this->inventoryPostingService->postOutbound(
+                    StockPostingData::forPosSaleLine(
+                        tenantId: (int) $tenant->id,
+                        productId: $product->id,
+                        productVariantId: $variantId,
+                        warehouseId: $shift?->warehouse_id,
+                        quantity: $item['qty'],
+                        unitCost: (float) $product->purchase_price,
+                        totalValue: $item['qty'] * (float) $product->purchase_price,
+                        saleNumber: $sale->sale_number,
+                        userId: (int) Auth::id(),
+                    )
+                );
 
-                // 2. Decrement Warehouse/Variant Stock
-                if ($shift && $shift->warehouse_id) {
-                    ProductWarehouseStock::updateOrCreate(
-                        [
-                            'product_id' => $product->id,
-                            'product_variant_id' => $variantId,
-                            'warehouse_id' => $shift->warehouse_id,
-                        ],
-                        ['tenant_id' => $product->tenant_id]
-                    )->decrement('quantity', $item['qty']);
-                }
+                $product->refresh();
 
                 if ($product->stock_quantity <= $product->min_stock_alert) {
                     $lowStockProducts[] = $product;
                 }
-
-                $beforeQty = $product->stock_quantity + $item['qty'];
-
-                StockMovement::create([
-                    'tenant_id' => $tenant->id,
-                    'product_id' => $product->id,
-                    'product_variant_id' => $variantId,
-                    'warehouse_id' => $shift?->warehouse_id,
-                    'type' => 'out',
-                    'quantity' => $item['qty'],
-                    'before_quantity' => $beforeQty,
-                    'after_quantity' => $product->stock_quantity,
-                    'unit_cost' => $product->purchase_price,
-                    'total_value' => $item['qty'] * $product->purchase_price,
-                    'reference' => $sale->sale_number,
-                    'notes' => 'POS Sale',
-                    'user_id' => Auth::id(),
-                    'tenant_id' => $tenant->id,
-                ]);
             }
 
             $saleId = $sale->id;

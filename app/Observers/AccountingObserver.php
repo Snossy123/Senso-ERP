@@ -18,19 +18,31 @@ class AccountingObserver
 
     /**
      * Handle the Sale "created" event.
+     *
+     * Must not type-hint Sale: this observer is shared with PurchaseOrder; Laravel dispatches
+     * created() for every observed model, so a Sale type hint causes TypeError on PurchaseOrder::created.
      */
-    public function created(Sale $sale)
+    public function created($model): void
     {
-        $this->processJournalEntry($sale);
+        if ($model instanceof Sale) {
+            $this->processJournalEntry($model);
+        }
     }
 
     /**
-     * Handle Purchase Order "updated" event
+     * Handle Purchase Order "updated" event.
+     *
+     * Must not type-hint PurchaseOrder: this observer is shared with Sale; Laravel dispatches
+     * updated() for every observed model, so a PurchaseOrder type hint causes TypeError on Sale::updated.
      */
-    public function updated(PurchaseOrder $order)
+    public function updated($model): void
     {
-        if ($order->isDirty('status') && $order->status === 'completed') {
-            $this->processJournalEntry($order);
+        if (! $model instanceof PurchaseOrder) {
+            return;
+        }
+
+        if ($model->isDirty('status') && $model->status === 'completed') {
+            $this->processJournalEntry($model);
         }
     }
 
