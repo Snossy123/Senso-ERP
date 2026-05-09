@@ -89,9 +89,6 @@ function initPosTerminal() {
                 this.hasMoreProducts = Boolean(data.next_page_url);
                 this.lastLoadedAt = Date.now();
                 this.catalogStale = false;
-                if (reset && typeof this.catalogUiPage === 'number') {
-                    this.catalogUiPage = 1;
-                }
                 if (typeof this._syncKeyboardCatalogIndex === 'function') {
                     this._syncKeyboardCatalogIndex(reset);
                 }
@@ -168,10 +165,6 @@ function initPosTerminal() {
                 return;
             }
             if (product.has_variants && product.variants?.length > 0) {
-                if (typeof this.openCatalogProductDetail === 'function') {
-                    this.openCatalogProductDetail(null, product);
-                    return;
-                }
                 this.activeProduct = product;
                 this.activeProductVariants = product.variants;
                 posModal('#variantModal', 'show');
@@ -412,12 +405,6 @@ function initPosTerminal() {
         _syncInFlight: false,
 
         keyboardProductIndex: 0,
-        /** Client-side catalog UI pagination (slices filteredProducts). */
-        catalogUiPage: 1,
-        catalogPageSize: 12,
-        detailModalQty: 1,
-        detailModalDiscountPct: 0,
-        detailSelectedVariantId: null,
         cartFocusedIndex: 0,
         recentFlashProductId: null,
         _cartPulseIndex: -1,
@@ -506,22 +493,6 @@ function initPosTerminal() {
                 }
             });
             this.cart = this.cart.filter((line) => line.qty > 0);
-        },
-
-        /** Current page of products for grid + keyboard (client-side slice). */
-        get catalogPagedProducts() {
-            const list = this.filteredProducts || [];
-            const size = Math.max(1, Math.floor(posFinite(this.catalogPageSize, 12)));
-            const page = Math.max(1, Math.floor(posFinite(this.catalogUiPage, 1)));
-            const start = (page - 1) * size;
-            return list.slice(start, start + size);
-        },
-
-        /** Pages available from loaded rows (ceil). */
-        get catalogTotalLoadedPages() {
-            const list = this.filteredProducts || [];
-            const size = Math.max(1, Math.floor(posFinite(this.catalogPageSize, 12)));
-            return Math.max(1, Math.ceil(list.length / size));
         },
 
         selectSplitPayment() {
@@ -919,11 +890,7 @@ function initPosTerminal() {
         },
 
         _syncKeyboardCatalogIndex(reset) {
-            if (reset && typeof this.catalogUiPage === 'number') {
-                this.catalogUiPage = 1;
-            }
-            const pageList = this.catalogPagedProducts;
-            const len = pageList.length;
+            const len = this.filteredProducts.length;
             if (!len) {
                 this.keyboardProductIndex = 0;
                 return;
@@ -954,7 +921,7 @@ function initPosTerminal() {
         },
 
         _navigateProductGrid(direction) {
-            const list = this.catalogPagedProducts;
+            const list = this.filteredProducts;
             if (!list.length) return;
             const cols = this._readCatalogGridCols();
             const len = list.length;
@@ -972,184 +939,18 @@ function initPosTerminal() {
         },
 
         _keyboardAddFocusedProduct() {
-            const list = this.catalogPagedProducts;
+            const list = this.filteredProducts;
             if (!list.length) return;
             const idx = Math.min(this.keyboardProductIndex, list.length - 1);
             const p = list[idx];
             if (!p || p.out_of_stock) return;
             this.keyboardProductIndex = idx;
-            if (typeof this.quickAddCatalogProduct === 'function') {
-                this.quickAddCatalogProduct(p);
-            } else {
-                this.addToCart(p);
-            }
+            this.addToCart(p);
         },
 
-        /**
-         * Card opens detail configurator. + button quick-adds (variants → detail).
-         */
-        openCatalogProductDetail(idx, product) {
-            if (!product) return;
-            if (!this.shiftId) {
-                if (window.Pos?.Telemetry) Pos.Telemetry.toast('Open a shift first.', 'warning');
-                else alert('Please open a shift first.');
-                return;
-            }
-            if (product.out_of_stock) return;
-            if (typeof idx === 'number') this.keyboardProductIndex = idx;
-            this.activeProduct = product;
-            this.activeProductVariants = product.variants || [];
-            this.detailModalQty = 1;
-            this.detailModalDiscountPct = 0;
-            if (product.has_variants && product.variants?.length > 0) {
-                this.detailSelectedVariantId = product.variants[0].id;
-            } else {
-                this.detailSelectedVariantId = null;
-            }
-            posModal('#productDetailModal', 'show');
-        },
-
-        closeProductDetailModal() {
-            posModal('#productDetailModal', 'hide');
-        },
-
-        quickAddCatalogProduct(product) {
-            if (!product || product.out_of_stock) return;
-            if (!this.shiftId) {
-                if (window.Pos?.Telemetry) Pos.Telemetry.toast('Open a shift first.', 'warning');
-                else alert('Please open a shift first.');
-                return;
-            }
-            if (product.has_variants && product.variants?.length > 0) {
-                this.openCatalogProductDetail(null, product);
-                return;
-            }
-            this.addToCart(product);
-        },
-
-        async catalogNextPage() {
-            const size = Math.max(1, Math.floor(posFinite(this.catalogPageSize, 12)));
-            const nextStart = this.catalogUiPage * size;
-            if (
-                nextStart >= this.filteredProducts.length &&
-                this.hasMoreProducts &&
-                !this.loadingProducts &&
-                this.routes.productsFeed
-            ) {
-                await this.fetchProducts(false);
-            }
-            const maxPage = Math.max(1, Math.ceil(this.filteredProducts.length / size));
-            if (this.catalogUiPage < maxPage) {
-                this.catalogUiPage++;
-                this.keyboardProductIndex = 0;
-            }
-        },
-
-        catalogPrevPage() {
-            if (this.catalogUiPage > 1) {
-                this.catalogUiPage--;
-                this.keyboardProductIndex = 0;
-            }
-        },
-
-        _addSimpleLineFromDetail(product, qty, discountPct) {
-            const q = Math.max(1, Math.floor(posFinite(qty, 1)));
-            const disc = Math.min(100, Math.max(0, posFinite(discountPct, 0)));
-            const existing = this.cart.find((item) => item.id === product.id && !item.variant_id);
-            if (existing) {
-                const nextQty = existing.qty + q;
-                if (nextQty > product.stock) {
-                    if (window.Pos?.Telemetry) Pos.Telemetry.toast('Stock limit reached.', 'warning');
-                    else alert('Stock limit reached.');
-                    existing.qty = product.stock;
-                } else {
-                    existing.qty = nextQty;
-                }
-                existing.discount_pct = disc;
-                const lineIdx = this.cart.indexOf(existing);
-                if (typeof this.cartFocusedIndex === 'number') this.cartFocusedIndex = lineIdx;
-                if (typeof this._pulseCartRow === 'function') this._pulseCartRow(lineIdx);
-            } else {
-                this.cart.push({
-                    ...product,
-                    qty: q,
-                    discount_pct: disc,
-                    variant_id: null,
-                });
-                const lineIdx = this.cart.length - 1;
-                if (typeof this.cartFocusedIndex === 'number') this.cartFocusedIndex = lineIdx;
-                if (typeof this._pulseCartRow === 'function') this._pulseCartRow(lineIdx);
-            }
-            this.scrollToBottomCart();
-            if (typeof this._scheduleCustomerDisplayBroadcast === 'function') {
-                this._scheduleCustomerDisplayBroadcast();
-            }
-            if (typeof this._persistCartDraft === 'function') this._persistCartDraft();
-        },
-
-        _addVariantLineFromDetail(product, variant, qty, discountPct) {
-            const q = Math.max(1, Math.floor(posFinite(qty, 1)));
-            const disc = Math.min(100, Math.max(0, posFinite(discountPct, 0)));
-            const existing = this.cart.find(
-                (item) => item.id === product.id && item.variant_id === variant.id
-            );
-            if (existing) {
-                const nextQty = existing.qty + q;
-                if (nextQty > product.stock) {
-                    if (window.Pos?.Telemetry) Pos.Telemetry.toast('Stock limit reached.', 'warning');
-                    else alert('Stock limit reached.');
-                    existing.qty = product.stock;
-                } else {
-                    existing.qty = nextQty;
-                }
-                existing.discount_pct = disc;
-                const lineIdx = this.cart.indexOf(existing);
-                if (typeof this.cartFocusedIndex === 'number') this.cartFocusedIndex = lineIdx;
-                if (typeof this._pulseCartRow === 'function') this._pulseCartRow(lineIdx);
-            } else {
-                this.cart.push({
-                    id: product.id,
-                    name: `${product.name} - ${variant.name}`,
-                    price: variant.price,
-                    stock: product.stock,
-                    qty: q,
-                    discount_pct: disc,
-                    variant_id: variant.id,
-                });
-                const lineIdx = this.cart.length - 1;
-                if (typeof this.cartFocusedIndex === 'number') this.cartFocusedIndex = lineIdx;
-                if (typeof this._pulseCartRow === 'function') this._pulseCartRow(lineIdx);
-            }
-            this.scrollToBottomCart();
-            if (typeof this._scheduleCustomerDisplayBroadcast === 'function') {
-                this._scheduleCustomerDisplayBroadcast();
-            }
-            if (typeof this._persistCartDraft === 'function') this._persistCartDraft();
-        },
-
-        confirmProductDetailAdd() {
-            const product = this.activeProduct;
-            if (!product || !this.shiftId || product.out_of_stock) return;
-            const maxStock = Math.max(0, Math.floor(posFinite(product.stock, 0)));
-            const qtyRaw = Math.max(1, Math.floor(posFinite(this.detailModalQty, 1)));
-            const qty = Math.min(maxStock || 1, qtyRaw);
-            this.detailModalQty = qty;
-            const disc = Math.min(100, Math.max(0, posFinite(this.detailModalDiscountPct, 0)));
-            if (product.has_variants && product.variants?.length > 0) {
-                const v =
-                    product.variants.find((x) => x.id === this.detailSelectedVariantId) ||
-                    product.variants[0];
-                this._addVariantLineFromDetail(product, v, qty, disc);
-            } else {
-                this._addSimpleLineFromDetail(product, qty, disc);
-            }
-            posModal('#productDetailModal', 'hide');
-            if (typeof this._flashCatalogProduct === 'function') this._flashCatalogProduct(product.id);
-        },
-
-        /** @deprecated Use openCatalogProductDetail / quickAddCatalogProduct */
         tapCatalogProduct(idx, product) {
-            this.openCatalogProductDetail(idx, product);
+            if (typeof idx === 'number') this.keyboardProductIndex = idx;
+            this.addToCart(product);
         },
 
         _flashCatalogProduct(productId) {
@@ -1198,10 +999,6 @@ function initPosTerminal() {
 
             window.jQuery('#checkoutModal').on('shown.bs.modal', () => {
                 window.setTimeout(() => document.getElementById('checkoutPayCash')?.focus(), 100);
-            });
-
-            window.jQuery('#productDetailModal').on('shown.bs.modal', () => {
-                window.setTimeout(() => document.getElementById('detailModalQty')?.focus(), 120);
             });
 
             window.jQuery('#successModal').on('shown.bs.modal', () => {

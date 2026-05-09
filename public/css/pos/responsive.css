@@ -1,0 +1,183 @@
+/**
+ * POS app shell — responsive layout (/pos/app).
+ * Loaded after catalog-slice3 so these rules win when needed.
+ */
+
+/* ─── Desktop three-column grid (default ≥992px in-flow rail) ─── */
+@media (min-width: 992px) {
+  .pos-app-main {
+    grid-template-columns: minmax(116px, 128px) minmax(0, 1fr) minmax(300px, 420px);
+  }
+
+  .pos-catalog-viewport,
+  .pos-catalog-grid-view {
+    max-height: min(91vh, calc(100dvh - 148px));
+    height: 100%;
+  }
+
+  .pos-app-rail {
+    width: auto;
+    min-width: 0;
+  }
+}
+
+/* Laptop / small desktop — tighter cart + rail */
+@media (min-width: 992px) and (max-width: 1399px) {
+  .pos-app-main {
+    grid-template-columns: minmax(104px, 118px) minmax(0, 1fr) minmax(260px, 380px);
+    gap: 8px;
+    padding: 0 8px 10px;
+  }
+}
+
+@media (min-width: 992px) and (max-width: 1199px) {
+  .pos-app-main {
+    grid-template-columns: minmax(96px, 108px) minmax(0, 1fr) minmax(240px, 340px);
+  }
+}
+
+@media (min-width: 1400px) {
+  .pos-app-main {
+    grid-template-columns: minmax(116px, 132px) minmax(0, 1fr) minmax(300px, 460px);
+    gap: 12px;
+    padding: 0 12px 14px;
+  }
+}
+
+/* Overlay rail width when off-canvas */
+@media (max-width: 991px) {
+  .pos-app-rail {
+    width: min(112px, 28vw);
+    max-width: 120px;
+  }
+
+  .pos-app-main {
+    gap: 8px;
+    padding: 0 8px 10px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+  }
+
+  .pos-app-catalog-col {
+    min-height: 0;
+    flex: 1 1 auto;
+    max-height: none;
+  }
+
+  .pos-app-cart-col {
+    flex: 0 1 auto;
+    max-height: min(46vh, 440px);
+    max-height: min(46dvh, 440px);
+    min-height: min(200px, 35vh);
+  }
+
+  .pos-catalog-viewport,
+  .pos-catalog-grid-view {
+    max-height: none;
+    height: auto;
+  }
+}
+
+@media (max-width: 576px) {
+  .pos-app-main {
+    padding-left: max(6px, env(safe-area-inset-left));
+    padding-right: max(6px, env(safe-area-inset-right));
+  }
+
+  .pos-app-cart-col {
+    max-height: min(42vh, 400px);
+    max-height: min(42dvh, 400px);
+  }
+}
+
+/* ─── Top bar ─── */
+@media (max-width: 991px) {
+  .pos-app-topbar__inner {
+    padding: 8px 10px;
+    gap: 8px;
+    row-gap: 10px;
+  }
+
+  .pos-app-brand-name {
+    max-width: min(200px, 46vw);
+  }
+
+  /* Prevent iOS zoom on input focus */
+  .pos-app-search-input {
+    font-size: 16px;
+  }
+
+  .pos-app-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    row-gap: 6px;
+  }
+
+  .pos-app-status {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 576px) {
+  .pos-app-brand-meta {
+    display: none;
+  }
+
+  .pos-app-customer-select {
+    max-width: min(130px, 36vw);
+    padding: 6px 8px;
+    font-size: 0.7rem;
+  }
+
+  .pos-app-search-wrap {
+    flex: 1 1 100%;
+    min-width: 0;
+    order: 3;
+  }
+
+  .pos-app-brand {
+    order: 1;
+  }
+
+  .pos-app-customer-pick {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .pos-app-actions {
+    order: 4;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .pos-app-status {
+    order: 5;
+  }
+
+  .pos-app-topbar__inner {
+    flex-wrap: wrap;
+  }
+}
+
+/* ─── Product grid — readable columns on phones ─── */
+@media (max-width: 400px) {
+  .pos-catalog-grid-wrap--app #pos-product-grid.pos-catalog-product-grid--retail,
+  #pos-product-grid.pos-catalog-product-grid--retail {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── Pagination strip — wrap on narrow screens ─── */
+@media (max-width: 420px) {
+  .pos-catalog-pagination-inner {
+    flex-wrap: wrap;
+    gap: var(--pos-space-2);
+  }
+
+  .pos-catalog-page-hint {
+    font-size: 0.65rem;
+    padding: 0 var(--pos-space-2);
+  }
+}

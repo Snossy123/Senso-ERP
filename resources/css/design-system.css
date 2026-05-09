@@ -1,0 +1,142 @@
+/**
+ * POS Slice 0 — Design tokens & typography foundation.
+ * Loaded only via POS bundle (resources/css/pos/main.css). Scoped document is POS layout.
+ */
+
+:root {
+  /* ─── Spacing (4px base) ─── */
+  --pos-space-0: 0;
+  --pos-space-1: 4px;
+  --pos-space-2: 8px;
+  --pos-space-3: 12px;
+  --pos-space-4: 16px;
+  --pos-space-5: 24px;
+  --pos-space-6: 32px;
+  --pos-space-8: 48px;
+
+  /* ─── Radius (aligned with legacy POS base for regression-free migration) ─── */
+  --pos-radius-sm: 12px;
+  --pos-radius-md: 18px;
+  --pos-radius-lg: 24px;
+  --pos-radius-xl: 22px;
+  --pos-radius-full: 9999px;
+
+  /* ─── Elevation ─── */
+  --pos-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --pos-shadow-md: 0 12px 40px rgba(15, 23, 42, 0.08);
+  --pos-shadow-lg: 0 24px 60px rgba(15, 23, 42, 0.12);
+  --pos-elev-1: 0 10px 30px rgba(15, 23, 42, 0.08);
+  --pos-elev-2: 0 16px 40px rgba(15, 23, 42, 0.12);
+
+  /* ─── Color ─── */
+  --pos-color-bg: #f5f7fb;
+  --pos-color-surface: #ffffff;
+  --pos-color-surface-muted: #f1f5f9;
+  --pos-color-surface-elevated: #ffffff;
+  --pos-color-border: #e9edf5;
+  --pos-color-border-subtle: #f1f5f9;
+
+  --pos-color-text: #0f172a;
+  --pos-color-text-muted: #64748b;
+  --pos-color-text-inverse: #ffffff;
+
+  --pos-color-primary: #4338ca;
+  --pos-color-primary-hover: #3730a3;
+  --pos-color-primary-muted: rgba(67, 56, 202, 0.12);
+
+  --pos-color-success: #059669;
+  --pos-color-warning: #d97706;
+  --pos-color-danger: #dc2626;
+
+  /* ─── Typography ─── */
+  --pos-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --pos-font-step--1: 0.72rem;
+  --pos-font-step-0: 0.8125rem;
+  --pos-font-step-1: 0.9375rem;
+  --pos-font-step-2: 1.0625rem;
+  --pos-font-step-3: 1.25rem;
+  --pos-font-step-4: 1.5rem;
+  --pos-font-step-hero: clamp(1.75rem, 4vw, 2.75rem);
+
+  /* ─── Touch ─── */
+  --pos-touch-min: 44px;
+  --pos-touch-comfortable: 48px;
+}
+
+/* ─── Numeric discipline: always pair money with .pos-tabular ─── */
+.pos-tabular {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+}
+
+.pos-text-muted {
+  color: var(--pos-color-text-muted);
+}
+
+.pos-text-strong {
+  color: var(--pos-color-text);
+  font-weight: 600;
+}
+
+/* Type scale (legacy helpers — keep for existing markup) */
+.pos-text-step--1 {
+  font-size: var(--pos-font-step--1);
+}
+.pos-text-step-0 {
+  font-size: var(--pos-font-step-0);
+}
+.pos-text-step-1 {
+  font-size: var(--pos-font-step-1);
+}
+.pos-text-step-2 {
+  font-size: var(--pos-font-step-2);
+}
+.pos-text-step-3 {
+  font-size: var(--pos-font-step-3);
+}
+
+/* Money display scale */
+.pos-money {
+  font-family: var(--pos-font-sans);
+  font-weight: 600;
+  color: var(--pos-color-text);
+}
+.pos-money.pos-tabular {
+  letter-spacing: -0.02em;
+}
+
+.pos-money--sm {
+  font-size: var(--pos-font-step-1);
+  font-weight: 600;
+}
+.pos-money--md {
+  font-size: var(--pos-font-step-3);
+  font-weight: 700;
+}
+.pos-money--lg {
+  font-size: var(--pos-font-step-4);
+  font-weight: 700;
+}
+.pos-money--hero {
+  font-size: var(--pos-font-step-hero);
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.pos-money--muted {
+  color: var(--pos-color-text-muted);
+  font-weight: 500;
+}
+
+.pos-money--success {
+  color: var(--pos-color-success);
+}
+
+.pos-money--danger {
+  color: var(--pos-color-danger);
+}
+
+.pos-btn-primary-visual {
+  box-shadow: var(--pos-shadow-sm);
+  border-radius: var(--pos-radius-md);
+}

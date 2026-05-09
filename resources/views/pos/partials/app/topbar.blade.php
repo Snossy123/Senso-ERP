@@ -2,7 +2,7 @@
 <header class="pos-app-topbar">
     <div class="pos-app-topbar__inner">
         <div class="pos-app-brand">
-            <button type="button" class="pos-app-icon-btn d-xl-none" aria-label="Categories" onclick="document.body.classList.toggle('pos-app-rail-open')">
+            <button type="button" class="pos-app-icon-btn d-lg-none" aria-label="Categories" onclick="document.body.classList.toggle('pos-app-rail-open')">
                 <i class="fe fe-menu"></i>
             </button>
             <div class="pos-app-brand-mark" aria-hidden="true">{{ strtoupper(substr($tenantName ?? 'P', 0, 1)) }}</div>

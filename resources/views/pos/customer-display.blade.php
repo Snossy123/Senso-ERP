@@ -67,7 +67,12 @@
             },
             fmtMoney(n) {
                 const v = Number(n);
-                return this.currencySymbol + (Number.isFinite(v) ? v.toFixed(2) : '0.00');
+                if (!Number.isFinite(v)) return '\u2014';
+                return this.currencySymbol + v.toFixed(2);
+            },
+            amountDueDisplay() {
+                if (this.lines.length === 0) return '\u2014';
+                return this.fmtMoney(this.total);
             },
         };
     }
@@ -128,9 +133,9 @@
                             <template x-for="(line, idx) in lines" :key="idx">
                                 <div class="pos-cd-line-card">
                                     <div class="pos-cd-line-name" x-text="line.name"></div>
-                                    <div class="pos-cd-num pos-cd-text-muted tx-13" x-text="fmtMoney(line.unitPrice || 0)"></div>
+                                    <div class="pos-cd-num pos-cd-text-muted tx-13 pos-tabular" x-text="fmtMoney(line.unitPrice)"></div>
                                     <div class="pos-cd-num pos-cd-text-soft font-weight-bold">×<span x-text="line.qty"></span></div>
-                                    <div class="pos-cd-num font-weight-bold text-white tx-16" x-text="fmtMoney(line.lineTotal || 0)"></div>
+                                    <div class="pos-cd-num font-weight-bold text-white tx-16 pos-tabular" x-text="fmtMoney(line.lineTotal)"></div>
                                 </div>
                             </template>
                         </div>
@@ -142,14 +147,14 @@
         <aside class="pos-cd-total-dock" aria-live="polite">
             <div class="pos-cd-total-hero" :class="{ 'pos-cd-total-hero--idle': lines.length === 0 }">
                 <div class="pos-cd-total-label text-white">Amount due</div>
-                <div class="pos-cd-total-value text-white pos-cd-num" x-text="fmtMoney(total)"></div>
+                <div class="pos-cd-total-value text-white pos-cd-num pos-tabular" x-text="amountDueDisplay()"></div>
                 <div class="pos-cd-summary-rows text-white">
-                    <div><span>Subtotal</span><span class="pos-cd-num" x-text="fmtMoney(subtotal)"></span></div>
+                    <div><span>Subtotal</span><span class="pos-cd-num pos-tabular" x-text="lines.length === 0 ? '\u2014' : fmtMoney(subtotal)"></span></div>
                     <div x-show="orderDiscount > 0 || totalDiscount > 0">
                         <span>Discounts</span>
                         <span class="pos-cd-num" x-text="'-' + fmtMoney(orderDiscount || totalDiscount || 0)"></span>
                     </div>
-                    <div><span>Tax</span><span class="pos-cd-num" x-text="fmtMoney(tax)"></span></div>
+                    <div><span>Tax</span><span class="pos-cd-num pos-tabular" x-text="lines.length === 0 ? '\u2014' : fmtMoney(tax)"></span></div>
                 </div>
             </div>
             <div class="pos-cd-qr" :class="{ 'pos-cd-qr--dim': lines.length === 0 }">

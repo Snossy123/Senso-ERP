@@ -12,9 +12,9 @@
 }
 
 .payment-method-btn.active {
-  border-color: #4338ca !important;
-  box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.25);
-  background: #eef2ff !important;
+  border-color: var(--pos-color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pos-color-primary) 25%, transparent);
+  background: var(--pos-color-primary-muted);
 }
 
 .pos-split-tender-row {
