@@ -1,0 +1,270 @@
+/**
+ * POS Slice 0 — UI primitives (paired with resources/views/components/ui/*).
+ * Prefer these classes over ad-hoc Tailwind in POS views during migration.
+ */
+
+/* ─── Button ─── */
+.pos-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--pos-space-2);
+  font-family: var(--pos-font-sans);
+  font-weight: 600;
+  line-height: 1.2;
+  border-radius: var(--pos-radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.pos-btn:focus-visible {
+  outline: 2px solid var(--pos-color-primary);
+  outline-offset: 2px;
+}
+
+.pos-btn:disabled,
+.pos-btn[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pos-btn--sm {
+  min-height: 36px;
+  padding: var(--pos-space-2) var(--pos-space-3);
+  font-size: var(--pos-font-step-0);
+}
+.pos-btn--md {
+  min-height: var(--pos-touch-min);
+  padding: var(--pos-space-2) var(--pos-space-4);
+  font-size: var(--pos-font-step-1);
+}
+.pos-btn--lg {
+  min-height: var(--pos-touch-comfortable);
+  padding: var(--pos-space-3) var(--pos-space-5);
+  font-size: var(--pos-font-step-2);
+}
+
+.pos-btn--primary {
+  background: var(--pos-color-primary);
+  color: var(--pos-color-text-inverse);
+  box-shadow: var(--pos-shadow-sm);
+}
+.pos-btn--primary:hover:not(:disabled) {
+  background: var(--pos-color-primary-hover);
+}
+
+.pos-btn--secondary {
+  background: var(--pos-color-surface);
+  color: var(--pos-color-text);
+  border-color: var(--pos-color-border);
+}
+.pos-btn--secondary:hover:not(:disabled) {
+  background: var(--pos-color-surface-muted);
+}
+
+.pos-btn--ghost {
+  background: transparent;
+  color: var(--pos-color-primary);
+}
+.pos-btn--ghost:hover:not(:disabled) {
+  background: var(--pos-color-primary-muted);
+}
+
+.pos-btn--danger {
+  background: var(--pos-color-danger);
+  color: var(--pos-color-text-inverse);
+}
+.pos-btn--danger:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+/* ─── Field wrapper ─── */
+.pos-field {
+  margin-bottom: var(--pos-space-4);
+}
+.pos-field:last-child {
+  margin-bottom: 0;
+}
+
+/* ─── Input ─── */
+.pos-input {
+  display: block;
+  width: 100%;
+  min-height: var(--pos-touch-min);
+  padding: var(--pos-space-2) var(--pos-space-3);
+  font-family: var(--pos-font-sans);
+  font-size: var(--pos-font-step-1);
+  color: var(--pos-color-text);
+  background: var(--pos-color-surface);
+  border: 1px solid var(--pos-color-border);
+  border-radius: var(--pos-radius-md);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.pos-input:focus {
+  outline: none;
+  border-color: var(--pos-color-primary);
+  box-shadow: 0 0 0 3px var(--pos-color-primary-muted);
+}
+
+.pos-input::placeholder {
+  color: var(--pos-color-text-muted);
+}
+
+.pos-input--error {
+  border-color: var(--pos-color-danger);
+}
+
+.pos-label {
+  display: block;
+  font-size: var(--pos-font-step--1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pos-color-text-muted);
+  margin-bottom: var(--pos-space-1);
+}
+
+/* ─── Surface / card primitive ─── */
+.pos-surface {
+  background: var(--pos-color-surface);
+  border-radius: var(--pos-radius-lg);
+  border: 1px solid var(--pos-color-border-subtle);
+  box-shadow: var(--pos-shadow-sm);
+}
+
+.pos-surface--muted {
+  background: var(--pos-color-surface-muted);
+}
+
+.pos-surface--elevated {
+  box-shadow: var(--pos-shadow-md);
+}
+
+.pos-surface__body {
+  padding: var(--pos-space-4);
+}
+
+.pos-surface__header {
+  padding: var(--pos-space-4);
+  border-bottom: 1px solid var(--pos-color-border-subtle);
+  font-weight: 600;
+  font-size: var(--pos-font-step-2);
+}
+
+/* ─── Badge ─── */
+.pos-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pos-space-1);
+  padding: 2px var(--pos-space-2);
+  font-size: var(--pos-font-step--1);
+  font-weight: 600;
+  line-height: 1.3;
+  border-radius: var(--pos-radius-full);
+  white-space: nowrap;
+}
+
+.pos-badge--neutral {
+  background: var(--pos-color-surface-muted);
+  color: var(--pos-color-text-muted);
+}
+
+.pos-badge--success {
+  background: rgba(5, 150, 105, 0.12);
+  color: var(--pos-color-success);
+}
+
+.pos-badge--warning {
+  background: rgba(217, 119, 6, 0.15);
+  color: var(--pos-color-warning);
+}
+
+.pos-badge--danger {
+  background: rgba(220, 38, 38, 0.12);
+  color: var(--pos-color-danger);
+}
+
+.pos-badge--primary {
+  background: var(--pos-color-primary-muted);
+  color: var(--pos-color-primary);
+}
+
+/* ─── Modal frame (structural; Bootstrap modals keep .modal-* overrides in modal-modern.css) ─── */
+.pos-ui-modal-frame {
+  border-radius: var(--pos-radius-xl);
+  background: var(--pos-color-surface-elevated);
+  box-shadow: var(--pos-elev-2);
+  overflow: hidden;
+  max-height: min(92dvh, 900px);
+  display: flex;
+  flex-direction: column;
+}
+
+.pos-ui-modal-frame__header {
+  padding: var(--pos-space-4) var(--pos-space-5);
+  border-bottom: 1px solid var(--pos-color-border-subtle);
+  font-weight: 700;
+  font-size: var(--pos-font-step-3);
+}
+
+.pos-ui-modal-frame__body {
+  padding: var(--pos-space-5);
+  overflow-y: auto;
+}
+
+.pos-ui-modal-frame__footer {
+  padding: var(--pos-space-4) var(--pos-space-5);
+  border-top: 1px solid var(--pos-color-border-subtle);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pos-space-3);
+  justify-content: flex-end;
+}
+
+/* ─── Table primitives (operational lists — Phase 6 builds on this) ─── */
+.pos-table-wrap {
+  overflow-x: auto;
+  border-radius: var(--pos-radius-md);
+  border: 1px solid var(--pos-color-border);
+}
+
+.pos-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--pos-font-step-0);
+}
+
+.pos-table th {
+  text-align: left;
+  font-size: var(--pos-font-step--1);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pos-color-text-muted);
+  padding: var(--pos-space-3) var(--pos-space-4);
+  background: var(--pos-color-surface-muted);
+  border-bottom: 1px solid var(--pos-color-border);
+}
+
+.pos-table td {
+  padding: var(--pos-space-3) var(--pos-space-4);
+  border-bottom: 1px solid var(--pos-color-border-subtle);
+  vertical-align: middle;
+}
+
+.pos-table tr:last-child td {
+  border-bottom: none;
+}
+
+.pos-table .pos-table__num {
+  text-align: right;
+}

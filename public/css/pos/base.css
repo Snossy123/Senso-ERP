@@ -1,29 +1,13 @@
 /**
- * POS design tokens — spacing, elevation, semantic colors.
+ * POS legacy utilities — canonical tokens live in resources/css/design-system.css (Slice 0).
  */
-:root {
-  --pos-space-1: 4px;
-  --pos-space-2: 8px;
-  --pos-space-3: 12px;
-  --pos-space-4: 16px;
-  --pos-space-5: 24px;
-  --pos-space-6: 32px;
-  --pos-radius-sm: 12px;
-  --pos-radius-md: 18px;
-  --pos-radius-lg: 24px;
-  --pos-elev-1: 0 10px 30px rgba(15, 23, 42, 0.08);
-  --pos-elev-2: 0 16px 40px rgba(15, 23, 42, 0.12);
-  --pos-color-bg: #f5f7fb;
-  --pos-color-surface: #ffffff;
-  --pos-color-border: #e9edf5;
-  --pos-color-primary: #4338ca;
-  --pos-color-danger: #dc2626;
-  --pos-color-success: #059669;
-  --pos-color-warning: #d97706;
-  --pos-font-sans: 'Inter', system-ui, sans-serif;
-}
 
-.pos-text-muted { color: #64748b; }
-.pos-state-live { color: var(--pos-color-success); }
-.pos-state-offline { color: var(--pos-color-danger); }
-.pos-state-sync { color: var(--pos-color-warning); }
+.pos-state-live {
+  color: var(--pos-color-success);
+}
+.pos-state-offline {
+  color: var(--pos-color-danger);
+}
+.pos-state-sync {
+  color: var(--pos-color-warning);
+}

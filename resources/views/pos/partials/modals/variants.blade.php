@@ -10,7 +10,7 @@
                             tabindex="72"
                             @click="$store.pos.addVariantToCart(v)">
                             <span x-text="v.name"></span>
-                            <span class="badge badge-primary rounded-pill px-3 py-2" x-text="$store.pos.currencySymbol + Number(v.price).toFixed(2)"></span>
+                            <span class="badge badge-primary rounded-pill px-3 py-2 pos-tabular" x-text="$store.pos.moneyLabel(v.price)"></span>
                         </button>
                     </template>
                 </div>

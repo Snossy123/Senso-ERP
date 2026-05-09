@@ -60,7 +60,7 @@
 
                 <div class="rounded-xl border shadow-inner p-3 mb-4 bg-gradient-light" x-show="$store.pos.paymentMethod === 'cash' && $store.pos.lastSaleChangeDue > 0">
                     <div class="tx-11 text-muted text-uppercase font-weight-bold">Change to customer</div>
-                    <h2 class="font-weight-bolder text-success mb-0" x-text="$store.pos.currencySymbol + Number($store.pos.lastSaleChangeDue).toFixed(2)"></h2>
+                    <h2 class="font-weight-bolder text-success mb-0 pos-tabular" x-text="$store.pos.moneyLabel($store.pos.lastSaleChangeDue)"></h2>
                 </div>
 
                 <a :href="'/pos/sales/' + $store.pos.lastSaleId" target="_blank" class="btn btn-outline-primary btn-lg btn-block rounded-xl mb-2 touch-target-modal" style="min-height:48px">

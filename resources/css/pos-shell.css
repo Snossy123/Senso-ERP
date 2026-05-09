@@ -1,0 +1,38 @@
+/**
+ * POS Slice 0 — Shell layout tokens & responsive hooks.
+ * Imports after resources/css/pos/app-shell.css so variables refine the grid without rewriting legacy rules.
+ */
+
+:root {
+  --pos-shell-gap: var(--pos-space-3);
+  --pos-shell-pad-x: var(--pos-space-3);
+  --pos-shell-pad-bottom: var(--pos-space-4);
+  --pos-shell-rail-width: 92px;
+  --pos-shell-cart-min: 300px;
+  --pos-shell-cart-max: 420px;
+}
+
+.pos-app-main {
+  gap: var(--pos-shell-gap);
+  padding: 0 var(--pos-shell-pad-x) var(--pos-shell-pad-bottom);
+  grid-template-columns: var(--pos-shell-rail-width) minmax(0, 1fr) minmax(
+      var(--pos-shell-cart-min),
+      var(--pos-shell-cart-max)
+    );
+}
+
+/* Tablet landscape: slightly tighter rail, cart floor unchanged */
+@media (max-width: 1199px) {
+  :root {
+    --pos-shell-rail-width: 80px;
+    --pos-shell-gap: var(--pos-space-2);
+  }
+}
+
+/* Narrow register: reduce cart max — cart column still present */
+@media (max-width: 991px) {
+  :root {
+    --pos-shell-cart-min: 280px;
+    --pos-shell-cart-max: 360px;
+  }
+}

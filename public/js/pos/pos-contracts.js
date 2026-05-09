@@ -15,13 +15,21 @@
         return String(v);
     }
 
+    /** Strip corrupt '$NaN' strings from receipt previews */
+    function sanitizeMoneyString(v, fallback) {
+        const s = v == null ? '' : String(v);
+        if (/NaN/i.test(s)) return '\u2014';
+        if (!s.length) return fallback;
+        return s;
+    }
+
     function normalizeReceiptLine(line) {
         const el = line && typeof line === 'object' ? line : {};
         return {
             name: strOr(el.name, ''),
             qty: Math.max(0, numOr(el.qty, 0)),
-            unit_price: strOr(el.unit_price, ''),
-            total: strOr(el.total, ''),
+            unit_price: sanitizeMoneyString(el.unit_price, ''),
+            total: sanitizeMoneyString(el.total, ''),
         };
     }
 
@@ -36,12 +44,15 @@
             cashier_name: strOr(r.cashier_name, ''),
             customer_name: strOr(r.customer_name, ''),
             lines,
-            subtotal: strOr(r.subtotal, '$0.00'),
-            discount: r.discount != null && r.discount !== '' ? strOr(r.discount, '') : '',
-            tax: strOr(r.tax, '$0.00'),
-            total: strOr(r.total, '$0.00'),
+            subtotal: sanitizeMoneyString(r.subtotal, '$0.00'),
+            discount:
+                r.discount != null && r.discount !== ''
+                    ? sanitizeMoneyString(r.discount, '')
+                    : '',
+            tax: sanitizeMoneyString(r.tax, '$0.00'),
+            total: sanitizeMoneyString(r.total, '$0.00'),
             payment: strOr(r.payment, ''),
-            change: strOr(r.change, '$0.00'),
+            change: sanitizeMoneyString(r.change, '$0.00'),
         };
     }
 

@@ -136,7 +136,7 @@
             @php $rows = [['label'=>'Customer','value'=>$sale->customer?->name ?? 'Walk-in'],
                     ['label'=>'Status','value'=>ucfirst($sale->status)],
                     ['label'=>'Tender','value'=>ucwords(str_replace('_',' ',$sale->payment_method))],
-                    ['label'=>'Shift', $sale->shift ? $sale->shift->terminal_id.' · '.$sale->shift->opened_at->format('H:i') : '—']]; @endphp
+                    ['label'=>'Shift','value'=>$sale->shift ? $sale->shift->terminal_id.' · '.$sale->shift->opened_at->format('H:i') : '—']]; @endphp
             <div class="position-relative pl-4">
                 <span class="timeline-rail"></span>
                 @foreach($rows as $row)

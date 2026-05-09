@@ -12,28 +12,27 @@
             <div class="modal-body p-0">
                 <div class="row no-gutters">
                     <!-- Left: Breakdown -->
-                    <div class="col-md-5 bg-light p-4 border-md-right checkout-summary-pane">
-                        <h6 class="text-uppercase text-muted font-weight-bold tx-11 mb-4">Summary</h6>
-                        <div class="d-flex justify-content-between mb-2"><span>Subtotal</span> <span class="font-weight-bold" x-text="$store.pos.currencySymbol + $store.pos.subtotal.toFixed(2)"></span></div>
-                        <div class="d-flex justify-content-between mb-2 text-danger" x-show="$store.pos.totalDiscount > 0"><span>Discount</span> <span x-text="'- ' + $store.pos.currencySymbol + $store.pos.totalDiscount.toFixed(2)"></span></div>
-                        <div class="d-flex justify-content-between mb-3 border-bottom pb-3"><span>Tax</span> <span x-text="$store.pos.currencySymbol + $store.pos.tax.toFixed(2)"></span></div>
+                    <div class="col-md-5 pos-checkout-summary-col checkout-summary-pane p-4">
+                        <h6 class="pos-checkout-summary-heading">Summary</h6>
+                        <div class="pos-checkout-summary-row"><span>Subtotal</span> <span class="font-weight-bold pos-tabular" x-text="$store.pos.moneyLabel($store.pos.subtotal)"></span></div>
+                        <div class="pos-checkout-summary-row text-danger pos-tabular" x-show="$store.pos.totalDiscount > 0"><span>Discount</span> <span x-text="$store.pos.discountLabel($store.pos.totalDiscount)"></span></div>
+                        <div class="pos-checkout-summary-row pos-checkout-summary-row--tax"><span>Tax</span> <span class="pos-tabular" x-text="$store.pos.moneyLabel($store.pos.tax)"></span></div>
 
-                        <div class="bg-dark text-white p-4 rounded-lg text-center shadow-sm">
-                            <span class="d-block tx-12 opacity-75 mb-1 text-uppercase">Total due</span>
-                            <h1 class="font-weight-bolder mb-0 checkout-total-display" tabindex="91" aria-live="polite" x-text="$store.pos.currencySymbol + $store.pos.total.toFixed(2)"></h1>
+                        <div class="pos-checkout-due-hero rounded-xl text-center">
+                            <span class="pos-checkout-due-label">Total due</span>
+                            <h1 class="pos-checkout-due-amount checkout-total-display mb-0 pos-tabular" tabindex="91" aria-live="polite" x-text="$store.pos.moneyLabel($store.pos.total)"></h1>
                         </div>
                     </div>
 
                     <!-- Right: Payment -->
-                    <div class="col-md-7 p-4 bg-white">
-                        <h6 class="text-uppercase text-muted font-weight-bold tx-11 mb-3">Payment method</h6>
+                    <div class="col-md-7 pos-checkout-pay-pane p-4 bg-white">
+                        <h6 class="pos-checkout-pay-heading">Payment method</h6>
                         <div class="row mb-4 checkout-payment-row">
                             <div class="col-12 col-lg-4 mb-2 px-1">
                                 <div id="checkoutPayCash"
                                     tabindex="92"
                                     role="button"
                                     class="payment-method-btn rounded-xl touch-target-modal h-100 d-flex flex-column align-items-center justify-content-center"
-                                    style="min-height:56px;"
                                     :class="$store.pos.paymentMethod === 'cash' ? 'active' : ''"
                                     @keydown.enter.prevent="$store.pos.paymentMethod = 'cash'; $store.pos.amountTendered = $store.pos.total.toFixed(2)"
                                     @click="$store.pos.paymentMethod = 'cash'; $store.pos.amountTendered = $store.pos.total.toFixed(2)">
@@ -45,7 +44,6 @@
                                     tabindex="93"
                                     role="button"
                                     class="payment-method-btn rounded-xl touch-target-modal h-100 d-flex flex-column align-items-center justify-content-center"
-                                    style="min-height:56px;"
                                     :class="$store.pos.paymentMethod === 'card' ? 'active' : ''"
                                     @keydown.enter.prevent="$store.pos.paymentMethod = 'card'; $store.pos.amountTendered = $store.pos.total.toFixed(2)"
                                     @click="$store.pos.paymentMethod = 'card'; $store.pos.amountTendered = $store.pos.total.toFixed(2)">
@@ -57,7 +55,6 @@
                                     tabindex="94"
                                     role="button"
                                     class="payment-method-btn rounded-xl touch-target-modal h-100 d-flex flex-column align-items-center justify-content-center"
-                                    style="min-height:56px;"
                                     :class="$store.pos.paymentMethod === 'bank_transfer' ? 'active' : ''"
                                     @keydown.enter.prevent="$store.pos.paymentMethod = 'bank_transfer'; $store.pos.amountTendered = $store.pos.total.toFixed(2)"
                                     @click="$store.pos.paymentMethod = 'bank_transfer'; $store.pos.amountTendered = $store.pos.total.toFixed(2)">
@@ -71,7 +68,6 @@
                                     tabindex="94b"
                                     role="button"
                                     class="payment-method-btn rounded-xl touch-target-modal w-100 d-flex flex-column align-items-center justify-content-center"
-                                    style="min-height:56px;"
                                     :class="$store.pos.paymentMethod === 'split' ? 'active' : ''"
                                     @keydown.enter.prevent="$store.pos.selectSplitPayment()"
                                     @click="$store.pos.selectSplitPayment()">
@@ -102,26 +98,26 @@
                             <div class="pos-split-remainder-pill mb-2"
                                 :class="Math.abs($store.pos.splitRemainingAmount) <= 0.02 ? 'pos-split-remainder-pill--ok' : 'pos-split-remainder-pill--warn'">
                                 <span class="mr-2">Remaining:</span>
-                                <span x-text="$store.pos.currencySymbol + Number($store.pos.splitRemainingAmount || 0).toFixed(2)"></span>
+                                <span class="pos-tabular" x-text="$store.pos.moneyLabel($store.pos.splitRemainingAmount)"></span>
                             </div>
                         </div>
 
                         <div x-show="$store.pos.paymentMethod === 'cash'" x-transition>
                             <label class="tx-11 font-weight-bold text-muted">Cash tendered</label>
-                            <div class="input-group input-group-lg mb-3 shadow-sm rounded-xl overflow-hidden border">
+                            <div class="input-group input-group-lg mb-3 shadow-sm rounded-xl overflow-hidden border pos-checkout-tender-input">
                                 <input type="number" id="checkoutAmountTendered" tabindex="95" aria-label="Amount tendered"
                                     x-model.number="$store.pos.amountTendered"
                                     class="form-control font-weight-bold tx-22 text-center py-3 bg-light border-0">
                                 <div class="input-group-append"><button type="button" tabindex="96" class="btn btn-secondary px-3 border-0" @click="$store.pos.amountTendered = $store.pos.total.toFixed(2)">Exact</button></div>
                             </div>
-                            <div class="row row-xs mb-3 mx-n1">
-                                <div class="col px-1"><button type="button" tabindex="97" class="btn btn-outline-secondary btn-block rounded-xl touch-target-modal" style="min-height:44px" @click="$store.pos.addTendered(10)">+<span x-text="$store.pos.currencySymbol"></span>10</button></div>
-                                <div class="col px-1"><button type="button" tabindex="98" class="btn btn-outline-secondary btn-block rounded-xl touch-target-modal" style="min-height:44px" @click="$store.pos.addTendered(20)">+<span x-text="$store.pos.currencySymbol"></span>20</button></div>
-                                <div class="col px-1"><button type="button" tabindex="99" class="btn btn-outline-secondary btn-block rounded-xl touch-target-modal" style="min-height:44px" @click="$store.pos.addTendered(50)">+<span x-text="$store.pos.currencySymbol"></span>50</button></div>
+                            <div class="row mb-3 mx-n1 pos-checkout-quick-row">
+                                <div class="col px-1"><button type="button" tabindex="97" class="pos-checkout-quick-cash btn btn-outline-secondary btn-block rounded-xl touch-target-modal" @click="$store.pos.addTendered(10)">+<span x-text="$store.pos.currencySymbol"></span>10</button></div>
+                                <div class="col px-1"><button type="button" tabindex="98" class="pos-checkout-quick-cash btn btn-outline-secondary btn-block rounded-xl touch-target-modal" @click="$store.pos.addTendered(20)">+<span x-text="$store.pos.currencySymbol"></span>20</button></div>
+                                <div class="col px-1"><button type="button" tabindex="99" class="pos-checkout-quick-cash btn btn-outline-secondary btn-block rounded-xl touch-target-modal" @click="$store.pos.addTendered(50)">+<span x-text="$store.pos.currencySymbol"></span>50</button></div>
                             </div>
-                            <div class="p-3 mb-3 rounded-xl d-flex justify-content-between align-items-center border" :class="$store.pos.changeDue >= 0 ? 'bg-success-transparent text-success' : 'bg-danger-transparent text-danger'">
+                            <div class="pos-checkout-change-strip p-3 mb-3 rounded-xl d-flex justify-content-between align-items-center" :class="$store.pos.changeDue >= 0 ? 'bg-success-transparent text-success' : 'bg-danger-transparent text-danger'">
                                 <span class="font-weight-bold text-uppercase tx-11">Change due</span>
-                                <h3 class="mb-0 font-weight-bold" x-text="$store.pos.currencySymbol + Math.max(0, $store.pos.changeDue).toFixed(2)"></h3>
+                                <h3 class="mb-0 font-weight-bold pos-tabular" x-text="$store.pos.changeDueDisplay()"></h3>
                             </div>
                         </div>
 
@@ -134,8 +130,7 @@
                 <button type="button"
                     tabindex="101"
                     id="checkoutSubmitBtn"
-                    class="btn btn-block btn-dark btn-lg font-weight-bold rounded-xl checkout-complete-btn shadow-sm touch-target-modal"
-                    style="min-height:54px;"
+                    class="btn btn-block btn-dark btn-lg font-weight-bold rounded-xl checkout-complete-btn shadow-sm touch-target-modal pos-checkout-submit"
                     data-pos-checkout-complete
                     @click="$store.pos.processPayment()"
                     :disabled="$store.pos.processing || $store.pos.paymentBlocked || $store.pos.cartStockBlocked || ($store.pos.paymentMethod === 'cash' && $store.pos.amountTendered < $store.pos.total) || ($store.pos.paymentMethod === 'split' && Math.abs($store.pos.splitRemainingAmount) > 0.02)">

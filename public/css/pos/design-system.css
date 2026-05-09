@@ -1,29 +1,4 @@
 /**
- * Phase 5 — design rhythm (extends base tokens).
- * One product: spacing 4/8/12/16/24, radius 12/18/24, elevation scale.
+ * Deprecated split — typography helpers merged into resources/css/design-system.css.
+ * Kept as an empty stub so old tooling that referenced this path keeps working.
  */
-:root {
-  --pos-font-step--1: 0.72rem;
-  --pos-font-step-0: 0.875rem;
-  --pos-font-step-1: 1rem;
-  --pos-font-step-2: 1.25rem;
-  --pos-font-step-3: 1.5rem;
-  --pos-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --pos-shadow-md: 0 12px 40px rgba(15, 23, 42, 0.08);
-  --pos-shadow-lg: 0 24px 60px rgba(15, 23, 42, 0.12);
-}
-
-.pos-text-step--1 {
-  font-size: var(--pos-font-step--1);
-}
-.pos-text-step-0 {
-  font-size: var(--pos-font-step-0);
-}
-.pos-text-step-1 {
-  font-size: var(--pos-font-step-1);
-}
-
-.pos-btn-primary-visual {
-  box-shadow: var(--pos-shadow-sm);
-  border-radius: var(--pos-radius-md, 18px);
-}

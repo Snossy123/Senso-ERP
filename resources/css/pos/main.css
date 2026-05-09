@@ -1,5 +1,5 @@
+@import url('../design-system.css');
 @import url('./base.css');
-@import url('./design-system.css');
 @import url('./command-bar.css');
 @import url('./layout.css');
 @import url('./products.css');
@@ -9,8 +9,12 @@
 @import url('./receipt.css');
 @import url('./app-shell.css');
 @import url('./product-grid.css');
+@import url('./catalog-slice3.css');
+@import url('./responsive.css');
 @import url('./cart-modern.css');
+@import url('./cart-checkout-slice2.css');
 @import url('./modal-modern.css');
+@import url('../pos-components.css');
 @import url('./kiosk.css');
 
 @media print {

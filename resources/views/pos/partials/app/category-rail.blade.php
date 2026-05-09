@@ -1,5 +1,5 @@
 {{-- Vertical category rail + compact register actions --}}
-<aside class="pos-app-rail" id="pos-app-category-rail">
+<aside class="pos-app-rail pos-app-rail--premium" id="pos-app-category-rail">
     <div class="pos-app-rail-scroll">
         <button type="button"
             class="pos-app-rail-item"
