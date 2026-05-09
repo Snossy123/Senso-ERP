@@ -1,187 +1,127 @@
 @extends('layouts.master')
-
 @section('page-header')
-<div class="breadcrumb-header justify-content-between">
+<div class="breadcrumb-header justify-content-between flex-wrap gap-3">
     <div class="my-auto">
-        <div class="d-flex">
-            <h4 class="content-title mb-0 my-auto">POS</h4>
-            <span class="text-muted mt-1 tx-13 mr-2 mb-0">/ Shift Report</span>
-            <span class="text-muted mt-1 tx-13 mr-2 mb-0">/ {{ $shift->terminal_id }} ({{ $shift->user?->name }})</span>
+        <div class="d-flex flex-wrap">
+            <h4 class="content-title mb-0 my-auto">POS</h4><span class="text-muted mt-1 tx-13 mr-2 mb-0">/ Reconciliation</span>
+            <span class="badge badge-dark rounded-pill ml-2 py-2 px-3 mt-2 mt-xl-0">{{ $shift->terminal_id }}</span>
         </div>
     </div>
-    <div class="d-flex my-xl-auto right-content">
-        <a href="{{ route('pos.shifts.index') }}" class="btn btn-secondary mr-2"><i class="fe fe-arrow-left"></i> Back</a>
-        <button onclick="window.print()" class="btn btn-primary"><i class="fe fe-printer"></i> Print Report</button>
+    <div class="d-flex gap-2 right-content flex-wrap">
+        <a href="{{ route('pos.shifts.index') }}" class="btn btn-secondary rounded-pill"><i class="fe fe-arrow-left"></i> Back</a>
+        <button type="button" onclick="window.print()" class="btn btn-outline-primary rounded-pill"><i class="fe fe-printer"></i> Print</button>
     </div>
 </div>
-@endsection
-
-@section('content')
-<div class="row">
-    {{-- Summary Cards --}}
-    <div class="col-xl-3 col-lg-6 col-md-6 col-xm-12">
-        <div class="card overflow-hidden sales-card bg-primary-gradient">
-            <div class="pl-3 pt-3 pr-3 pb-2 pt-0">
-                <div class="">
-                    <h6 class="mb-3 tx-12 text-white">EXPECTED CASH</h6>
-                </div>
-                <div class="pb-0 mt-0">
-                    <div class="d-flex">
-                        <div class="">
-                            <h4 class="tx-20 font-weight-bold mb-1 text-white">{{ number_format($shift->expected_cash, 2) }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-lg-6 col-md-6 col-xm-12">
-        <div class="card overflow-hidden sales-card bg-danger-gradient">
-            <div class="pl-3 pt-3 pr-3 pb-2 pt-0">
-                <div class="">
-                    <h6 class="mb-3 tx-12 text-white">CLOSING CASH</h6>
-                </div>
-                <div class="pb-0 mt-0">
-                    <div class="d-flex">
-                        <div class="">
-                            <h4 class="tx-20 font-weight-bold mb-1 text-white">{{ number_format($shift->closing_float, 2) }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-lg-6 col-md-6 col-xm-12">
-        <div class="card overflow-hidden sales-card bg-success-gradient">
-            <div class="pl-3 pt-3 pr-3 pb-2 pt-0">
-                <div class="">
-                    <h6 class="mb-3 tx-12 text-white">TOTAL SALES</h6>
-                </div>
-                <div class="pb-0 mt-0">
-                    <div class="d-flex">
-                        <div class="">
-                            <h4 class="tx-20 font-weight-bold mb-1 text-white">{{ number_format($shift->totalSales(), 2) }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-lg-6 col-md-6 col-xm-12">
-        <div class="card overflow-hidden sales-card {{ $shift->variance == 0 ? 'bg-info-gradient' : 'bg-warning-gradient' }}">
-            <div class="pl-3 pt-3 pr-3 pb-2 pt-0">
-                <div class="">
-                    <h6 class="mb-3 tx-12 text-white">VARIANCE</h6>
-                </div>
-                <div class="pb-0 mt-0">
-                    <div class="d-flex">
-                        <div class="">
-                            <h4 class="tx-20 font-weight-bold mb-1 text-white">{{ number_format($shift->variance, 2) }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-lg-12">
-        <div class="card">
-            <div class="card-header pb-0 border-bottom">
-                <h5 class="mb-2">Shift Details</h5>
-                <p class="text-muted small">Comprehensive breakdown of terminal activity during this shift.</p>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6 border-right">
-                        <h6 class="font-weight-bold mb-3"><i class="fe fe-info mr-2"></i>General Information</h6>
-                        <table class="table table-sm table-borderless">
-                            <tr><th class="pl-0 text-muted">Status</th><td class="text-right font-weight-bold text-uppercase @if($shift->status == 'open') text-success @endif">{{ $shift->status }}</td></tr>
-                            <tr><th class="pl-0 text-muted">Cashier</th><td class="text-right font-weight-bold">{{ $shift->user?->name }}</td></tr>
-                            <tr><th class="pl-0 text-muted">Terminal</th><td class="text-right">{{ $shift->terminal_id }}</td></tr>
-                            <tr><th class="pl-0 text-muted">Opened At</th><td class="text-right">{{ $shift->opened_at->format('M d, Y H:i:s') }}</td></tr>
-                            <tr><th class="pl-0 text-muted">Closed At</th><td class="text-right">{{ $shift->closed_at ? $shift->closed_at->format('M d, Y H:i:s') : 'Still active' }}</td></tr>
-                        </table>
-                    </div>
-                    <div class="col-md-6">
-                        <h6 class="font-weight-bold mb-3"><i class="fe fe-activity mr-2"></i>Financial Reconciliation</h6>
-                        <table class="table table-sm table-borderless">
-                            <tr><th class="pl-0 text-muted">Opening Float</th><td class="text-right">{{ number_format($shift->opening_float, 2) }}</td></tr>
-                            <tr><th class="pl-0 text-muted">Cash Sales (+)</th><td class="text-right font-weight-bold text-success">{{ number_format($shift->totalCashSales(), 2) }}</td></tr>
-                            <tr><th class="pl-0 text-muted">Expected in Drawer</th><td class="text-right font-weight-bold">{{ number_format($shift->expected_cash, 2) }}</td></tr>
-                            <tr class="border-top"><th class="pl-0 text-muted pt-2">Actual Cash Counted</th><td class="text-right pt-2 font-weight-bold text-primary">{{ number_format($shift->closing_float, 2) }}</td></tr>
-                            <tr><th class="pl-0 text-muted">Variance</th><td class="text-right font-weight-bold {{ $shift->variance == 0 ? 'text-success' : 'text-danger' }}">{{ number_format($shift->variance, 2) }}</td></tr>
-                        </table>
-                    </div>
-                </div>
-
-                @if($shift->notes)
-                <div class="alert alert-light mt-4">
-                    <h6 class="font-weight-bold mb-1">Shift Notes:</h6>
-                    <p class="mb-0 text-muted">{{ $shift->notes }}</p>
-                </div>
-                @endif
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header pb-0 border-bottom">
-                <h5 class="mb-0">Transactions in this Shift</h5>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="bg-light">
-                            <tr>
-                                <th>#</th>
-                                <th>Sale Number</th>
-                                <th>Time</th>
-                                <th>Customer</th>
-                                <th>Method</th>
-                                <th class="text-right">Total</th>
-                                <th class="text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @php $i = 1; @endphp
-                            @forelse($shift->sales as $sale)
-                            <tr>
-                                <td>{{ $i++ }}</td>
-                                <td class="font-weight-bold">{{ $sale->sale_number }}</td>
-                                <td>{{ $sale->created_at->format('H:i:s') }}</td>
-                                <td>{{ $sale->customer?->name ?? 'Walk-in' }}</td>
-                                <td><span class="badge badge-light">{{ ucfirst($sale->payment_method) }}</span></td>
-                                <td class="text-right font-weight-bold">{{ number_format($sale->total, 2) }}</td>
-                                <td class="text-center">
-                                    <a href="{{ route('pos.sales.show', $sale) }}" class="btn btn-sm btn-outline-info"><i class="fe fe-eye"></i></a>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="7" class="text-center py-4">No transactions recorded yet in this shift.</td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 @endsection
 
 @section('css')
 <style>
-    @media print {
-        .breadcrumb-header, .btn, .main-footer, .breadcrumb { display: none !important; }
-        .card { border: none !important; box-shadow: none !important; margin-bottom: 20px !important; }
-        .content-body { padding: 0 !important; }
+    .recon-fin-card {border-radius:20px;color:#fff;padding:18px;border:1px solid rgba(255,255,255,0.1);margin-bottom:.75rem;box-shadow:0 22px 50px rgba(15,23,42,0.18);}
+    .variance-strong {font-weight:900;letter-spacing:-.02em;}
+    .timeline-rail-shift {border-left:3px dashed #cdd6f9;padding-left:20px;margin-left:10px;}
+    .txn-chip{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;font-weight:800;padding:.35rem .7rem;border-radius:999px;}
+    @media print{
+        .breadcrumb-header,.sidebar,.sidebar-mini,.btn,.main-footer{display:none!important;}
+        .recon-fin-card{color:#222!important;background:#fff!important;box-shadow:none!important;}
     }
 </style>
+@endsection
+
+@section('content')
+@php
+    $variance = (float)($shift->variance ?? 0);
+    $expected = $shift->expected_cash !== null ? (float)$shift->expected_cash : null;
+@endphp
+
+<div class="row row-sm px-2">
+    <div class="col-lg-8">
+        <div class="timeline-rail-shift mb-4 pb-4">
+            <h5 class="font-weight-bold mb-3">Operational timeline</h5>
+            <div class="d-flex align-items-start mb-3"><span class="badge badge-primary-transparent mr-3 mt-1">01</span>
+                <div><div class="text-muted tx-11 mb-2 text-uppercase font-weight-semibold">Shift opened</div><div>{{ $shift->opened_at->format('M d, Y H:i:s') }} · cashier {{ $shift->user?->name }}</div></div>
+            </div>
+            @if($shift->closed_at)
+                <div class="d-flex align-items-start mb-3"><span class="badge badge-secondary-transparent mr-3 mt-1">02</span>
+                    <div><div class="text-muted tx-11 mb-2 text-uppercase font-weight-semibold">Register closed</div><div>{{ $shift->closed_at->format('M d, Y H:i:s') }}</div></div>
+                </div>
+            @endif
+            @if($shift->notes)
+                <div class="rounded-xl border px-4 py-3 bg-light"><strong>Notes:</strong><span class="text-muted">{{ $shift->notes }}</span></div>
+            @endif
+        </div>
+
+        <div class="card border-0 shadow-lg rounded-xl">
+            <div class="card-header bg-white py-4 border-0 px-4">
+                <h5 class="mb-2 font-weight-bold">Transactions anchored to lane</h5>
+                <small class="text-muted">Deep links reconcile with accounting payloads automatically.</small>
+            </div>
+            <div class="table-responsive d-none d-md-block">
+                <table class="table mb-0 table-hover tx-13">
+                    <thead class="bg-light text-muted text-uppercase tx-11"><tr><th>#</th><th>Sale</th><th>Time</th><th>Buyer</th><th>Tender</th><th class="text-right">Total</th><th></th></tr></thead>
+                    <tbody>
+                        @php $i = 1; @endphp
+                        @forelse($shift->sales as $sale)
+                        <tr>
+                            <td>{{ $i++ }}</td>
+                            <td class="font-weight-semibold">{{ $sale->sale_number }}</td>
+                            <td>{{ $sale->created_at->format('H:i:s') }}</td>
+                            <td>{{ $sale->customer?->name ?? 'Walk-in' }}</td>
+                            <td>
+                                @if($sale->payment_method === 'cash')
+                                    <span class="txn-chip badge badge-success-transparent px-3 py-1">Cash</span>
+                                @elseif($sale->payment_method === 'card')
+                                    <span class="txn-chip badge badge-info-transparent px-3 py-1">Card</span>
+                                @else
+                                    <span class="txn-chip badge badge-warning-transparent px-3 py-1">Transfer</span>
+                                @endif
+                            </td>
+                            <td class="text-right font-weight-semibold">{{ number_format((float)$sale->total, 2) }}</td>
+                            <td class="text-right"><a href="{{ route('pos.sales.show', $sale) }}" class="btn btn-sm btn-outline-secondary rounded-xl">Ledger</a></td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="7" class="text-center py-5 text-muted">No ticket activity yet.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            <div class="d-md-none px-4 pb-4">
+                @forelse($shift->sales as $sale)
+                    <div class="border rounded-xl p-3 mb-3">
+                        <div class="font-weight-semibold">{{ $sale->sale_number }}</div>
+                        <div class="d-flex justify-content-between tx-13 text-muted mb-3"><span>{{ $sale->created_at->format('H:i:s') }}</span><span>{{ number_format((float)$sale->total, 2) }}</span></div>
+                        <a href="{{ route('pos.sales.show', $sale) }}" class="btn btn-sm btn-outline-primary btn-block rounded-xl">View receipt</a>
+                    </div>
+                @empty
+                    <div class="text-center text-muted py-4 mb-0">No ticket activity captured.</div>
+                @endforelse
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="recon-fin-card mb-4" style="background:linear-gradient(135deg,#1d4ed8,#1e293b);">
+            <small class="text-uppercase tx-11 opacity-80 d-block mb-4">Variance intelligence</small>
+            <div class="d-flex justify-content-between align-items-baseline mb-2">
+                <span class="opacity-80">Variance</span>
+                <span class="variance-strong tx-36">{{ number_format((float)$variance, 2) }}</span>
+            </div>
+            <small class="opacity-80">{{ $shift->status === 'open' ? 'Drawer still accumulating sales.' : 'Locked recon snapshot.' }}</small>
+        </div>
+
+        <div class="bg-white rounded-xl border shadow-lg p-4" style="position:sticky;top:90px;">
+            <h6 class="text-uppercase text-muted mb-4 font-weight-bold">Financial bridge</h6>
+            <div class="border-bottom pb-3 mb-3 d-flex justify-content-between"><small class="text-muted">Opening float</small><strong>{{ number_format((float)$shift->opening_float, 2) }}</strong></div>
+            <div class="border-bottom pb-3 mb-3 d-flex justify-content-between text-success"><small class="font-weight-semibold text-uppercase">Cash receipts</small><strong>+ {{ number_format((float)$shift->totalCashSales(), 2) }}</strong></div>
+            <div class="border-bottom pb-3 mb-3 d-flex justify-content-between"><small class="text-muted">Drawer expectation</small><strong>{{ $expected !== null ? number_format($expected, 2) : '—' }}</strong></div>
+            <div class="d-flex justify-content-between mb-4"><small class="text-muted">Counted cash</small><strong class="tx-18">{{ $shift->closing_float !== null ? number_format((float)$shift->closing_float, 2) : 'Awaiting audit' }}</strong></div>
+            <div class="rounded-xl p-4 border {{ ($shift->status === 'closed' && abs($variance) < .000001) ? 'border-success bg-success-transparent text-success' : 'border-danger bg-danger-transparent'}}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="small text-muted text-uppercase font-weight-bold">Total sales</div>
+                    <div class="h4 mb-0 font-weight-bold">{{ number_format((float)$shift->totalSales(), 2) }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection

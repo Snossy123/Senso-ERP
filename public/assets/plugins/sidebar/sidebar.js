@@ -134,9 +134,18 @@
 	});
 	
 	
-	// ______________ PerfectScrollbar	
-	const ps1 = new PerfectScrollbar('.sidebar-right', {
-		useBothWheelAxes:true,
-		suppressScrollX:true,
-	});
+	// ______________ PerfectScrollbar (optional — skip if plugin missing / no element)
+	if (typeof PerfectScrollbar !== 'undefined') {
+		var psEl = document.querySelector('.sidebar-right');
+		if (psEl) {
+			try {
+				new PerfectScrollbar(psEl, {
+					useBothWheelAxes:true,
+					suppressScrollX:true,
+				});
+			} catch (e) {
+				console.warn('[PerfectScrollbar] sidebar-right init skipped:', e);
+			}
+		}
+	}
 }(jQuery);

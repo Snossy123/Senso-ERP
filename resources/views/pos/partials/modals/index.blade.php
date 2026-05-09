@@ -1,0 +1,9 @@
+{{-- POS terminal modals (atomic includes) — keep IDs stable for JS --}}
+@include('pos.partials.modals.held-orders')
+@include('pos.partials.modals.open-shift')
+@include('pos.partials.modals.close-shift')
+@include('pos.partials.modals.quick-customer')
+@include('pos.partials.modals.variants')
+@include('pos.partials.modals.checkout')
+@include('pos.partials.modals.success')
+@include('pos.partials.modals.queue')

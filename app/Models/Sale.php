@@ -15,7 +15,7 @@ class Sale extends Model
         'sale_number', 'customer_id', 'customer_name', 'customer_email', 'user_id', 'shift_id',
         'subtotal', 'discount_amount', 'tax_amount', 'total',
         'payment_method', 'payment_status', 'amount_tendered', 'change_due',
-        'status', 'notes', 'void_reason', 'voided_by', 'voided_at',
+        'status', 'notes', 'client_idempotency_key', 'void_reason', 'voided_by', 'voided_at',
     ];
 
     protected $casts = [

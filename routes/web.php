@@ -46,8 +46,13 @@ Route::get('/__uomo/{path}', [UomoAssetController::class, 'show'])
 Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-    // POS
-    Route::get('/pos', [POSController::class, 'terminal'])->name('pos.terminal');
+    // POS — standalone cashier app (primary); `/pos` redirects for backward-compatible bookmarks
+    Route::get('/pos', function () {
+        return redirect()->route('pos.app');
+    })->name('pos.terminal');
+    Route::get('/pos/app', [POSController::class, 'app'])->name('pos.app');
+    Route::get('/pos/legacy', [POSController::class, 'terminalLegacy'])->name('pos.terminal.legacy');
+    Route::get('/pos/display', [POSController::class, 'customerDisplay'])->name('pos.display');
     Route::post('/pos/sale', [SaleController::class, 'store'])->name('pos.sale.store');
     Route::get('/pos/sales', [SaleController::class, 'index'])->name('pos.sales.index');
     Route::get('/pos/sales/{sale}', [SaleController::class, 'show'])->name('pos.sales.show');
@@ -62,6 +67,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/pos/held/{held}/resume', [POSController::class, 'resumeHeldOrder'])->name('pos.held.resume');
     // POS Product Search / Barcode
     Route::get('/pos/search', [POSController::class, 'searchProduct'])->name('pos.search');
+    Route::get('/pos/products', [POSController::class, 'productsFeed'])->name('pos.products.feed');
     Route::post('/pos/customer/quick-store', [POSController::class, 'quickStoreCustomer'])->name('pos.customer.quick-store');
     // POS Shift Reports
     Route::get('/pos/shifts', [POSController::class, 'shiftsIndex'])->name('pos.shifts.index');

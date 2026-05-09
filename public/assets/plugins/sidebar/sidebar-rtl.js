@@ -134,9 +134,18 @@
 	});
 	
 	
-	// ______________ PerfectScrollbar	
-	const ps1 = new PerfectScrollbar('.sidebar-left', {
-		useBothWheelAxes:false,
-		suppressScrollX:false,
-	});
+	// ______________ PerfectScrollbar (optional)
+	if (typeof PerfectScrollbar !== 'undefined') {
+		var psRtlEl = document.querySelector('.sidebar-left');
+		if (psRtlEl) {
+			try {
+				new PerfectScrollbar(psRtlEl, {
+					useBothWheelAxes:false,
+					suppressScrollX:false,
+				});
+			} catch (e) {
+				console.warn('[PerfectScrollbar] sidebar-left init skipped:', e);
+			}
+		}
+	}
 }(jQuery);

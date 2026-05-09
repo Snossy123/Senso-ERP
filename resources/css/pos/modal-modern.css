@@ -1,0 +1,27 @@
+/**
+ * POS modals — centered, soft shadow, touch-friendly (scoped to .pos-app).
+ */
+.pos-app .modal-content {
+  border: none;
+  border-radius: 22px;
+  box-shadow: 0 28px 90px rgba(15, 23, 42, 0.22);
+  overflow: hidden;
+}
+
+.pos-app .modal-header {
+  border-bottom: 1px solid #f1f5f9;
+  padding: 1rem 1.25rem;
+}
+
+.pos-app .modal-body {
+  padding: 1.25rem;
+}
+
+.pos-app .modal-footer {
+  border-top: 1px solid #f1f5f9;
+  padding: 1rem 1.25rem;
+}
+
+.pos-app .modal-backdrop.show {
+  opacity: 0.55;
+}

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\POS;
 
+use App\Events\POS\InventoryBulkUpdated;
+use App\Events\POS\PosSaleCompleted;
 use App\Http\Controllers\Controller;
 use App\Models\PosShift;
 use App\Models\Product;
@@ -15,6 +17,7 @@ use App\Notifications\LowStockAlertNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class SaleController extends Controller
 {
@@ -64,6 +67,7 @@ class SaleController extends Controller
             'customer_id' => 'nullable|exists:customers,id',
             'customer_name' => 'nullable|string|max:120',
             'shift_id' => 'required|exists:pos_shifts,id',
+            'client_idempotency_key' => 'nullable|string|max:191',
         ]);
 
         // Resolve Tenant
@@ -81,10 +85,28 @@ class SaleController extends Controller
             return response()->json(['success' => false, 'error' => 'Monthly order limit reached. Please upgrade your plan.'], 403);
         }
 
+        $idempotencyKey = $request->input('client_idempotency_key');
+        if (filled($idempotencyKey) && Schema::hasColumn('sales', 'client_idempotency_key')) {
+            $existing = Sale::query()
+                ->where('tenant_id', $tenant->id)
+                ->where('client_idempotency_key', $idempotencyKey)
+                ->first();
+
+            if ($existing) {
+                return response()->json([
+                    'success' => true,
+                    'duplicate' => true,
+                    'sale_id' => $existing->id,
+                    'change_due' => $existing->change_due,
+                    'sale_number' => $existing->sale_number,
+                ]);
+            }
+        }
+
         $lowStockProducts = [];
         $saleId = null;
 
-        DB::transaction(function () use ($request, &$lowStockProducts, &$saleId, $tenant) {
+        DB::transaction(function () use ($request, &$lowStockProducts, &$saleId, $tenant, $idempotencyKey) {
             $items = $request->input('items');
             $discountAmt = (float) $request->input('discount', 0);
             $taxRate = (float) $request->input('tax_rate', 0);
@@ -129,7 +151,7 @@ class SaleController extends Controller
             $amountTendered = (float) $request->input('amount_tendered', $total);
             $changeDue = max(0, $amountTendered - $total);
 
-            $sale = Sale::create([
+            $saleAttrs = [
                 'tenant_id' => $tenant->id,
                 'sale_number' => Sale::generateSaleNumber(),
                 'customer_id' => $request->input('customer_id'),
@@ -146,7 +168,13 @@ class SaleController extends Controller
                 'change_due' => $changeDue,
                 'status' => 'completed',
                 'notes' => $request->input('notes'),
-            ]);
+            ];
+
+            if (Schema::hasColumn('sales', 'client_idempotency_key')) {
+                $saleAttrs['client_idempotency_key'] = filled($idempotencyKey) ? $idempotencyKey : null;
+            }
+
+            $sale = Sale::create($saleAttrs);
 
             $shift = PosShift::find($request->input('shift_id'));
 
@@ -240,8 +268,34 @@ class SaleController extends Controller
             }
         }
 
-        $sale = Sale::find($saleId);
+        $sale = Sale::with('items.product')->find($saleId);
         \App\Models\Activity::logSale($sale);
+
+        if ($sale && config('broadcasting.default') !== 'null') {
+            try {
+                $updates = [];
+                foreach ($sale->items as $item) {
+                    if ($item->product) {
+                        $updates[] = [
+                            'product_id' => $item->product_id,
+                            'stock_quantity' => $item->product->stock_quantity,
+                        ];
+                    }
+                }
+                if ($updates !== []) {
+                    broadcast(new InventoryBulkUpdated($tenant->id, $updates, 'pos_sale'));
+                }
+                broadcast(new PosSaleCompleted(
+                    $tenant->id,
+                    $sale->id,
+                    (string) $sale->sale_number,
+                    $sale->shift_id,
+                    $sale->user_id
+                ));
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
 
         return response()->json([
             'success' => true,

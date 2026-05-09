@@ -1,0 +1,36 @@
+/**
+ * Product grid emphasis for standalone POS (image-first cards).
+ */
+.pos-catalog-card--app {
+  border-radius: var(--pos-radius-md, 18px);
+  box-shadow: var(--pos-elev-1);
+}
+
+.pos-catalog-grid-wrap--app {
+  padding: 12px !important;
+}
+
+.pos-catalog-card--app .product-img-frame {
+  min-height: 156px;
+  aspect-ratio: 4 / 3;
+}
+
+.pos-catalog-card--app .product-card {
+  border-radius: var(--pos-radius-md, 18px);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+.pos-catalog-card--app .product-card:hover:not(.out-stock) {
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.12);
+}
+
+.pos-catalog-card--app #pos-product-grid.product-grid-rows {
+  gap: 14px;
+}
+
+@media (min-width: 1400px) {
+  .pos-catalog-card--app #pos-product-grid.product-grid-rows,
+  .pos-catalog-card--app .product-skeleton-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
