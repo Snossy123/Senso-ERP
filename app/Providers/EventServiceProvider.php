@@ -2,10 +2,11 @@
 
 namespace App\Providers;
 
+use App\Events\Domain\Sales\SaleRecorded;
+use App\Listeners\Accounting\PostSaleJournalListener;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Event;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -18,6 +19,9 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
+        SaleRecorded::class => [
+            PostSaleJournalListener::class,
+        ],
     ];
 
     /**
@@ -29,7 +33,6 @@ class EventServiceProvider extends ServiceProvider
     {
         parent::boot();
 
-        \App\Models\Sale::observe(\App\Observers\AccountingObserver::class);
         \App\Models\PurchaseOrder::observe(\App\Observers\AccountingObserver::class);
     }
 }

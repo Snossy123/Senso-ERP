@@ -12,7 +12,7 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SaleRefund;
-use App\Models\StockMovement;
+use App\Events\Domain\Sales\SaleRecorded;
 use App\Models\User;
 use App\Notifications\LowStockAlertNotification;
 use Illuminate\Http\Request;
@@ -223,21 +223,14 @@ class SaleController extends Controller
 
             $saleId = $sale->id;
 
-            // ── Create Journal Entry ─────────────────────────────────────
-            try {
-                $generator = \App\Services\Accounting\JournalEntryFactory::getGenerator($sale);
-                $jeData = $generator->generate($sale);
-
-                app(\App\Services\AccountingService::class)->createJournalEntry(
-                    $jeData['header'],
-                    $jeData['lines']
-                );
-            } catch (\Exception $e) {
-                // If accounting fails, we might still want to record the sale,
-                // but usually in ERPs this should be atomic.
-                // For now, we'll throw to rollback and ensure data integrity.
-                throw new \Exception('Accounting integration failed: '.$e->getMessage());
-            }
+            DB::afterCommit(function () use ($sale, $tenant) {
+                event(new SaleRecorded(
+                    saleId: $sale->id,
+                    tenantId: (int) $tenant->id,
+                    channel: 'pos',
+                    payloadVersion: 1,
+                ));
+            });
         });
 
         // Post-transaction: notifications
@@ -305,19 +298,38 @@ class SaleController extends Controller
             return response()->json(['error' => 'Sale is already voided.'], 422);
         }
 
-        DB::transaction(function () use ($sale, $request) {
-            // Restore stock
+        $sale->load(['items.product', 'shift']);
+        $inventory = $this->inventoryPostingService;
+        $warehouseId = $sale->shift?->warehouse_id;
+
+        DB::transaction(function () use ($sale, $request, $inventory, $warehouseId) {
             foreach ($sale->items as $item) {
-                $item->product->increment('stock_quantity', $item->quantity);
-                StockMovement::create([
-                    'tenant_id' => $sale->tenant_id,
-                    'product_id' => $item->product_id,
-                    'type' => 'in',
-                    'quantity' => $item->quantity,
-                    'reference' => 'VOID-'.$sale->sale_number,
-                    'notes' => 'Sale Voided: '.$request->reason,
-                    'user_id' => Auth::id(),
-                ]);
+                $product = $item->product;
+                if (! $product) {
+                    continue;
+                }
+
+                $qty = (int) $item->quantity;
+                if ($qty < 1) {
+                    continue;
+                }
+
+                $unitCost = (float) $product->purchase_price;
+                $totalValue = $qty * $unitCost;
+
+                $inventory->postInbound(
+                    StockPostingData::forPosVoidLine(
+                        tenantId: (int) $sale->tenant_id,
+                        productId: $item->product_id,
+                        productVariantId: $item->product_variant_id,
+                        warehouseId: $warehouseId,
+                        quantity: $qty,
+                        unitCost: $unitCost,
+                        totalValue: $totalValue,
+                        reference: 'VOID-'.$sale->sale_number,
+                        userId: (int) Auth::id(),
+                    )
+                );
             }
 
             $sale->void($request->reason, Auth::id());
@@ -357,7 +369,11 @@ class SaleController extends Controller
         $tenant = app(\App\Services\TenantManager::class)->getCurrent() ?? Auth::user()->tenant;
         $restock = (bool) $request->input('restock', true);
 
-        DB::transaction(function () use ($sale, $request, $tenant, $restock) {
+        $sale->loadMissing(['items.product', 'shift']);
+        $inventory = $this->inventoryPostingService;
+        $warehouseId = $sale->shift?->warehouse_id;
+
+        DB::transaction(function () use ($sale, $request, $tenant, $restock, $inventory, $warehouseId) {
             $refund = SaleRefund::create([
                 'tenant_id' => $tenant?->id ?? $sale->tenant_id,
                 'sale_id' => $sale->id,
@@ -377,26 +393,27 @@ class SaleController extends Controller
                         continue;
                     }
 
-                    $product = Product::find($saleItem->product_id);
+                    $product = $saleItem->product;
                     if (! $product) {
                         continue;
                     }
 
-                    $before = $product->stock_quantity;
-                    $product->increment('stock_quantity', $restoreQty);
+                    $unitCost = (float) $product->purchase_price;
+                    $totalValue = $restoreQty * $unitCost;
 
-                    StockMovement::create([
-                        'tenant_id' => $tenant?->id ?? $sale->tenant_id,
-                        'product_id' => $saleItem->product_id,
-                        'product_variant_id' => $saleItem->product_variant_id,
-                        'type' => 'in',
-                        'quantity' => $restoreQty,
-                        'before_quantity' => $before,
-                        'after_quantity' => $before + $restoreQty,
-                        'reference' => 'REF-'.$refund->refund_number,
-                        'notes' => 'Refund: '.$request->reason,
-                        'user_id' => Auth::id(),
-                    ]);
+                    $inventory->postInbound(
+                        StockPostingData::forPosRefundLine(
+                            tenantId: (int) ($tenant?->id ?? $sale->tenant_id),
+                            productId: $saleItem->product_id,
+                            productVariantId: $saleItem->product_variant_id,
+                            warehouseId: $warehouseId,
+                            quantity: $restoreQty,
+                            unitCost: $unitCost,
+                            totalValue: $totalValue,
+                            reference: 'REF-'.$refund->refund_number,
+                            userId: (int) Auth::id(),
+                        )
+                    );
                 }
             }
 

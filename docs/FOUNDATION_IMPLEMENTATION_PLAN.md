@@ -124,4 +124,17 @@ Dispatch via **`DB::afterCommit`** from orchestration layer once extracted.
 
 ---
 
+## 7. Progress (living status)
+
+| Foundation seam | Status |
+|-----------------|--------|
+| **`InventoryPostingService`** (PO receive, ecommerce outbound, POS outbound; refund/void inbound) | **Complete** |
+| **POS accounting** — single path via **`SaleRecorded`** + **`PostSaleJournalListener`** (after commit) | **Complete** |
+| **Refund / void** inventory — warehouse + rolled-up consistency via **`InventoryPostingService`** | **Complete** |
+| **Ecommerce orchestration** — **`RecordWebOrderService`** (`Application/Sales`) | **Complete (Slice G)** |
+
+Remaining major gaps (not blocking extraction): ecommerce **after-commit accounting** event, **reservations**, **warehouse allocation** for web orders, **order idempotency**.
+
+---
+
 *Update this plan when ADRs are accepted or amended.*

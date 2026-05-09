@@ -79,16 +79,18 @@ class PosVoidCharacterizationTest extends TestCase
         $voidMovement = StockMovement::query()
             ->where('product_id', $product->id)
             ->where('type', 'in')
-            ->where('notes', 'like', 'Sale Voided:%')
+            ->where('reference', 'VOID-'.$sale->sale_number)
             ->first();
 
         $this->assertNotNull($voidMovement);
-        $this->assertNull($voidMovement->warehouse_id);
+        $this->assertSame($warehouse->id, (int) $voidMovement->warehouse_id);
+        $this->assertNull($voidMovement->product_variant_id);
+        $this->assertSame('Voided POS Sale', $voidMovement->notes);
 
         $this->assertSame(
-            10,
+            15,
             (int) ProductWarehouseStock::where('warehouse_id', $warehouse->id)->where('product_id', $product->id)->value('quantity'),
-            'Current behavior: void restores rolled-up product stock only; warehouse slice used by POS sale is not incremented back.'
+            'Void restores rolled-up stock and the warehouse slice used by the POS sale.'
         );
     }
 }
