@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\BelongsToTenant;
 use App\Traits\Loggable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,7 +13,7 @@ use Illuminate\Support\Str;
 
 class Product extends Model
 {
-    use BelongsToTenant, Loggable, SoftDeletes;
+    use BelongsToTenant, HasFactory, Loggable, SoftDeletes;
 
     protected $fillable = [
         'tenant_id', 'sku', 'name', 'slug', 'description', 'category_id', 'supplier_id', 'warehouse_id',

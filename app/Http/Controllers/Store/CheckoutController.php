@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\Store;
 
+use App\Application\Inventory\InventoryPostingService;
+use App\Application\Inventory\StockPostingData;
 use App\Http\Controllers\Controller;
 use App\Models\Activity;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
-use App\Models\StockMovement;
 use App\Models\User;
 use App\Modules\StorefrontBuilder\Services\StorefrontRenderer;
 use App\Notifications\LowStockAlertNotification;
@@ -18,7 +19,10 @@ use Illuminate\Support\Facades\DB;
 
 class CheckoutController extends Controller
 {
-    public function __construct(private readonly StorefrontRenderer $storefrontRenderer) {}
+    public function __construct(
+        private readonly StorefrontRenderer $storefrontRenderer,
+        private readonly InventoryPostingService $inventoryPostingService,
+    ) {}
 
     private function getCart(): array
     {
@@ -117,20 +121,23 @@ class CheckoutController extends Controller
                 ]);
 
                 $product = $line['product'];
+
                 $newStock = $product->stock_quantity - $line['qty'];
 
                 if ($newStock <= $product->min_stock_alert) {
                     $lowStockProducts[] = $product;
                 }
 
-                $product->decrement('stock_quantity', $line['qty']);
-                StockMovement::create([
-                    'product_id' => $product->id,
-                    'type' => 'out',
-                    'quantity' => $line['qty'],
-                    'reference' => $order->order_number,
-                    'notes' => 'Ecommerce Order',
-                ]);
+                $this->inventoryPostingService->postOutbound(
+                    StockPostingData::forEcommerceOrderLine(
+                        tenantId: (int) $order->tenant_id,
+                        productId: $product->id,
+                        quantity: $line['qty'],
+                        orderNumber: $order->order_number,
+                    )
+                );
+
+                $product->refresh();
             }
 
             $orderNumber = $order->order_number;

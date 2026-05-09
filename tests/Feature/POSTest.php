@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Account;
+use App\Models\Permission;
+use App\Models\Plan;
 use App\Models\PosShift;
 use App\Models\Product;
 use App\Models\Sale;
@@ -31,11 +33,29 @@ class POSTest extends TestCase
     {
         parent::setUp();
 
+        $plan = Plan::firstOrCreate(
+            ['slug' => 'legacy-pos-test-plan'],
+            [
+                'name' => 'Legacy POS Test Plan',
+                'description' => 'Feature tests',
+                'price' => 0,
+                'billing_cycle' => 'monthly',
+                'max_users' => 50,
+                'max_products' => 500,
+                'max_orders_per_month' => 500,
+                'features' => ['pos', 'inventory'],
+                'sort_order' => 98,
+                'is_active' => true,
+                'is_featured' => false,
+            ]
+        );
+
         $tenant = Tenant::create([
             'name' => 'POS Test Co',
             'slug' => 'pos-test-'.str_replace('.', '', uniqid('', true)),
             'status' => 'active',
             'is_active' => true,
+            'plan_id' => $plan->id,
             'trial_ends_at' => now()->addMonth(),
             'currency' => 'USD',
             'language' => 'en',
@@ -44,6 +64,12 @@ class POSTest extends TestCase
         $this->tenantId = $tenant->id;
 
         $this->user = User::factory()->create(['tenant_id' => $this->tenantId]);
+
+        $refundPerm = Permission::firstOrCreate(
+            ['slug' => 'pos.refund'],
+            ['name' => 'POS Refund', 'group' => 'pos', 'description' => 'Legacy POS test']
+        );
+        $this->user->permissions()->syncWithoutDetaching([$refundPerm->id => ['granted' => true]]);
 
         $tid = $this->tenantId;
 
@@ -190,21 +216,18 @@ class POSTest extends TestCase
         $shift = PosShift::factory()->create(['user_id' => $this->user->id, 'tenant_id' => $this->tenantId]);
         $product = Product::factory()->create(['stock_quantity' => 10, 'selling_price' => 100, 'tenant_id' => $this->tenantId]);
 
-        // Manual Create Sale with Journal Entry (simulated)
-        $sale = Sale::create([
-            'tenant_id' => $this->tenantId,
-            'user_id' => $this->user->id,
-            'shift_id' => $shift->id,
-            'sale_number' => 'TEST-REFUND-01',
-            'total' => 100,
-            'subtotal' => 100,
-            'tax_amount' => 0,
+        $this->actingAs($this->user)->postJson(route('pos.sale.store'), [
+            'items' => [
+                ['id' => $product->id, 'qty' => 1, 'price' => 100, 'discount_pct' => 0],
+            ],
             'payment_method' => 'cash',
-            'status' => 'completed',
-        ]);
-        $sale->items()->create([
-            'tenant_id' => $this->tenantId, 'product_id' => $product->id, 'quantity' => 1, 'unit_price' => 100, 'total' => 100,
-        ]);
+            'amount_tendered' => 100,
+            'shift_id' => $shift->id,
+            'tax_rate' => 0,
+            'discount' => 0,
+        ])->assertStatus(200);
+
+        $sale = Sale::where('shift_id', $shift->id)->latest('id')->firstOrFail();
 
         // Refund request
         $response = $this->actingAs($this->user)->postJson(route('pos.sales.refund', $sale), [

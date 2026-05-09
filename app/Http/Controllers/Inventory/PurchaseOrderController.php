@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Inventory;
 
+use App\Application\Inventory\InventoryPostingService;
+use App\Application\Inventory\StockPostingData;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
@@ -13,8 +15,9 @@ use Illuminate\Support\Facades\DB;
 
 class PurchaseOrderController extends Controller
 {
-    public function __construct()
-    {
+    public function __construct(
+        private readonly InventoryPostingService $inventoryPostingService
+    ) {
         $this->middleware('auth');
     }
 
@@ -91,38 +94,21 @@ class PurchaseOrderController extends Controller
 
         DB::transaction(function () use ($order) {
             foreach ($order->items as $item) {
-                // 1. Update Warehouse Stock
-                $warehouseStock = \App\Models\ProductWarehouseStock::firstOrCreate([
-                    'product_id' => $item->product_id,
-                    'product_variant_id' => $item->product_variant_id,
-                    'warehouse_id' => $order->warehouse_id,
-                ], [
-                    'tenant_id' => $order->tenant_id,
-                    'quantity' => 0,
-                ]);
-                $warehouseStock->increment('quantity', $item->quantity);
-
-                // 2. Update Global Product Stock
-                $product = $item->product;
-                $beforeQty = $product->stock_quantity;
-                $product->increment('stock_quantity', $item->quantity);
-
-                // 3. Record Movement
-                \App\Models\StockMovement::create([
-                    'product_id' => $item->product_id,
-                    'product_variant_id' => $item->product_variant_id,
-                    'warehouse_id' => $order->warehouse_id,
-                    'purchase_order_id' => $order->id,
-                    'type' => 'in',
-                    'quantity' => $item->quantity,
-                    'before_quantity' => $beforeQty,
-                    'after_quantity' => $beforeQty + $item->quantity,
-                    'unit_cost' => $item->unit_cost,
-                    'total_value' => $item->total,
-                    'reference' => $order->reference_no,
-                    'notes' => 'Received from PO',
-                    'user_id' => Auth::id(),
-                ]);
+                $this->inventoryPostingService->postInbound(
+                    StockPostingData::forGoodsReceipt(
+                        tenantId: (int) $order->tenant_id,
+                        productId: $item->product_id,
+                        productVariantId: $item->product_variant_id,
+                        warehouseId: (int) $order->warehouse_id,
+                        quantity: $item->quantity,
+                        unitCost: (float) $item->unit_cost,
+                        totalValue: (float) $item->total,
+                        reference: $order->reference_no,
+                        notes: 'Received from PO',
+                        userId: Auth::id(),
+                        purchaseOrderId: $order->id,
+                    )
+                );
             }
 
             $order->update([
