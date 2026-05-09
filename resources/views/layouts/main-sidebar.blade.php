@@ -122,7 +122,7 @@
 					@endif
 					@if($can('pos.view'))
 					<li class="slide">
-						<a class="side-menu__item" href="{{ route('pos.terminal') }}">
+						<a class="side-menu__item" href="{{ route('pos.app') }}">
 							<i class="side-menu__icon fe fe-shopping-bag"></i>
 							<span class="side-menu__label">{{ __('messages.sidebar.pos_terminal') }}</span>
 						</a>

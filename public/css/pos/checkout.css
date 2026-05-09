@@ -1,0 +1,45 @@
+/**
+ * Checkout modal, payment chips, split tender rows (Phase 3 architecture).
+ */
+.checkout-modal .payment-method-btn:focus {
+  outline: 2px solid rgba(67, 56, 202, 0.45);
+  outline-offset: 2px;
+}
+.pos-modal-close-fix {
+  min-width: 44px;
+  min-height: 44px;
+  line-height: 1;
+}
+
+.payment-method-btn.active {
+  border-color: #4338ca !important;
+  box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.25);
+  background: #eef2ff !important;
+}
+
+.pos-split-tender-row {
+  display: grid;
+  grid-template-columns: 1fr minmax(120px, 140px);
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.pos-split-remainder-pill {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.pos-split-remainder-pill--warn {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.pos-split-remainder-pill--ok {
+  background: #d1fae5;
+  color: #065f46;
+}

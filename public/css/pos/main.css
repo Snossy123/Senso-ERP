@@ -1,0 +1,23 @@
+@import url('./base.css');
+@import url('./design-system.css');
+@import url('./command-bar.css');
+@import url('./layout.css');
+@import url('./products.css');
+@import url('./cart.css');
+@import url('./checkout.css');
+@import url('./animations.css');
+@import url('./receipt.css');
+@import url('./app-shell.css');
+@import url('./product-grid.css');
+@import url('./cart-modern.css');
+@import url('./modal-modern.css');
+@import url('./kiosk.css');
+
+@media print {
+  body {
+    overflow: visible;
+  }
+  .pos-quick-add-float {
+    display: none !important;
+  }
+}

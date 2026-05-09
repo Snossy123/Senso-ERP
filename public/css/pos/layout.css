@@ -1,0 +1,116 @@
+/**
+ * POS shell & operational chrome (offline strip, toasts, sync badge).
+ */
+body.pos-terminal-body,
+.pos-terminal-wrapper {
+  overflow: hidden;
+  background: var(--pos-color-bg);
+  font-family: var(--pos-font-sans);
+}
+
+.pos-shell {
+  height: calc(100vh - 60px);
+  overflow: hidden;
+}
+
+.pos-terminal-shell {
+  padding-top: 0.75rem !important;
+  padding-bottom: 0.75rem !important;
+}
+
+
+.pos-card {
+  border-radius: var(--pos-radius-md);
+  background: var(--pos-color-surface);
+  box-shadow: var(--pos-elev-1);
+  border: 1px solid var(--pos-color-border);
+}
+
+.pos-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.pos-scroll::-webkit-scrollbar-thumb {
+  background: #d8deea;
+  border-radius: 8px;
+}
+
+.pos-offline-strip {
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pos-space-3);
+  padding: var(--pos-space-2) var(--pos-space-4);
+  background: linear-gradient(90deg, #fef3c7, #fde68a);
+  border-bottom: 1px solid #f59e0b;
+  font-size: 13px;
+  font-weight: 600;
+  color: #78350f;
+}
+
+.pos-offline-strip--hidden {
+  display: none !important;
+}
+
+.pos-sync-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #fff;
+  border: 1px solid rgba(120, 53, 15, 0.25);
+}
+
+#pos-toast-root {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 11000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+  max-width: min(420px, 92vw);
+}
+
+.pos-toast {
+  padding: 12px 16px;
+  border-radius: 12px;
+  box-shadow: var(--pos-elev-2);
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: auto;
+}
+.pos-toast--show {
+  opacity: 1;
+  transform: translateY(0);
+}
+.pos-toast--info {
+  background: #1e293b;
+  color: #f8fafc;
+}
+.pos-toast--success {
+  background: #065f46;
+  color: #ecfdf5;
+}
+.pos-toast--warning {
+  background: #92400e;
+  color: #fffbeb;
+}
+.pos-toast--danger {
+  background: #991b1b;
+  color: #fef2f2;
+}
+
+[x-cloak] {
+  display: none !important;
+}

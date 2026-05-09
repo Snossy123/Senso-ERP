@@ -1,0 +1,19 @@
+/**
+ * Fullscreen / kiosk readiness for standalone POS.
+ */
+.pos-app-body:fullscreen {
+  background: #0f172a;
+}
+
+.pos-app-body:fullscreen .pos-app {
+  height: 100vh;
+  height: 100dvh;
+}
+
+.pos-app-body:fullscreen .pos-app-topbar {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+.pos-app-body:fullscreen .pos-app-main {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}

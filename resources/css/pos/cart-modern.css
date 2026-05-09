@@ -1,0 +1,33 @@
+/**
+ * Smart cart panel — sticky totals, touch POS rhythm.
+ */
+.pos-cart-pane--app {
+  border-radius: var(--pos-radius-md, 18px);
+  max-height: 100%;
+  box-shadow: var(--pos-elev-1);
+}
+
+.pos-cart-pane--app #cart-scroll-area {
+  flex: 1;
+  min-height: 0;
+}
+
+.pos-cart-pane--app #cart-summary-sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  border-radius: 0 0 var(--pos-radius-md, 18px) var(--pos-radius-md, 18px);
+}
+
+.pos-cart-pane--app .pos-cart-row {
+  padding: 14px 16px;
+  border-radius: 14px;
+  margin: 6px 10px;
+  border: 1px solid transparent;
+  border-bottom: none;
+}
+
+.pos-cart-pane--app .pos-cart-row-selected {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+}

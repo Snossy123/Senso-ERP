@@ -1,0 +1,328 @@
+/* POS command bar + register sidebar (Phase 4) */
+.pos-command-bar {
+  border-radius: var(--pos-radius-md, 18px);
+  padding: 1rem 1.25rem 0.75rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  box-shadow: var(--pos-shadow-md, 0 12px 40px rgba(15, 23, 42, 0.06));
+}
+
+.pos-command-bar--compact {
+  padding: 0.55rem 0.85rem 0.45rem;
+  border-radius: var(--pos-radius-md, 18px);
+  box-shadow: var(--pos-shadow-sm, 0 1px 2px rgba(15, 23, 42, 0.06));
+}
+
+.pos-command-bar--compact .pos-command-bar__title {
+  font-size: 1.08rem;
+  margin-bottom: 0;
+}
+
+.pos-command-bar--compact .pos-command-bar__subtitle--collapsible {
+  display: none;
+}
+
+@media (min-width: 1280px) {
+  .pos-command-bar--compact .pos-command-bar__subtitle--collapsible {
+    display: block;
+    margin-top: 0.1rem;
+  }
+}
+
+.pos-command-bar--compact .pos-command-bar__main {
+  gap: 0.65rem 1rem;
+}
+
+.pos-command-bar--compact .pos-cmd-pill {
+  padding: 0.4rem 0.72rem;
+  font-size: 0.76rem;
+}
+
+.pos-command-bar--compact .pos-status-chip {
+  padding: 0.3rem 0.55rem;
+  font-size: 0.7rem;
+}
+
+.pos-command-bar--compact .pos-shortcuts-row {
+  margin-top: 0.45rem;
+  padding-top: 0.45rem;
+}
+
+.pos-command-bar__main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+}
+
+.pos-command-bar__brand {
+  min-width: 200px;
+}
+
+.pos-command-bar__title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+  margin: 0 0 0.15rem;
+}
+
+.pos-command-bar__subtitle {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.pos-command-bar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  justify-content: center;
+}
+
+.pos-command-bar__status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.pos-cmd-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #1e293b;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.pos-cmd-pill:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #0f172a;
+  text-decoration: none;
+}
+
+.pos-cmd-pill:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pos-cmd-pill--link {
+  color: #1e293b;
+}
+
+.pos-cmd-pill--accent {
+  background: linear-gradient(135deg, #4f46e5, #4338ca);
+  border-color: #4338ca;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(67, 56, 202, 0.28);
+}
+
+.pos-cmd-pill--accent:hover {
+  color: #fff;
+  filter: brightness(1.05);
+}
+
+.pos-cmd-pill--muted {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+.pos-cmd-pill--ghost {
+  background: transparent;
+  border-color: #e2e8f0;
+  color: #475569;
+}
+
+.pos-cmd-badge {
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  line-height: 1.25rem;
+  text-align: center;
+  background: #4338ca;
+  color: #fff;
+}
+
+.pos-cmd-badge--warn {
+  background: #d97706;
+}
+
+.pos-cmd-badge--danger {
+  background: #dc2626;
+}
+
+.pos-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.pos-status-chip--ok {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #047857;
+}
+
+.pos-status-chip--bad {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.pos-status-chip--live {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.pos-status-chip--queue {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+.pos-status-chip--muted {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #9a3412;
+}
+
+.pos-cmd-help {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px dashed #cbd5e1;
+  background: #fff;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.pos-cmd-help:hover {
+  border-style: solid;
+  color: #334155;
+}
+
+.pos-shortcuts-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.65rem 0 0.25rem;
+  margin-top: 0.65rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.pos-shortcut-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.pos-shortcut-pill kbd {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 6px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+}
+
+.pos-sidebar-heading {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: #94a3b8;
+  margin-bottom: 0.5rem;
+}
+
+.pos-sidebar-btn {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 14px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.pos-sidebar-btn--success {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #047857;
+}
+
+.pos-sidebar-btn--danger {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.pos-sidebar-link {
+  background: none;
+  border: none;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #4f46e5;
+  cursor: pointer;
+  padding: 0;
+}
+
+.pos-sidebar-select {
+  width: 100%;
+  border-radius: var(--pos-radius-sm, 12px);
+  border: 1px solid #e2e8f0;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.875rem;
+  background: #fff;
+}
+
+.pos-sidebar-select--compact {
+  padding: 0.45rem 0.65rem;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.pos-sidebar-hint--compact {
+  font-size: 0.72rem;
+  line-height: 1.35;
+  opacity: 0.88;
+}
+
+.pos-sidebar-hint strong {
+  color: #475569;
+}

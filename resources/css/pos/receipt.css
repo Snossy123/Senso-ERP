@@ -1,0 +1,157 @@
+/**
+ * Thermal-friendly receipt layout — print-safe.
+ */
+.pos-receipt-print-root {
+  width: 72mm;
+  max-width: 100%;
+  margin: 0 auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #000;
+  background: #fff;
+}
+
+.pos-receipt-print-root--compact {
+  font-size: 11px;
+}
+
+.pos-receipt-brand {
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.pos-receipt-title {
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.pos-receipt-meta {
+  text-align: center;
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+
+.pos-receipt-meta-grid {
+  display: grid;
+  gap: 4px;
+  font-size: 10px;
+  text-align: left;
+  margin-bottom: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed #ccc;
+}
+
+.pos-receipt-meta-grid div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pos-receipt-logo-slot {
+  height: 48px;
+  margin: 0 auto 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #bbb;
+  border-radius: 8px;
+  font-size: 9px;
+  color: #777;
+}
+
+.pos-receipt-lines {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 8px;
+}
+
+.pos-receipt-lines th {
+  text-align: left;
+  font-weight: 700;
+  border-bottom: 1px dashed #000;
+  padding: 4px 2px;
+}
+
+.pos-receipt-lines td {
+  padding: 3px 2px;
+  vertical-align: top;
+}
+
+.pos-receipt-col-qty {
+  width: 2em;
+  text-align: right;
+}
+
+.pos-receipt-col-unit {
+  text-align: right;
+  font-size: 10px;
+  color: #444;
+}
+
+.pos-receipt-col-amt {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.pos-receipt-totals {
+  border-top: 1px dashed #000;
+  padding-top: 6px;
+}
+
+.pos-receipt-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.pos-receipt-row--total {
+  font-weight: 800;
+  margin-top: 6px;
+}
+
+.pos-receipt-footer {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.pos-receipt-thanks {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.pos-receipt-qr {
+  height: 96px;
+  margin: 8px auto;
+  border: 1px dashed #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #666;
+}
+
+.pos-receipt-barcode {
+  margin-top: 6px;
+  letter-spacing: 0.2em;
+  font-size: 11px;
+}
+
+@media screen {
+  .pos-receipt-print-root {
+    padding: 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+  }
+}
+
+@media print {
+  .pos-receipt-print-root {
+    width: 72mm;
+  }
+}
