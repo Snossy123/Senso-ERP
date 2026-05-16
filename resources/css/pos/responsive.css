@@ -5,75 +5,264 @@
 
 /* ─── Desktop three-column grid (default ≥992px in-flow rail) ─── */
 @media (min-width: 992px) {
+  .pos-app {
+    --pos-app-chrome-h: 128px;
+  }
+
   .pos-app-main {
-    grid-template-columns: minmax(116px, 128px) minmax(0, 1fr) minmax(300px, 420px);
+    grid-template-columns: minmax(172px, 204px) minmax(0, 1fr) minmax(300px, 420px);
+  }
+
+  .pos-app-catalog-col {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .pos-catalog-viewport,
   .pos-catalog-grid-view {
-    max-height: min(91vh, calc(100dvh - 148px));
-    height: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: calc(100dvh - var(--pos-app-chrome-h, 128px));
+    height: auto;
   }
 
   .pos-app-rail {
     width: auto;
     min-width: 0;
+    height: 100%;
+    max-height: calc(100dvh - var(--pos-app-chrome-h, 128px));
+  }
+
+  /* Medium desktop — 2-row topbar grid */
+  .pos-app-topbar__inner {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) minmax(120px, 200px) auto;
+    grid-template-areas:
+      'lead search customer status'
+      'actions actions actions actions';
+    gap: 8px 10px;
+    align-items: center;
+  }
+
+  .pos-app-topbar__cluster--lead {
+    grid-area: lead;
+  }
+
+  .pos-app-topbar__cluster--search {
+    grid-area: search;
+    min-width: 0;
+    flex: none;
+  }
+
+  .pos-app-topbar__cluster--customer {
+    grid-area: customer;
+    min-width: 0;
+  }
+
+  .pos-app-topbar__cluster--actions {
+    grid-area: actions;
+    justify-content: flex-end;
+    min-width: 0;
+  }
+
+  .pos-app-topbar__cluster--status {
+    grid-area: status;
+    justify-content: flex-end;
+  }
+
+  .pos-app-actions-extra {
+    display: none;
+  }
+
+  .pos-app-more-menu {
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .pos-app-actions {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    justify-content: flex-end;
+  }
+
+  .pos-app-actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pos-app-pill-label {
+    display: none;
+  }
+}
+
+/* Wide desktop — single-row topbar, full labels */
+@media (min-width: 1400px) {
+  .pos-app {
+    --pos-app-chrome-h: 80px;
+  }
+
+  .pos-app-topbar__inner {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 10px 12px;
+  }
+
+  .pos-app-topbar__cluster--search {
+    flex: 1 1 280px;
+    min-width: 200px;
+  }
+
+  .pos-app-topbar__cluster--status {
+    margin-left: auto;
+  }
+
+  .pos-app-actions-extra {
+    display: inline-flex;
+  }
+
+  .pos-app-more-menu {
+    display: none;
+  }
+
+  .pos-app-pill-label {
+    display: inline;
+  }
+
+  .pos-app-actions {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+}
+
+/* Shorter viewports — denser category rows, rail stays in viewport */
+@media (min-width: 992px) and (max-height: 900px) {
+  .pos-app {
+    --pos-app-chrome-h: 120px;
+  }
+
+  .pos-app-rail {
+    max-height: calc(100dvh - var(--pos-app-chrome-h, 120px));
+  }
+
+  .pos-app-rail--labels.pos-app-rail--premium .pos-app-rail-item {
+    min-height: 42px;
+    padding: 7px 8px;
+  }
+
+  .pos-app-rail--labels.pos-app-rail--premium .pos-app-rail-label {
+    -webkit-line-clamp: 2;
+  }
+
+  .pos-catalog-viewport,
+  .pos-catalog-grid-view {
+    max-height: calc(100dvh - var(--pos-app-chrome-h, 120px));
+  }
+}
+
+@media (min-width: 992px) and (max-height: 720px) {
+  .pos-app-rail--labels.pos-app-rail--premium .pos-app-rail-item {
+    min-height: 38px;
+    padding: 6px 8px;
+    gap: 8px;
+  }
+
+  .pos-app-rail--labels.pos-app-rail--premium .pos-app-rail-monogram,
+  .pos-app-rail--labels.pos-app-rail--premium .pos-app-rail-icon {
+    width: 30px;
+    height: 30px;
   }
 }
 
 /* Laptop / small desktop — tighter cart + rail */
 @media (min-width: 992px) and (max-width: 1399px) {
   .pos-app-main {
-    grid-template-columns: minmax(104px, 118px) minmax(0, 1fr) minmax(260px, 380px);
+    grid-template-columns: minmax(160px, 188px) minmax(0, 1fr) minmax(260px, 380px);
     gap: 8px;
     padding: 0 8px 10px;
+  }
+
+  .pos-app-customer-select {
+    max-width: 160px;
+  }
+
+  .pos-app-brand-name {
+    max-width: 120px;
   }
 }
 
 @media (min-width: 992px) and (max-width: 1199px) {
   .pos-app-main {
-    grid-template-columns: minmax(96px, 108px) minmax(0, 1fr) minmax(240px, 340px);
+    grid-template-columns: minmax(148px, 172px) minmax(0, 1fr) minmax(240px, 320px);
+  }
+
+  .pos-catalog-grid-wrap--app #pos-product-grid.pos-catalog-product-grid--retail {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .pos-cart-order-discount {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--pos-space-2);
+    padding: var(--pos-space-2) var(--pos-space-3);
+    margin-bottom: var(--pos-space-3);
+  }
+
+  .pos-cart-order-discount-hint {
+    display: none;
+  }
+
+  .pos-cart-order-discount-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .pos-cart-order-discount-input,
+  .pos-cart-order-discount input {
+    width: 100%;
+    max-width: 120px;
+    min-height: 40px;
+  }
+
+  .pos-cart-summary-panel {
+    padding: var(--pos-space-3);
+  }
+
+  .pos-cart-due-amount {
+    font-size: clamp(1.35rem, 4vw, 1.75rem);
+  }
+}
+
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .pos-catalog-grid-wrap--app #pos-product-grid.pos-catalog-product-grid--retail {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
 @media (min-width: 1400px) {
   .pos-app-main {
-    grid-template-columns: minmax(116px, 132px) minmax(0, 1fr) minmax(300px, 460px);
+    grid-template-columns: minmax(180px, 212px) minmax(0, 1fr) minmax(300px, 460px);
     gap: 12px;
     padding: 0 12px 14px;
   }
 }
 
-/* Overlay rail width when off-canvas */
+/* Mobile catalog/cart layout — see mobile-shell.css */
 @media (max-width: 991px) {
-  .pos-app-rail {
-    width: min(112px, 28vw);
-    max-width: 120px;
-  }
-
-  .pos-app-main {
-    gap: 8px;
-    padding: 0 8px 10px;
-    padding-bottom: max(10px, env(safe-area-inset-bottom));
-  }
-
-  .pos-app-catalog-col {
-    min-height: 0;
-    flex: 1 1 auto;
+  .pos-catalog-card--app {
     max-height: none;
-  }
-
-  .pos-app-cart-col {
-    flex: 0 1 auto;
-    max-height: min(46vh, 440px);
-    max-height: min(46dvh, 440px);
-    min-height: min(200px, 35vh);
+    height: 100%;
   }
 
   .pos-catalog-viewport,
   .pos-catalog-grid-view {
     max-height: none;
     height: auto;
+  }
+
+  .pos-catalog-grid-wrap--app {
+    padding: 8px !important;
   }
 }
 
@@ -82,82 +271,168 @@
     padding-left: max(6px, env(safe-area-inset-left));
     padding-right: max(6px, env(safe-area-inset-right));
   }
-
-  .pos-app-cart-col {
-    max-height: min(42vh, 400px);
-    max-height: min(42dvh, 400px);
-  }
 }
 
-/* ─── Top bar ─── */
+/* ─── Top bar — tablet / phone ─── */
 @media (max-width: 991px) {
+  .pos-app {
+    --pos-app-chrome-h: 188px;
+    --pos-app-topbar-offset: 168px;
+  }
+
+  .pos-app:has(.pos-app-offline-strip:not([style*='display: none'])) {
+    --pos-app-chrome-h: 220px;
+    --pos-app-topbar-offset: 196px;
+  }
+
+  .pos-app-menu-btn {
+    display: inline-flex;
+  }
+
   .pos-app-topbar__inner {
-    padding: 8px 10px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'lead status'
+      'search search'
+      'customer customer'
+      'actions actions';
     gap: 8px;
-    row-gap: 10px;
+    padding: 8px 10px;
+    align-items: center;
+  }
+
+  .pos-app-topbar__cluster--lead {
+    grid-area: lead;
+  }
+
+  .pos-app-topbar__cluster--status {
+    grid-area: status;
+    margin-left: 0;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .pos-app-topbar__cluster--search {
+    grid-area: search;
+    flex: none;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .pos-app-topbar__cluster--customer {
+    grid-area: customer;
+    width: 100%;
+  }
+
+  .pos-app-topbar__cluster--customer .pos-app-customer-select {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+  }
+
+  .pos-app-topbar__cluster--actions {
+    grid-area: actions;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .pos-app-actions {
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    justify-content: flex-start;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .pos-app-actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pos-app-actions-extra {
+    display: none;
+  }
+
+  .pos-app-more-menu {
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .pos-app-pill {
+    flex-shrink: 0;
+    padding: 8px 10px;
+  }
+
+  .pos-app-pill-label {
+    display: none;
+  }
+
+  .pos-app-chip-label {
+    display: none;
+  }
+
+  .pos-app-chip {
+    padding: 6px 8px;
   }
 
   .pos-app-brand-name {
-    max-width: min(200px, 46vw);
+    max-width: min(42vw, 160px);
+    font-size: 0.88rem;
   }
 
-  /* Prevent iOS zoom on input focus */
   .pos-app-search-input {
     font-size: 16px;
   }
 
-  .pos-app-actions {
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    row-gap: 6px;
+  .pos-cart-order-discount {
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .pos-app-status {
-    width: 100%;
-    margin-left: 0;
-    justify-content: flex-end;
-    flex-wrap: wrap;
+  .pos-cart-order-discount-hint {
+    display: none;
   }
 }
 
 @media (max-width: 576px) {
+  .pos-app {
+    --pos-app-chrome-h: 176px;
+    --pos-app-topbar-offset: 160px;
+  }
+
   .pos-app-brand-meta {
     display: none;
   }
 
-  .pos-app-customer-select {
-    max-width: min(130px, 36vw);
-    padding: 6px 8px;
-    font-size: 0.7rem;
+  .pos-app-brand-mark {
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
   }
 
-  .pos-app-search-wrap {
-    flex: 1 1 100%;
-    min-width: 0;
-    order: 3;
+  .pos-app-icon-btn,
+  .pos-app-menu-btn {
+    width: 36px;
+    height: 36px;
   }
 
-  .pos-app-brand {
-    order: 1;
+  .pos-app-pill {
+    padding: 7px 9px;
+    font-size: 0.72rem;
   }
 
-  .pos-app-customer-pick {
-    order: 2;
-    margin-left: auto;
+  .pos-app-search-input {
+    padding: 9px 12px 9px 38px;
   }
 
-  .pos-app-actions {
-    order: 4;
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .pos-app-status {
-    order: 5;
-  }
-
-  .pos-app-topbar__inner {
-    flex-wrap: wrap;
+  .pos-app-search-icon {
+    left: 12px;
+    font-size: 0.9rem;
   }
 }
 

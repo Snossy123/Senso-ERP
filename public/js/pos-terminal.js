@@ -113,9 +113,34 @@ function initPosTerminal() {
             await this.fetchProducts(true);
         },
 
+        closePosAppRail() {
+            document.body.classList.remove('pos-app-rail-open');
+            document.body.dispatchEvent(new CustomEvent('pos-app-rail-toggled'));
+        },
+
+        togglePosAppRail() {
+            document.body.classList.toggle('pos-app-rail-open');
+            document.body.dispatchEvent(new CustomEvent('pos-app-rail-toggled'));
+        },
+
+        closePosAppCart() {
+            document.body.classList.remove('pos-app-cart-open');
+        },
+
+        togglePosAppCart() {
+            document.body.classList.toggle('pos-app-cart-open');
+        },
+
+        openPosAppCart() {
+            document.body.classList.add('pos-app-cart-open');
+        },
+
         async setCategory(categoryId) {
             this.selectedCategory = categoryId;
             await this.fetchProducts(true);
+            if (window.matchMedia('(max-width: 991px)').matches) {
+                this.closePosAppRail();
+            }
         },
 
         async onCatalogScroll(event) {
@@ -153,6 +178,7 @@ function initPosTerminal() {
     const cartStore = {
         cart: [],
         orderDiscount: 0,
+        orderDiscountMode: 'amount',
         notes: '',
         customerId: '',
 
@@ -184,7 +210,14 @@ function initPosTerminal() {
                 else if (window.Pos?.Telemetry) Pos.Telemetry.toast('Stock limit reached.', 'warning');
                 else alert('Stock limit reached.');
             } else {
-                this.cart.push({ ...product, qty: 1, discount_pct: 0, variant_id: null });
+                this.cart.push({
+                    ...product,
+                    qty: 1,
+                    discount_pct: 0,
+                    discount_amount: 0,
+                    discount_mode: 'pct',
+                    variant_id: null,
+                });
             }
 
             const lineIdx = existing ? this.cart.indexOf(existing) : this.cart.length - 1;
@@ -237,6 +270,21 @@ function initPosTerminal() {
             if (typeof this._persistCartDraft === 'function') this._persistCartDraft();
         },
 
+        _syncCartExpandedAfterRemove(removedIdx) {
+            if (this.cartExpandedIndex === null || this.cartExpandedIndex === undefined) return;
+            if (removedIdx === this.cartExpandedIndex) {
+                this.cartExpandedIndex = null;
+            } else if (removedIdx < this.cartExpandedIndex) {
+                this.cartExpandedIndex--;
+            }
+        },
+
+        toggleCartLineExpand(idx) {
+            if (typeof idx !== 'number' || idx < 0 || idx >= this.cart.length) return;
+            if (typeof this.cartFocusedIndex === 'number') this.cartFocusedIndex = idx;
+            this.cartExpandedIndex = this.cartExpandedIndex === idx ? null : idx;
+        },
+
         updateQty(idx, delta) {
             const item = this.cart[idx];
             if (!item) return;
@@ -244,6 +292,7 @@ function initPosTerminal() {
             const next = item.qty + delta;
             if (next <= 0) {
                 this.cart.splice(idx, 1);
+                this._syncCartExpandedAfterRemove(idx);
                 if (typeof this.cartFocusedIndex === 'number') {
                     if (this.cart.length === 0) this.cartFocusedIndex = 0;
                     else if (this.cartFocusedIndex > idx) this.cartFocusedIndex--;
@@ -274,6 +323,7 @@ function initPosTerminal() {
 
         removeItem(idx) {
             this.cart.splice(idx, 1);
+            this._syncCartExpandedAfterRemove(idx);
             if (typeof this.cartFocusedIndex === 'number') {
                 if (this.cart.length === 0) this.cartFocusedIndex = 0;
                 else if (this.cartFocusedIndex >= this.cart.length) {
@@ -290,7 +340,10 @@ function initPosTerminal() {
 
         clearCartState() {
             this.cart = [];
+            this.closePosAppCart();
+            this.cartExpandedIndex = null;
             this.orderDiscount = 0;
+            this.orderDiscountMode = 'amount';
             this.customerId = '';
             this.notes = '';
             this.paymentMethod = 'cash';
@@ -318,10 +371,10 @@ function initPosTerminal() {
         itemTotal(item) {
             const price = posFinite(item?.price, 0);
             const qty = posFinite(item?.qty, 0);
-            const disc = posFinite(item?.discount_pct, 0);
             const gross = price * qty;
-            const line = gross - (gross * disc) / 100;
-            return Number.isFinite(line) ? line : 0;
+            const disc = this.lineDiscountGross(item);
+            const line = gross - disc;
+            return Number.isFinite(line) ? Math.max(0, line) : 0;
         },
     };
 
@@ -340,19 +393,16 @@ function initPosTerminal() {
         },
 
         get totalDiscount() {
-            const lineDiscount = this.cart.reduce((sum, item) => {
-                const price = posFinite(item?.price, 0);
-                const qty = posFinite(item?.qty, 0);
-                const disc = posFinite(item?.discount_pct, 0);
-                const part = (price * qty * disc) / 100;
-                return sum + (Number.isFinite(part) ? part : 0);
-            }, 0);
-            return lineDiscount + posFinite(parseFloat(this.orderDiscount), 0);
+            const lineDiscount = this.cart.reduce(
+                (sum, item) => sum + (Number.isFinite(this.lineDiscountGross(item)) ? this.lineDiscountGross(item) : 0),
+                0
+            );
+            return lineDiscount + this.orderDiscountGross();
         },
 
         get tax() {
             const sub = posFinite(this.subtotal, 0);
-            const od = posFinite(parseFloat(this.orderDiscount), 0);
+            const od = this.orderDiscountGross();
             const rate = posFinite(this.taxRate, 0) / 100;
             const taxable = sub - od;
             const t = taxable * rate;
@@ -361,7 +411,7 @@ function initPosTerminal() {
 
         get total() {
             const sub = posFinite(this.subtotal, 0);
-            const od = posFinite(parseFloat(this.orderDiscount), 0);
+            const od = this.orderDiscountGross();
             const tx = posFinite(this.tax, 0);
             const t = sub - od + tx;
             return Number.isFinite(t) ? Math.max(0, t) : 0;
@@ -415,10 +465,19 @@ function initPosTerminal() {
         /** Client-side catalog UI pagination (slices filteredProducts). */
         catalogUiPage: 1,
         catalogPageSize: 12,
+        _catalogResizeTimer: null,
+        _catalogResizeBound: false,
         detailModalQty: 1,
         detailModalDiscountPct: 0,
+        detailModalDiscountAmount: 0,
+        detailModalDiscountMode: 'pct',
+        posTheme: 'light',
+        customerSearchQuery: '',
+        customerSearchResults: [],
+        detailModalNotes: '',
         detailSelectedVariantId: null,
         cartFocusedIndex: 0,
+        cartExpandedIndex: null,
         recentFlashProductId: null,
         _cartPulseIndex: -1,
         _recentFlashTimer: null,
@@ -473,9 +532,129 @@ function initPosTerminal() {
         lineDiscountGross(item) {
             const price = posFinite(item?.price, 0);
             const qty = posFinite(item?.qty, 0);
+            const gross = price * qty;
+            const mode = item?.discount_mode === 'amount' ? 'amount' : 'pct';
+            if (mode === 'amount') {
+                const amt = Math.min(gross, Math.max(0, posFinite(item?.discount_amount, 0)));
+                return Number.isFinite(amt) ? amt : NaN;
+            }
             const disc = posFinite(item?.discount_pct, 0);
-            const v = (price * qty * disc) / 100;
+            const v = (gross * disc) / 100;
             return Number.isFinite(v) ? v : NaN;
+        },
+
+        setLineDiscountMode(idx, mode) {
+            const item = this.cart[idx];
+            if (!item) return;
+            item.discount_mode = mode === 'amount' ? 'amount' : 'pct';
+            if (item.discount_mode === 'amount') {
+                item.discount_pct = 0;
+            } else {
+                item.discount_amount = 0;
+            }
+        },
+
+        orderDiscountGross() {
+            const sub = posFinite(this.subtotal, 0);
+            const val = posFinite(parseFloat(this.orderDiscount), 0);
+            const mode = this.orderDiscountMode === 'pct' ? 'pct' : 'amount';
+            if (mode === 'amount') {
+                return Math.min(sub, Math.max(0, val));
+            }
+            const cappedPct = Math.min(100, Math.max(0, val));
+            const v = (sub * cappedPct) / 100;
+            return Number.isFinite(v) ? Math.min(sub, Math.max(0, v)) : 0;
+        },
+
+        setOrderDiscountMode(mode) {
+            this.orderDiscountMode = mode === 'pct' ? 'pct' : 'amount';
+            if (typeof this._persistCartDraft === 'function') this._persistCartDraft();
+            if (typeof this._scheduleCustomerDisplayBroadcast === 'function') {
+                this._scheduleCustomerDisplayBroadcast();
+            }
+        },
+
+        recalcCatalogPageSize() {
+            const viewport = document.getElementById('product-scroll-area');
+            const grid = document.getElementById('pos-product-grid');
+            if (!viewport || !grid) return;
+
+            const cols = this._readCatalogGridCols();
+            const card = grid.querySelector('.pos-catalog-card-modern:not(.pos-catalog-card-modern--skel)');
+            const cardHeight = card ? card.getBoundingClientRect().height : 132;
+            const gap = 12;
+            const pagination = viewport.closest('.pos-catalog-grid-view')?.querySelector('.pos-catalog-pagination');
+            const paginationH = pagination ? pagination.offsetHeight : 52;
+            const avail = Math.max(200, viewport.clientHeight - paginationH - 8);
+            const rows = Math.max(2, Math.floor(avail / (cardHeight + gap)));
+            const next = Math.min(48, Math.max(12, cols * rows));
+
+            if (next !== this.catalogPageSize) {
+                const oldPage = this.catalogUiPage;
+                this.catalogPageSize = next;
+                const maxPage = Math.max(1, Math.ceil((this.filteredProducts?.length || 0) / next));
+                this.catalogUiPage = Math.min(oldPage, maxPage);
+            }
+        },
+
+        _bindCatalogResize() {
+            if (this._catalogResizeBound) return;
+            this._catalogResizeBound = true;
+            const debounced = () => {
+                clearTimeout(this._catalogResizeTimer);
+                this._catalogResizeTimer = setTimeout(() => this.recalcCatalogPageSize(), 150);
+            };
+            window.addEventListener('resize', debounced);
+            if (typeof ResizeObserver !== 'undefined') {
+                const el = document.getElementById('product-scroll-area');
+                if (el) {
+                    this._catalogResizeObserver = new ResizeObserver(debounced);
+                    this._catalogResizeObserver.observe(el);
+                }
+            }
+            document.body.addEventListener('pos-app-rail-toggled', debounced);
+        },
+
+        _bindPosAppRailOverlay() {
+            if (this._posAppRailOverlayBound) return;
+            this._posAppRailOverlayBound = true;
+
+            const backdrop = document.getElementById('pos-app-rail-backdrop');
+            if (backdrop) {
+                backdrop.addEventListener('click', () => this.closePosAppRail());
+            }
+
+            document.querySelectorAll('[data-pos-rail-close]').forEach((btn) => {
+                btn.addEventListener('click', () => this.closePosAppRail());
+            });
+
+            document.querySelectorAll('[data-pos-rail-toggle]').forEach((btn) => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.togglePosAppRail();
+                });
+            });
+        },
+
+        _bindPosAppCartSheet() {
+            if (this._posAppCartSheetBound) return;
+            this._posAppCartSheetBound = true;
+
+            const backdrop = document.getElementById('pos-app-cart-backdrop');
+            if (backdrop) {
+                backdrop.addEventListener('click', () => this.closePosAppCart());
+            }
+
+            document.querySelectorAll('[data-pos-cart-close]').forEach((btn) => {
+                btn.addEventListener('click', () => this.closePosAppCart());
+            });
+
+            document.querySelectorAll('[data-pos-cart-toggle]').forEach((btn) => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.togglePosAppCart();
+                });
+            });
         },
 
         /** Stable receipt shape for Alpine templates — prevents null field errors */
@@ -561,7 +740,7 @@ function initPosTerminal() {
                 lines,
                 subtotal: this.subtotal,
                 tax: this.tax,
-                orderDiscount: parseFloat(this.orderDiscount) || 0,
+                orderDiscount: this.orderDiscountGross(),
                 totalDiscount: this.totalDiscount,
                 total: this.total,
                 currencySymbol: this.currencySymbol,
@@ -577,6 +756,7 @@ function initPosTerminal() {
                     const draft = {
                         cart: this.cart,
                         orderDiscount: this.orderDiscount,
+                        orderDiscountMode: this.orderDiscountMode,
                         notes: this.notes,
                         customerId: this.customerId,
                         savedAt: Date.now(),
@@ -596,6 +776,7 @@ function initPosTerminal() {
                 if (d.cart?.length && this.shiftId) {
                     this.cart = d.cart;
                     this.orderDiscount = d.orderDiscount || 0;
+                    this.orderDiscountMode = d.orderDiscountMode === 'pct' ? 'pct' : 'amount';
                     this.notes = d.notes || '';
                     this.customerId = d.customerId || '';
                     if (window.Pos?.Telemetry) {
@@ -661,7 +842,9 @@ function initPosTerminal() {
                 id: i.id,
                 qty: i.qty,
                 price: i.price,
-                discount_pct: i.discount_pct || 0,
+                discount_pct: i.discount_mode === 'amount' ? 0 : i.discount_pct || 0,
+                discount_amount: i.discount_mode === 'amount' ? i.discount_amount || 0 : 0,
+                discount_mode: i.discount_mode === 'amount' ? 'amount' : 'pct',
                 variant_id: i.variant_id,
             }));
             let amount_tendered = posFinite(this.amountTendered, 0);
@@ -671,7 +854,7 @@ function initPosTerminal() {
             const body = {
                 items,
                 payment_method: this.paymentMethod,
-                discount: this.orderDiscount,
+                discount: this.orderDiscountGross(),
                 tax_rate: posFinite(this.taxRate, 0),
                 amount_tendered,
                 customer_id: this.customerId || null,
@@ -888,6 +1071,11 @@ function initPosTerminal() {
             this._bindRemoteInventory();
             this._restoreCartDraft();
             await this.fetchProducts(true);
+            this._bindCatalogResize();
+            this._bindPosAppRailOverlay();
+            this._bindPosAppCartSheet();
+            this._applyPosTheme();
+            setTimeout(() => this.recalcCatalogPageSize(), 80);
             this._refreshQueueStats();
             this.syncPendingSales();
             this._bindPosBootstrapHooks();
@@ -1001,6 +1189,9 @@ function initPosTerminal() {
             this.activeProductVariants = product.variants || [];
             this.detailModalQty = 1;
             this.detailModalDiscountPct = 0;
+            this.detailModalDiscountAmount = 0;
+            this.detailModalDiscountMode = 'pct';
+            this.detailModalNotes = '';
             if (product.has_variants && product.variants?.length > 0) {
                 this.detailSelectedVariantId = product.variants[0].id;
             } else {
@@ -1052,9 +1243,12 @@ function initPosTerminal() {
             }
         },
 
-        _addSimpleLineFromDetail(product, qty, discountPct) {
+        _addSimpleLineFromDetail(product, qty, discountOpts, notes) {
             const q = Math.max(1, Math.floor(posFinite(qty, 1)));
-            const disc = Math.min(100, Math.max(0, posFinite(discountPct, 0)));
+            const mode = discountOpts?.mode === 'amount' ? 'amount' : 'pct';
+            const discPct = Math.min(100, Math.max(0, posFinite(discountOpts?.pct, 0)));
+            const discAmt = Math.max(0, posFinite(discountOpts?.amount, 0));
+            const note = typeof notes === 'string' ? notes.trim() : '';
             const existing = this.cart.find((item) => item.id === product.id && !item.variant_id);
             if (existing) {
                 const nextQty = existing.qty + q;
@@ -1065,7 +1259,10 @@ function initPosTerminal() {
                 } else {
                     existing.qty = nextQty;
                 }
-                existing.discount_pct = disc;
+                existing.discount_mode = mode;
+                existing.discount_pct = mode === 'pct' ? discPct : 0;
+                existing.discount_amount = mode === 'amount' ? discAmt : 0;
+                existing.notes = note;
                 const lineIdx = this.cart.indexOf(existing);
                 if (typeof this.cartFocusedIndex === 'number') this.cartFocusedIndex = lineIdx;
                 if (typeof this._pulseCartRow === 'function') this._pulseCartRow(lineIdx);
@@ -1073,7 +1270,10 @@ function initPosTerminal() {
                 this.cart.push({
                     ...product,
                     qty: q,
-                    discount_pct: disc,
+                    discount_pct: mode === 'pct' ? discPct : 0,
+                    discount_amount: mode === 'amount' ? discAmt : 0,
+                    discount_mode: mode,
+                    notes: note,
                     variant_id: null,
                 });
                 const lineIdx = this.cart.length - 1;
@@ -1087,9 +1287,12 @@ function initPosTerminal() {
             if (typeof this._persistCartDraft === 'function') this._persistCartDraft();
         },
 
-        _addVariantLineFromDetail(product, variant, qty, discountPct) {
+        _addVariantLineFromDetail(product, variant, qty, discountOpts, notes) {
             const q = Math.max(1, Math.floor(posFinite(qty, 1)));
-            const disc = Math.min(100, Math.max(0, posFinite(discountPct, 0)));
+            const mode = discountOpts?.mode === 'amount' ? 'amount' : 'pct';
+            const discPct = Math.min(100, Math.max(0, posFinite(discountOpts?.pct, 0)));
+            const discAmt = Math.max(0, posFinite(discountOpts?.amount, 0));
+            const note = typeof notes === 'string' ? notes.trim() : '';
             const existing = this.cart.find(
                 (item) => item.id === product.id && item.variant_id === variant.id
             );
@@ -1102,7 +1305,10 @@ function initPosTerminal() {
                 } else {
                     existing.qty = nextQty;
                 }
-                existing.discount_pct = disc;
+                existing.discount_mode = mode;
+                existing.discount_pct = mode === 'pct' ? discPct : 0;
+                existing.discount_amount = mode === 'amount' ? discAmt : 0;
+                existing.notes = note;
                 const lineIdx = this.cart.indexOf(existing);
                 if (typeof this.cartFocusedIndex === 'number') this.cartFocusedIndex = lineIdx;
                 if (typeof this._pulseCartRow === 'function') this._pulseCartRow(lineIdx);
@@ -1113,7 +1319,10 @@ function initPosTerminal() {
                     price: variant.price,
                     stock: product.stock,
                     qty: q,
-                    discount_pct: disc,
+                    discount_pct: mode === 'pct' ? discPct : 0,
+                    discount_amount: mode === 'amount' ? discAmt : 0,
+                    discount_mode: mode,
+                    notes: note,
                     variant_id: variant.id,
                 });
                 const lineIdx = this.cart.length - 1;
@@ -1134,14 +1343,18 @@ function initPosTerminal() {
             const qtyRaw = Math.max(1, Math.floor(posFinite(this.detailModalQty, 1)));
             const qty = Math.min(maxStock || 1, qtyRaw);
             this.detailModalQty = qty;
-            const disc = Math.min(100, Math.max(0, posFinite(this.detailModalDiscountPct, 0)));
+            const discOpts = {
+                mode: this.detailModalDiscountMode === 'amount' ? 'amount' : 'pct',
+                pct: Math.min(100, Math.max(0, posFinite(this.detailModalDiscountPct, 0))),
+                amount: Math.max(0, posFinite(this.detailModalDiscountAmount, 0)),
+            };
             if (product.has_variants && product.variants?.length > 0) {
                 const v =
                     product.variants.find((x) => x.id === this.detailSelectedVariantId) ||
                     product.variants[0];
-                this._addVariantLineFromDetail(product, v, qty, disc);
+                this._addVariantLineFromDetail(product, v, qty, discOpts, this.detailModalNotes);
             } else {
-                this._addSimpleLineFromDetail(product, qty, disc);
+                this._addSimpleLineFromDetail(product, qty, discOpts, this.detailModalNotes);
             }
             posModal('#productDetailModal', 'hide');
             if (typeof this._flashCatalogProduct === 'function') this._flashCatalogProduct(product.id);
@@ -1251,6 +1464,16 @@ function initPosTerminal() {
                 }
 
                 if (e.key === 'Escape') {
+                    if (document.body.classList.contains('pos-app-cart-open')) {
+                        e.preventDefault();
+                        this.closePosAppCart();
+                        return;
+                    }
+                    if (document.body.classList.contains('pos-app-rail-open')) {
+                        e.preventDefault();
+                        this.closePosAppRail();
+                        return;
+                    }
                     if (this._anyModalOpen()) {
                         e.preventDefault();
                         this._closeTopBootstrapModal();
@@ -1348,6 +1571,24 @@ function initPosTerminal() {
             return Number.isFinite(d) ? d : 0;
         },
 
+        get cashChangeStripState() {
+            if (this.paymentMethod !== 'cash') return 'exact';
+            const d = posFinite(this.changeDue, 0);
+            if (d < -0.005) return 'short';
+            if (d > 0.005) return 'change';
+            return 'exact';
+        },
+
+        get cashChangeStripLabel() {
+            return this.cashChangeStripState === 'short' ? 'Still due' : 'Change due';
+        },
+
+        get cashChangeStripAmountDisplay() {
+            const d = posFinite(this.changeDue, 0);
+            if (d < -0.005) return this.moneyLabel(Math.abs(d));
+            return this.moneyLabel(Math.max(0, d));
+        },
+
         addTendered(delta) {
             const d = posFinite(delta, 0);
             const cur = posFinite(this.amountTendered, 0);
@@ -1410,11 +1651,13 @@ function initPosTerminal() {
                 this._paymentLock = true;
                 this.cart = [];
                 this.orderDiscount = 0;
+                this.orderDiscountMode = 'amount';
                 this.notes = '';
                 this.customerId = '';
                 this.resetCheckout();
                 if (typeof this.cartFocusedIndex === 'number') this.cartFocusedIndex = 0;
                 this._persistCartDraft();
+                this.closePosAppCart();
                 posModal('#checkoutModal', 'hide');
                 Pos?.Telemetry?.toast(
                     `${reason} — sale queued; accounting pending server confirmation.`,
@@ -1453,9 +1696,11 @@ function initPosTerminal() {
                         duplicate: Boolean(data.duplicate),
                     });
                     posModal('#checkoutModal', 'hide');
+                    this.closePosAppCart();
                     setTimeout(() => posModal('#successModal', 'show'), 400);
                     this.cart = [];
                     this.orderDiscount = 0;
+                    this.orderDiscountMode = 'amount';
                     this.notes = '';
                     this.customerId = '';
                     try {
@@ -1489,16 +1734,77 @@ function initPosTerminal() {
         },
 
         printLastReceipt() {
+            const saleId = this.lastSaleId;
+            if (saleId) {
+                const url = `/pos/sales/${saleId}/receipt?print=1`;
+                const w = window.open(url, '_blank', 'noopener,noreferrer,width=400,height=720');
+                if (w) return;
+            }
             const el = document.getElementById('pos-receipt-print-mount');
             if (!el) return;
             const w = window.open('', '_blank', 'noopener,noreferrer');
             if (!w) return;
             w.document.write(
-                `<!DOCTYPE html><html><head><title>Receipt</title><link rel="stylesheet" href="${window.location.origin}/css/pos/main.css" /></head><body>${el.innerHTML}</body></html>`
+                `<!DOCTYPE html><html><head><title>Receipt</title><link rel="stylesheet" href="${window.location.origin}/css/pos/receipt.css" /></head><body onload="setTimeout(function(){window.print();},400)">${el.innerHTML}</body></html>`
             );
             w.document.close();
             w.focus();
-            w.print();
+        },
+
+        _applyPosTheme() {
+            let theme = 'light';
+            try {
+                theme = localStorage.getItem('posTheme') || '';
+            } catch {
+                /* ignore */
+            }
+            if (!theme) {
+                theme =
+                    window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+                        ? 'dark'
+                        : 'light';
+            }
+            this.posTheme = theme === 'dark' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-pos-theme', this.posTheme);
+            document.body.classList.toggle('pos-theme-dark', this.posTheme === 'dark');
+        },
+
+        togglePosTheme() {
+            this.posTheme = this.posTheme === 'dark' ? 'light' : 'dark';
+            try {
+                localStorage.setItem('posTheme', this.posTheme);
+            } catch {
+                /* ignore */
+            }
+            document.documentElement.setAttribute('data-pos-theme', this.posTheme);
+            document.body.classList.toggle('pos-theme-dark', this.posTheme === 'dark');
+        },
+
+        async searchCustomersDebounced() {
+            const q = String(this.customerSearchQuery || '').trim();
+            if (!this.routes.customerSearch) return;
+            try {
+                const params = q ? `?q=${encodeURIComponent(q)}` : '';
+                const res = await fetch(`${this.routes.customerSearch}${params}`, {
+                    headers: { Accept: 'application/json' },
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                this.customerSearchResults = data.data || [];
+            } catch {
+                /* ignore */
+            }
+        },
+
+        selectCustomerFromSearch(customer) {
+            if (!customer?.id) return;
+            const exists = this.customers.find((c) => String(c.id) === String(customer.id));
+            if (!exists) {
+                this.customers.push(customer);
+            }
+            this.customerId = customer.id;
+            this.customerSearchQuery = '';
+            this.customerSearchResults = [];
         },
 
         async saveQuickCustomer() {
@@ -1508,7 +1814,9 @@ function initPosTerminal() {
                     body: JSON.stringify(this.newCustomer),
                 });
                 if (data.success) {
-                    this.newCustomers.push(data.customer);
+                    if (!this.customers.find((c) => String(c.id) === String(data.customer.id))) {
+                        this.customers.push(data.customer);
+                    }
                     this.customerId = data.customer.id;
                     posModal('#quickCustomerModal', 'hide');
                 }

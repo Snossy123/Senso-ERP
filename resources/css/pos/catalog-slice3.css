@@ -1,6 +1,6 @@
 /**
- * Slice 3 revised — Compact catalog chips, pagination bar, product detail sheet, rail polish (tokens).
- * Shell grid breakpoints: see responsive.css (loaded after this file).
+ * Slice 3 revised — Premium product grid, modern cards, detail modal.
+ * Clean, fast, touch-friendly POS catalog with indigo accent.
  */
 
 /* ─── Category rail — retail strip (calm gray idle · white + green accent active) ─── */
@@ -61,12 +61,61 @@
   max-width: 100%;
 }
 
-.pos-app-rail--premium .pos-app-rail-icon--letter {
-  font-weight: 800;
-  font-size: var(--pos-font-step-1);
+/* Full category names — horizontal row + monogram */
+.pos-app-rail--labels.pos-app-rail--premium .pos-app-rail-item {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 9px 10px;
+  min-height: 48px;
+  text-align: left;
 }
 
-/* ─── Catalog viewport — flex fill; height caps only on desktop (see responsive break points) ─── */
+.pos-app-rail--labels.pos-app-rail--premium .pos-app-rail-icon {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: var(--pos-radius-sm);
+  background: color-mix(in srgb, var(--pos-color-text) 5%, transparent);
+}
+
+.pos-app-rail--labels.pos-app-rail--premium .pos-app-rail-item.is-active .pos-app-rail-icon {
+  background: color-mix(in srgb, var(--pos-color-success) 14%, transparent);
+}
+
+.pos-app-rail--labels.pos-app-rail--premium .pos-app-rail-monogram {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--pos-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-weight: 800;
+  font-size: 0.8rem;
+  background: color-mix(in srgb, var(--pos-color-text) 6%, transparent);
+  color: var(--pos-color-text-muted);
+}
+
+.pos-app-rail--labels.pos-app-rail--premium .pos-app-rail-item.is-active .pos-app-rail-monogram {
+  background: color-mix(in srgb, var(--pos-color-success) 18%, transparent);
+  color: var(--pos-color-success);
+}
+
+.pos-app-rail--labels.pos-app-rail--premium .pos-app-rail-label {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-height: 1.25;
+  font-size: var(--pos-font-step-0);
+  font-weight: 650;
+}
+
+/* ─── Catalog viewport — flex fill ─── */
 .pos-catalog-viewport {
   min-height: 0;
   flex: 1 1 auto;
@@ -158,76 +207,97 @@
   color: var(--pos-color-text-muted);
 }
 
-/* ─── Retail product cards — image top, title + muted price (reference layout) ─── */
-.pos-catalog-retail-card.pos-catalog-chip {
+/* ══════════════════════════════════════════════════
+   MODERN PRODUCT CARD — Premium POS Design
+   ══════════════════════════════════════════════════ */
+.pos-catalog-card-modern {
   border-radius: var(--pos-radius-md);
-  border: 1px solid var(--pos-color-border-subtle);
+  border: 1px solid var(--pos-color-border);
   background: var(--pos-color-surface);
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  cursor: pointer;
+  position: relative;
   transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
-}
-
-.pos-catalog-retail-card:hover:not(.out-stock) {
-  border-color: color-mix(in srgb, var(--pos-color-success) 22%, var(--pos-color-border));
+    transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
   box-shadow: var(--pos-shadow-sm);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
-.pos-catalog-retail-media {
+.pos-catalog-card-modern:hover:not(.pos-catalog-card-modern--out) {
+  transform: translateY(-3px);
+  border-color: var(--pos-color-primary);
+  box-shadow:
+    0 12px 32px rgba(67, 56, 202, 0.10),
+    0 4px 12px rgba(15, 23, 42, 0.06);
+}
+
+.pos-catalog-card-modern:active:not(.pos-catalog-card-modern--out) {
+  transform: translateY(-1px) scale(0.985);
+  transition-duration: 0.06s;
+}
+
+.pos-catalog-card-modern--keyboard {
+  border-color: var(--pos-color-primary) !important;
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--pos-color-primary) 30%, transparent),
+    0 12px 32px rgba(67, 56, 202, 0.12) !important;
+  z-index: 2;
+  transform: translateY(-2px);
+}
+
+.pos-catalog-card-modern--scan {
+  animation: posCardGlow 460ms ease-out 1;
+}
+
+.pos-catalog-card-modern--out {
+  opacity: 0.45;
+  filter: grayscale(1);
+  cursor: not-allowed;
+}
+
+/* ─── Card media (image) ─── */
+.pos-catalog-card-modern-media {
   position: relative;
   aspect-ratio: 1;
-  max-height: 140px;
   background: var(--pos-color-surface-muted);
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
-.pos-catalog-retail-img {
+.pos-catalog-card-modern-img {
   width: 100%;
   height: 100%;
   object-fit: contain;
   object-position: center;
   padding: var(--pos-space-2);
   display: block;
+  transition: transform 0.25s ease;
 }
 
-.pos-catalog-retail-ph {
+.pos-catalog-card-modern:hover:not(.pos-catalog-card-modern--out) .pos-catalog-card-modern-img {
+  transform: scale(1.06);
+}
+
+.pos-catalog-card-modern-ph {
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--pos-font-step-3);
+  font-size: var(--pos-font-step-4);
   font-weight: 800;
-  color: color-mix(in srgb, var(--pos-color-text-muted) 75%, transparent);
+  color: color-mix(in srgb, var(--pos-color-text-muted) 65%, transparent);
 }
 
-.pos-catalog-retail-badge {
-  position: absolute;
-  top: var(--pos-space-2);
-  left: var(--pos-space-2);
-  border-radius: var(--pos-radius-sm);
-  padding: 2px 8px;
-  font-size: var(--pos-font-step--1);
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--pos-color-text-inverse);
-}
-
-.pos-catalog-retail-badge--low {
-  background: var(--pos-color-warning);
-}
-
-.pos-catalog-retail-badge--out {
-  background: var(--pos-color-danger);
-}
-
-.pos-catalog-retail-body {
+/* ─── Card body (name + price) ─── */
+.pos-catalog-card-modern-body {
   padding: var(--pos-space-3) var(--pos-space-3) var(--pos-space-4);
   flex: 1;
   display: flex;
@@ -236,7 +306,7 @@
   min-height: 0;
 }
 
-.pos-catalog-retail-name {
+.pos-catalog-card-modern-name {
   margin: 0;
   font-size: var(--pos-font-step-0);
   font-weight: 700;
@@ -246,116 +316,94 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
+  word-break: break-word;
 }
 
-.pos-catalog-retail-price {
+.pos-catalog-card-modern-price {
   margin: 0;
   font-size: var(--pos-font-step-0);
-  font-weight: 600;
-  color: var(--pos-color-text-muted);
-  letter-spacing: 0.02em;
+  font-weight: 800;
+  color: var(--pos-color-primary);
+  letter-spacing: -0.02em;
 }
 
-.pos-catalog-retail-stocknote {
-  font-size: var(--pos-font-step--1);
-  font-weight: 700;
-  margin-top: 2px;
-}
-
-.pos-catalog-retail-stocknote--low {
-  color: var(--pos-color-warning);
-}
-
-.pos-catalog-retail-stocknote--out {
-  color: var(--pos-color-danger);
-}
-
-.product-card-keyboard.pos-catalog-retail-card {
-  border-color: var(--pos-color-success) !important;
-  box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--pos-color-success) 25%, transparent),
-    var(--pos-shadow-md) !important;
-  z-index: 2;
-}
-
-.pos-catalog-retail-card.out-stock {
-  opacity: 0.52;
-  filter: grayscale(1);
-}
-
-.pos-catalog-card .pos-catalog-retail-card.product-card:hover:not(.out-stock) {
-  transform: none;
-}
-
-/* ─── Grid density — tighter · more columns on wide screens ─── */
-.pos-catalog-grid-wrap--app #pos-product-grid.pos-catalog-product-grid--retail {
+/* ─── Grid — dense, responsive ─── */
+#pos-product-grid.pos-catalog-product-grid--retail {
+  display: grid;
   gap: var(--pos-space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
 }
 
 @media (min-width: 640px) {
-  .pos-catalog-grid-wrap--app #pos-product-grid.pos-catalog-product-grid--retail {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  #pos-product-grid.pos-catalog-product-grid--retail {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 @media (min-width: 900px) {
+  #pos-product-grid.pos-catalog-product-grid--retail {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1200px) {
+  #pos-product-grid.pos-catalog-product-grid--retail {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+.pos-catalog-grid-wrap--app #pos-product-grid.pos-catalog-product-grid--retail {
+  gap: var(--pos-space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 640px) {
   .pos-catalog-grid-wrap--app #pos-product-grid.pos-catalog-product-grid--retail {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 900px) {
   .pos-catalog-grid-wrap--app #pos-product-grid.pos-catalog-product-grid--retail {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
-@media (min-width: 1500px) {
+@media (min-width: 1200px) {
   .pos-catalog-grid-wrap--app #pos-product-grid.pos-catalog-product-grid--retail {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
 
-#pos-product-grid.pos-catalog-product-grid--retail {
-  gap: var(--pos-space-3);
-}
-
-@media (min-width: 640px) {
-  #pos-product-grid.pos-catalog-product-grid--retail {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+@media (min-width: 1500px) {
+  .pos-catalog-grid-wrap--app #pos-product-grid.pos-catalog-product-grid--retail {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
 
-@media (min-width: 900px) {
-  #pos-product-grid.pos-catalog-product-grid--retail {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1200px) {
-  #pos-product-grid.pos-catalog-product-grid--retail {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
-/* Skeleton — vertical retail card */
+/* ─── Skeleton grid ─── */
 .pos-catalog-skel-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--pos-space-3);
 }
 
-.pos-catalog-retail-card--skeleton {
+/* ─── Skeleton cards ─── */
+.pos-catalog-card-modern--skel {
   border-radius: var(--pos-radius-md);
   border: 1px solid var(--pos-color-border-subtle);
   background: var(--pos-color-surface);
   overflow: hidden;
+  cursor: default;
+  box-shadow: none;
 }
 
-.pos-catalog-retail-media-skel {
+.pos-catalog-card-modern-media-skel {
   aspect-ratio: 1;
-  max-height: 140px;
 }
 
-.pos-catalog-retail-body-skel {
+.pos-catalog-card-modern-body-skel {
   padding: var(--pos-space-3);
 }
 
@@ -363,24 +411,29 @@
   width: 44%;
 }
 
-/* Hide unused floating add from legacy rules */
-.pos-catalog-retail-card .pos-quick-add-float {
-  display: none !important;
+/* ─── Animations ─── */
+@keyframes posCardGlow {
+  0% { box-shadow: 0 0 0 0 rgba(67, 56, 202, 0.3); }
+  70% { box-shadow: 0 0 0 12px rgba(67, 56, 202, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(67, 56, 202, 0); }
 }
 
-/* ─── Product detail modal (token sheet, not default Bootstrap chrome) ─── */
+/* ══════════════════════════════════════════════════
+   PRODUCT DETAIL MODAL — Premium Sheet
+   ══════════════════════════════════════════════════ */
 .pos-product-detail-modal .modal-dialog {
   max-width: 560px;
 }
 
 .pos-product-detail-sheet {
   border-radius: var(--pos-radius-lg) !important;
-  box-shadow: var(--pos-shadow-lg) !important;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.18) !important;
   background: var(--pos-color-surface);
+  border: none !important;
 }
 
 .pos-product-detail-head {
-  padding: var(--pos-space-4) var(--pos-space-4) 0;
+  padding: var(--pos-space-5) var(--pos-space-5) 0;
 }
 
 .pos-product-detail-title {
@@ -392,15 +445,15 @@
 }
 
 .pos-product-detail-meta {
-  font-size: var(--pos-font-step--1);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-size: var(--pos-font-step-0);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0.01em;
   color: var(--pos-color-text-muted);
 }
 
 .pos-product-detail-body {
-  padding: var(--pos-space-3) var(--pos-space-4) var(--pos-space-4);
+  padding: var(--pos-space-4) var(--pos-space-5);
 }
 
 .pos-product-detail-layout {
@@ -415,12 +468,17 @@
   }
 }
 
+.pos-product-detail-visual {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pos-space-3);
+}
+
 .pos-product-detail-img-wrap {
   border-radius: var(--pos-radius-md);
   overflow: hidden;
   background: var(--pos-color-surface-muted);
   aspect-ratio: 1;
-  max-height: 220px;
 }
 
 .pos-product-detail-img {
@@ -433,7 +491,7 @@
 .pos-product-detail-ph {
   width: 100%;
   height: 100%;
-  min-height: 160px;
+  min-height: 180px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -443,7 +501,7 @@
 }
 
 .pos-product-detail-price-block {
-  margin-top: var(--pos-space-3);
+  margin-top: 0;
 }
 
 .pos-product-detail-price-label {
@@ -459,6 +517,7 @@
   font-weight: 800;
   color: var(--pos-color-primary);
   letter-spacing: -0.03em;
+  margin: var(--pos-space-1) 0 0;
 }
 
 .pos-product-detail-dl {
@@ -480,6 +539,21 @@
   font-weight: 600;
 }
 
+.pos-product-detail-dl-row dd {
+  font-weight: 700;
+  color: var(--pos-color-text);
+}
+
+.pos-product-detail-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pos-space-4);
+}
+
+.pos-product-detail-field {
+  width: 100%;
+}
+
 .pos-product-detail-label {
   display: block;
   font-size: var(--pos-font-step--1);
@@ -491,11 +565,29 @@
 }
 
 .pos-product-detail-select,
-.pos-product-detail-disc {
+.pos-product-detail-disc,
+.pos-product-detail-notes {
   border-radius: var(--pos-radius-sm) !important;
-  background: var(--pos-color-surface-muted) !important;
+  background: var(--pos-color-surface) !important;
   padding: var(--pos-space-3) var(--pos-space-3) !important;
   font-weight: 600;
+  border: 1px solid var(--pos-color-border-subtle) !important;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.pos-product-detail-select:focus,
+.pos-product-detail-disc:focus,
+.pos-product-detail-notes:focus {
+  border-color: var(--pos-color-primary) !important;
+  background: var(--pos-color-surface) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pos-color-primary) 15%, transparent) !important;
+}
+
+.pos-product-detail-notes {
+  resize: vertical;
+  min-height: 72px;
+  font-weight: 500;
+  font-size: var(--pos-font-step-0);
 }
 
 .pos-product-detail-stepper {
@@ -516,6 +608,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  transition: background 0.12s ease;
+}
+
+.pos-product-detail-step:hover {
+  background: color-mix(in srgb, var(--pos-color-primary) 10%, var(--pos-color-surface-muted));
 }
 
 .pos-product-detail-qty-input {
@@ -524,10 +621,17 @@
   font-size: var(--pos-font-step-3);
   border-left: 1px solid var(--pos-color-border);
   border-right: 1px solid var(--pos-color-border);
+  outline: none;
+}
+
+.pos-product-detail-qty-input:focus {
+  background: color-mix(in srgb, var(--pos-color-primary) 4%, var(--pos-color-surface));
 }
 
 .pos-product-detail-foot {
-  padding: 0 var(--pos-space-4) var(--pos-space-4);
+  padding: 0 var(--pos-space-5) var(--pos-space-5);
+  display: flex;
+  gap: var(--pos-space-3);
 }
 
 .pos-product-detail-btn-cancel {
@@ -537,22 +641,54 @@
   color: var(--pos-color-text-muted);
   font-weight: 700;
   padding: var(--pos-space-3) var(--pos-space-5);
+  transition: background 0.12s ease, border-color 0.15s ease;
+  flex: 1;
+}
+
+.pos-product-detail-btn-cancel:hover {
+  background: var(--pos-color-surface-muted);
+  border-color: var(--pos-color-border);
+  color: var(--pos-color-text);
 }
 
 .pos-product-detail-btn-add {
   border-radius: var(--pos-radius-md);
   border: none;
-  background: var(--pos-color-success);
+  background: var(--pos-color-primary);
   color: var(--pos-color-text-inverse);
   font-weight: 800;
   padding: var(--pos-space-3) var(--pos-space-6);
-  box-shadow: var(--pos-shadow-sm);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--pos-color-primary) 30%, transparent);
+  transition: filter 0.15s ease, transform 0.12s ease;
+  flex: 2;
 }
 
 .pos-product-detail-btn-add:hover:not(:disabled) {
-  filter: brightness(1.05);
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.pos-product-detail-btn-add:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .pos-product-detail-btn-add:disabled {
   opacity: 0.45;
+}
+
+/* ─── Close button ─── */
+.pos-modal-close-fix {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: var(--pos-color-text-muted);
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.pos-modal-close-fix:hover {
+  background: var(--pos-color-surface-muted) !important;
+  color: var(--pos-color-text);
 }

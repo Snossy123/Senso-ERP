@@ -58,8 +58,9 @@ class PosRefundCharacterizationTest extends TestCase
             ->count();
         $this->assertSame(1, $outMovements);
 
+        $saleItem = $sale->items()->first();
         $refund = $this->actingAs($this->foundationUser)->postJson(route('pos.sales.refund', $sale), [
-            'amount' => 200,
+            'items' => [['sale_item_id' => $saleItem->id, 'qty' => 2]],
             'reason' => 'Full return',
             'method' => 'cash',
             'restock' => true,
@@ -98,7 +99,7 @@ class PosRefundCharacterizationTest extends TestCase
         );
     }
 
-    public function test_pos_refund_partial_restock_uses_prorated_quantity_current_baseline(): void
+    public function test_pos_refund_partial_line_return_restocks_exact_quantity(): void
     {
         $shift = \App\Models\PosShift::factory()->create([
             'user_id' => $this->foundationUser->id,
@@ -125,25 +126,18 @@ class PosRefundCharacterizationTest extends TestCase
         $sale = Sale::latest('id')->first();
         $this->assertSame(17, $product->fresh()->stock_quantity);
 
+        $saleItem = $sale->items()->first();
         $this->actingAs($this->foundationUser)->postJson(route('pos.sales.refund', $sale), [
-            'amount' => 75,
+            'items' => [['sale_item_id' => $saleItem->id, 'qty' => 1]],
             'reason' => 'Partial',
             'method' => 'cash',
             'restock' => true,
         ])->assertOk();
 
-        $ratio = 75 / 150;
-        $expectedRestock = (int) round(3 * $ratio);
-        $this->assertSame(2, $expectedRestock);
-
-        $this->assertSame(19, $product->fresh()->stock_quantity);
+        $this->assertSame(18, $product->fresh()->stock_quantity);
 
         $sale->refresh();
-        $this->assertSame(
-            'refunded',
-            $sale->status,
-            'Legacy: totalRefunded uses sum(refunds)+current amount, double-counting the new refund so partial payment can mark sale as refunded.'
-        );
+        $this->assertSame('completed', $sale->status);
     }
 
     public function test_pos_refund_full_restock_restores_warehouse_slice_when_shift_has_warehouse(): void
@@ -194,8 +188,9 @@ class PosRefundCharacterizationTest extends TestCase
             (int) ProductWarehouseStock::where('warehouse_id', $warehouse->id)->where('product_id', $product->id)->value('quantity')
         );
 
+        $saleItem = $sale->items()->first();
         $this->actingAs($this->foundationUser)->postJson(route('pos.sales.refund', $sale), [
-            'amount' => 200,
+            'items' => [['sale_item_id' => $saleItem->id, 'qty' => 2]],
             'reason' => 'Full return WH',
             'method' => 'cash',
             'restock' => true,

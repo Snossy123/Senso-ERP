@@ -115,9 +115,15 @@
                                 <div class="col px-1"><button type="button" tabindex="98" class="pos-checkout-quick-cash btn btn-outline-secondary btn-block rounded-xl touch-target-modal" @click="$store.pos.addTendered(20)">+<span x-text="$store.pos.currencySymbol"></span>20</button></div>
                                 <div class="col px-1"><button type="button" tabindex="99" class="pos-checkout-quick-cash btn btn-outline-secondary btn-block rounded-xl touch-target-modal" @click="$store.pos.addTendered(50)">+<span x-text="$store.pos.currencySymbol"></span>50</button></div>
                             </div>
-                            <div class="pos-checkout-change-strip p-3 mb-3 rounded-xl d-flex justify-content-between align-items-center" :class="$store.pos.changeDue >= 0 ? 'bg-success-transparent text-success' : 'bg-danger-transparent text-danger'">
-                                <span class="font-weight-bold text-uppercase tx-11">Change due</span>
-                                <h3 class="mb-0 font-weight-bold pos-tabular" x-text="$store.pos.changeDueDisplay()"></h3>
+                            <div
+                                class="pos-checkout-change-strip pos-checkout-change-strip--dynamic p-3 mb-3 rounded-xl d-flex justify-content-between align-items-center"
+                                :class="{
+                                    'pos-checkout-change-strip--short': $store.pos.cashChangeStripState === 'short',
+                                    'pos-checkout-change-strip--change': $store.pos.cashChangeStripState === 'change',
+                                    'pos-checkout-change-strip--exact': $store.pos.cashChangeStripState === 'exact',
+                                }">
+                                <span class="font-weight-bold tx-11 text-uppercase" x-text="$store.pos.cashChangeStripLabel"></span>
+                                <h3 class="mb-0 font-weight-bold pos-tabular" x-text="$store.pos.cashChangeStripAmountDisplay"></h3>
                             </div>
                         </div>
 

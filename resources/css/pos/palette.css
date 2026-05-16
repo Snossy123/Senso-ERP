@@ -1,0 +1,257 @@
+/**
+ * POS palette — binds UI surfaces to design tokens (import last in main.css).
+ */
+
+/* ─── App shell ─── */
+.pos-app-body,
+body.pos-terminal-body {
+  background: var(--pos-gradient-app-bg);
+}
+
+.pos-app-topbar {
+  background: var(--pos-color-surface);
+  border-bottom-color: var(--pos-color-border);
+}
+
+.pos-app-brand-mark {
+  background: var(--pos-gradient-brand);
+  box-shadow: 0 8px 24px var(--pos-palette-emerald-muted);
+}
+
+.pos-app-search-input {
+  background: var(--pos-color-surface-muted);
+  border-color: var(--pos-color-border);
+  color: var(--pos-color-text);
+}
+
+.pos-app-search-input:focus {
+  background: var(--pos-color-surface);
+  border-color: var(--pos-color-primary-light);
+  box-shadow: var(--pos-focus-ring);
+}
+
+.pos-app-search-icon {
+  color: var(--pos-palette-ink-soft);
+}
+
+.pos-app-pill {
+  background: var(--pos-color-surface);
+  border-color: var(--pos-color-border);
+  color: var(--pos-color-text);
+}
+
+.pos-app-pill:hover {
+  background: var(--pos-color-surface-muted);
+}
+
+.pos-app-pill--accent {
+  background: var(--pos-gradient-primary);
+  border-color: var(--pos-color-primary-hover);
+  color: var(--pos-color-text-inverse);
+}
+
+.pos-app-pill--ghost {
+  color: var(--pos-color-text-muted);
+}
+
+.pos-app-pill--warn {
+  background: var(--pos-color-warning-surface);
+  border-color: var(--pos-color-warning-border);
+  color: var(--pos-palette-amber);
+}
+
+.pos-app-badge {
+  background: var(--pos-color-primary-hover);
+}
+
+.pos-app-badge--warn {
+  background: var(--pos-color-warning);
+}
+
+.pos-app-chip {
+  background: var(--pos-color-surface-muted);
+  border-color: var(--pos-color-border);
+  color: var(--pos-color-text-muted);
+}
+
+.pos-app-chip--ok {
+  background: var(--pos-color-success-surface);
+  border-color: var(--pos-color-success-border);
+  color: var(--pos-color-success-deep);
+}
+
+.pos-app-chip--bad {
+  background: var(--pos-color-danger-surface);
+  border-color: var(--pos-color-danger-border);
+  color: var(--pos-color-danger-deep);
+}
+
+.pos-app-chip--live {
+  background: var(--pos-color-info-surface);
+  border-color: var(--pos-color-info-border);
+  color: var(--pos-color-info);
+}
+
+.pos-app-chip--queue {
+  background: var(--pos-color-warning-surface);
+  border-color: var(--pos-color-warning-border);
+  color: var(--pos-palette-amber);
+}
+
+.pos-app-chip--muted {
+  background: var(--pos-palette-orange-surface);
+  border-color: var(--pos-palette-orange-border);
+  color: var(--pos-palette-orange-ink);
+}
+
+.pos-app-icon-btn {
+  background: var(--pos-color-surface);
+  border-color: var(--pos-color-border);
+  color: var(--pos-color-text-muted);
+}
+
+.pos-app-icon-btn:hover {
+  background: var(--pos-color-surface-muted);
+  border-color: var(--pos-palette-ink-soft);
+}
+
+.pos-app-rail-backdrop,
+.pos-app-cart-backdrop {
+  background: color-mix(in srgb, var(--pos-palette-ink) 55%, transparent);
+}
+
+/* ─── Category rail ─── */
+.pos-app-rail-item.is-active {
+  background: var(--pos-color-success-surface);
+  color: var(--pos-color-success-deep);
+  box-shadow: inset 3px 0 0 var(--pos-color-success);
+}
+
+.pos-app-rail-item.is-active .pos-app-rail-icon,
+.pos-app-rail--premium .pos-app-rail-item.is-active .pos-app-rail-icon {
+  color: var(--pos-color-success);
+}
+
+.pos-app-rail-tool--danger {
+  background: var(--pos-gradient-danger);
+}
+
+.pos-app-rail-tool--success {
+  background: var(--pos-gradient-brand);
+}
+
+/* ─── Catalog cards ─── */
+.pos-catalog-card-modern {
+  border-color: var(--pos-color-border);
+  background: var(--pos-color-surface);
+}
+
+.pos-catalog-card-modern:hover:not(.pos-catalog-card-modern--out) {
+  border-color: var(--pos-color-primary);
+  box-shadow:
+    0 12px 32px var(--pos-palette-indigo-shadow),
+    0 4px 12px rgba(15, 23, 42, 0.06);
+}
+
+.pos-catalog-card-modern--keyboard {
+  border-color: var(--pos-color-primary) !important;
+  box-shadow:
+    0 0 0 3px var(--pos-palette-indigo-muted),
+    0 12px 32px var(--pos-palette-indigo-shadow) !important;
+}
+
+.pos-catalog-card-modern-price {
+  color: var(--pos-color-primary);
+}
+
+.pos-catalog-grid-wrap--app .pos-catalog-card-modern-price {
+  color: var(--pos-color-primary);
+}
+
+@keyframes posCardGlow {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--pos-color-primary) 35%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 12px color-mix(in srgb, var(--pos-color-primary) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+/* ─── Cart & checkout ─── */
+.pos-cart-line-total,
+.pos-catalog-card-modern-price {
+  color: var(--pos-color-primary);
+}
+
+.pos-cart-due-amount,
+.pos-cart-totals-row--due .pos-cart-due-amount {
+  color: var(--pos-color-success);
+}
+
+.pos-cart-cta,
+.pos-pay-cta,
+#cart-pay-cta {
+  background: var(--pos-gradient-checkout) !important;
+  border-color: var(--pos-color-success-deep) !important;
+  color: var(--pos-color-text-inverse) !important;
+}
+
+.pos-cart-cta:hover,
+.pos-pay-cta:hover,
+#cart-pay-cta:hover {
+  filter: brightness(1.05);
+  color: var(--pos-color-text-inverse) !important;
+}
+
+.pos-cart-row-selected,
+.pos-cart-pane--app .pos-cart-row-selected {
+  background: var(--pos-color-primary-muted);
+  border-color: color-mix(in srgb, var(--pos-color-primary) 35%, var(--pos-color-border));
+}
+
+.pos-cart-pane--retail.pos-cart-pane--app.pos-cart-pane--slice2 .pos-cart-row-selected {
+  background: var(--pos-color-success-surface);
+  border-color: color-mix(in srgb, var(--pos-color-success) 30%, var(--pos-color-border));
+  box-shadow: inset 3px 0 0 var(--pos-color-success);
+}
+
+.pos-cart-order-discount-prefix {
+  color: var(--pos-color-primary);
+}
+
+.pos-disc-mode-btn.active {
+  background: var(--pos-color-primary);
+  color: var(--pos-color-text-inverse);
+}
+
+/* ─── Mobile FAB ─── */
+.pos-app-cart-fab {
+  background: var(--pos-gradient-brand);
+  box-shadow: 0 8px 28px var(--pos-palette-emerald-muted);
+}
+
+/* ─── Scrollbars ─── */
+.pos-scroll::-webkit-scrollbar-thumb,
+.pos-app-rail-scroll::-webkit-scrollbar-thumb,
+.pos-cart-pane--app #cart-scroll-area.pos-scroll::-webkit-scrollbar-thumb {
+  background: var(--pos-scrollbar-thumb);
+}
+
+.pos-scroll::-webkit-scrollbar-track,
+.pos-app-rail-scroll::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--pos-palette-ink) 6%, transparent);
+}
+
+/* ─── Layout / modals ─── */
+.pos-card {
+  background: var(--pos-color-surface);
+  border-color: var(--pos-color-border);
+}
+
+.pos-cart-header-badge {
+  background: var(--pos-color-surface-muted);
+  color: var(--pos-color-text-muted);
+}

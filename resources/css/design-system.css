@@ -28,25 +28,95 @@
   --pos-elev-1: 0 10px 30px rgba(15, 23, 42, 0.08);
   --pos-elev-2: 0 16px 40px rgba(15, 23, 42, 0.12);
 
-  /* ─── Color ─── */
-  --pos-color-bg: #f5f7fb;
-  --pos-color-surface: #ffffff;
-  --pos-color-surface-muted: #f1f5f9;
-  --pos-color-surface-elevated: #ffffff;
-  --pos-color-border: #e9edf5;
-  --pos-color-border-subtle: #f1f5f9;
+  /* ─── POS retail palette (light) ─── */
+  --pos-palette-bg: #eef2f7;
+  --pos-palette-bg-soft: #e8edf5;
+  --pos-palette-surface: #ffffff;
+  --pos-palette-surface-muted: #f1f5f9;
+  --pos-palette-border: #e2e8f0;
+  --pos-palette-border-subtle: #f1f5f9;
 
-  --pos-color-text: #0f172a;
-  --pos-color-text-muted: #64748b;
+  --pos-palette-ink: #0f172a;
+  --pos-palette-ink-muted: #64748b;
+  --pos-palette-ink-soft: #94a3b8;
+
+  /* Commerce indigo — catalog, focus, Display, links */
+  --pos-palette-indigo: #4f46e5;
+  --pos-palette-indigo-deep: #4338ca;
+  --pos-palette-indigo-light: #6366f1;
+  --pos-palette-indigo-muted: rgba(79, 70, 229, 0.12);
+  --pos-palette-indigo-ring: rgba(99, 102, 241, 0.18);
+  --pos-palette-indigo-shadow: rgba(79, 70, 229, 0.1);
+
+  /* Retail emerald — checkout, due, shift, category active */
+  --pos-palette-emerald: #059669;
+  --pos-palette-emerald-deep: #047857;
+  --pos-palette-emerald-light: #10b981;
+  --pos-palette-emerald-muted: rgba(5, 150, 105, 0.14);
+  --pos-palette-emerald-surface: #ecfdf5;
+  --pos-palette-emerald-border: #a7f3d0;
+
+  --pos-palette-amber: #d97706;
+  --pos-palette-amber-surface: #fffbeb;
+  --pos-palette-amber-border: #fde68a;
+
+  --pos-palette-red: #dc2626;
+  --pos-palette-red-deep: #b91c1c;
+  --pos-palette-red-surface: #fef2f2;
+  --pos-palette-red-border: #fecaca;
+
+  --pos-palette-blue: #2563eb;
+  --pos-palette-blue-surface: #eff6ff;
+  --pos-palette-blue-border: #bfdbfe;
+
+  --pos-palette-orange-surface: #fff7ed;
+  --pos-palette-orange-border: #fed7aa;
+  --pos-palette-orange-ink: #9a3412;
+
+  /* Semantic aliases (use these in components) */
+  --pos-color-bg: var(--pos-palette-bg);
+  --pos-color-surface: var(--pos-palette-surface);
+  --pos-color-surface-muted: var(--pos-palette-surface-muted);
+  --pos-color-surface-elevated: var(--pos-palette-surface);
+  --pos-color-border: var(--pos-palette-border);
+  --pos-color-border-subtle: var(--pos-palette-border-subtle);
+
+  --pos-color-text: var(--pos-palette-ink);
+  --pos-color-text-muted: var(--pos-palette-ink-muted);
   --pos-color-text-inverse: #ffffff;
 
-  --pos-color-primary: #4338ca;
-  --pos-color-primary-hover: #3730a3;
-  --pos-color-primary-muted: rgba(67, 56, 202, 0.12);
+  --pos-color-primary: var(--pos-palette-indigo);
+  --pos-color-primary-hover: var(--pos-palette-indigo-deep);
+  --pos-color-primary-muted: var(--pos-palette-indigo-muted);
+  --pos-color-primary-light: var(--pos-palette-indigo-light);
 
-  --pos-color-success: #059669;
-  --pos-color-warning: #d97706;
-  --pos-color-danger: #dc2626;
+  --pos-color-success: var(--pos-palette-emerald);
+  --pos-color-success-deep: var(--pos-palette-emerald-deep);
+  --pos-color-success-muted: var(--pos-palette-emerald-muted);
+  --pos-color-success-surface: var(--pos-palette-emerald-surface);
+  --pos-color-success-border: var(--pos-palette-emerald-border);
+
+  --pos-color-warning: var(--pos-palette-amber);
+  --pos-color-warning-surface: var(--pos-palette-amber-surface);
+  --pos-color-warning-border: var(--pos-palette-amber-border);
+
+  --pos-color-danger: var(--pos-palette-red);
+  --pos-color-danger-deep: var(--pos-palette-red-deep);
+  --pos-color-danger-surface: var(--pos-palette-red-surface);
+  --pos-color-danger-border: var(--pos-palette-red-border);
+
+  --pos-color-info: var(--pos-palette-blue);
+  --pos-color-info-surface: var(--pos-palette-blue-surface);
+  --pos-color-info-border: var(--pos-palette-blue-border);
+
+  /* Gradients */
+  --pos-gradient-app-bg: linear-gradient(180deg, var(--pos-palette-bg) 0%, var(--pos-palette-bg-soft) 100%);
+  --pos-gradient-brand: linear-gradient(135deg, var(--pos-palette-emerald) 0%, var(--pos-palette-emerald-deep) 100%);
+  --pos-gradient-primary: linear-gradient(135deg, var(--pos-palette-indigo-light) 0%, var(--pos-palette-indigo-deep) 100%);
+  --pos-gradient-danger: linear-gradient(135deg, #f87171 0%, var(--pos-palette-red) 100%);
+  --pos-gradient-checkout: var(--pos-gradient-brand);
+  --pos-focus-ring: 0 0 0 4px var(--pos-palette-indigo-ring);
+  --pos-scrollbar-thumb: #b8c4d8;
 
   /* ─── Typography ─── */
   --pos-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
@@ -61,6 +131,39 @@
   /* ─── Touch ─── */
   --pos-touch-min: 44px;
   --pos-touch-comfortable: 48px;
+}
+
+[data-pos-theme="dark"] {
+  --pos-palette-bg: #0b0f17;
+  --pos-palette-bg-soft: #111827;
+  --pos-palette-surface: #141a24;
+  --pos-palette-surface-muted: #1c2433;
+  --pos-palette-border: #2a3548;
+  --pos-palette-border-subtle: #1f2937;
+  --pos-palette-ink: #f1f5f9;
+  --pos-palette-ink-muted: #94a3b8;
+  --pos-palette-indigo: #818cf8;
+  --pos-palette-indigo-deep: #a5b4fc;
+  --pos-palette-indigo-light: #c7d2fe;
+  --pos-palette-indigo-muted: rgba(129, 140, 248, 0.2);
+  --pos-palette-indigo-ring: rgba(129, 140, 248, 0.25);
+  --pos-palette-emerald: #34d399;
+  --pos-palette-emerald-deep: #10b981;
+  --pos-palette-emerald-surface: rgba(16, 185, 129, 0.12);
+  --pos-palette-emerald-border: rgba(52, 211, 153, 0.35);
+  --pos-scrollbar-thumb: #4b5563;
+  --pos-gradient-app-bg: linear-gradient(180deg, var(--pos-palette-bg) 0%, var(--pos-palette-bg-soft) 100%);
+}
+
+[data-pos-theme="dark"] .pos-app-body,
+[data-pos-theme="dark"] body.pos-terminal-body {
+  background: var(--pos-gradient-app-bg);
+}
+
+[data-pos-theme="dark"] .pos-app-topbar,
+[data-pos-theme="dark"] .pos-card {
+  background: var(--pos-color-surface);
+  color: var(--pos-color-text);
 }
 
 /* ─── Numeric discipline: always pair money with .pos-tabular ─── */

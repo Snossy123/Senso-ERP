@@ -14,6 +14,7 @@ use App\Http\Controllers\Inventory\SupplierController;
 use App\Http\Controllers\Inventory\UnitController;
 use App\Http\Controllers\Inventory\WarehouseController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\MarketingController;
 use App\Http\Controllers\POS\POSController;
 use App\Http\Controllers\POS\SaleController;
 use App\Http\Controllers\ReportController;
@@ -32,6 +33,9 @@ use App\Modules\StorefrontBuilder\Http\Controllers\StorefrontStudioController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
+
+Route::get('/welcome', [MarketingController::class, 'home'])->name('marketing.home');
+Route::get('/product/pos', [MarketingController::class, 'pos'])->name('marketing.pos');
 
 // ── ADMIN ERP AUTH (staff) ──────────────────────────────────
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -56,6 +60,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/pos/sale', [SaleController::class, 'store'])->name('pos.sale.store');
     Route::get('/pos/sales', [SaleController::class, 'index'])->name('pos.sales.index');
     Route::get('/pos/sales/{sale}', [SaleController::class, 'show'])->name('pos.sales.show');
+    Route::get('/pos/sales/{sale}/receipt', [SaleController::class, 'receipt'])->name('pos.sales.receipt');
     Route::post('/pos/sales/{sale}/void', [SaleController::class, 'void'])->name('pos.sales.void');
     Route::post('/pos/sales/{sale}/refund', [SaleController::class, 'refund'])->name('pos.sales.refund');
     // POS Shift Management
@@ -69,6 +74,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/pos/search', [POSController::class, 'searchProduct'])->name('pos.search');
     Route::get('/pos/products', [POSController::class, 'productsFeed'])->name('pos.products.feed');
     Route::post('/pos/customer/quick-store', [POSController::class, 'quickStoreCustomer'])->name('pos.customer.quick-store');
+    Route::get('/pos/customers/search', [POSController::class, 'searchCustomers'])->name('pos.customers.search');
+
+    // CRM
+    Route::prefix('crm')->name('crm.')->group(function () {
+        Route::resource('customers', \App\Http\Controllers\CRM\CustomerController::class);
+        Route::post('customers/{customer}/notes', [\App\Http\Controllers\CRM\CustomerNoteController::class, 'store'])->name('customers.notes.store');
+        Route::delete('customers/{customer}/notes/{note}', [\App\Http\Controllers\CRM\CustomerNoteController::class, 'destroy'])->name('customers.notes.destroy');
+        Route::resource('tags', \App\Http\Controllers\CRM\CustomerTagController::class)->except(['show']);
+    });
     // POS Shift Reports
     Route::get('/pos/shifts', [POSController::class, 'shiftsIndex'])->name('pos.shifts.index');
     Route::get('/pos/shifts/{shift}', [POSController::class, 'shiftShow'])->name('pos.shifts.show');

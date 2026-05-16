@@ -11,9 +11,14 @@ class SaleItem extends Model
     use BelongsToTenant;
 
     protected $fillable = [
-        'sale_id', 'product_id', 'product_variant_id', 'quantity',
+        'sale_id', 'product_id', 'product_variant_id', 'quantity', 'qty_refunded',
         'unit_price', 'discount', 'discount_pct', 'discount_amount', 'total', 'tenant_id',
     ];
+
+    public function refundableQty(): int
+    {
+        return max(0, (int) $this->quantity - (int) ($this->qty_refunded ?? 0));
+    }
 
     protected $casts = [
         'unit_price' => 'decimal:2',

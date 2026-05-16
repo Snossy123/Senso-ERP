@@ -29,7 +29,9 @@
             productsFeed: '{{ route('pos.products.feed') }}',
             openShift: '{{ route('pos.shift.open') }}',
             closeShift: '/pos/shift/:id/close',
-            customerDisplay: '{{ route('pos.display') }}'
+            customerDisplay: '{{ route('pos.display') }}',
+            customerSearch: '{{ route('pos.customers.search') }}',
+            saleReceipt: '/pos/sales/:id/receipt'
         }
     };
 </script>
@@ -68,6 +70,8 @@
         'customers' => $customers,
     ])
 
+    <button type="button" id="pos-app-rail-backdrop" class="pos-app-rail-backdrop" aria-label="Close categories"></button>
+
     <div class="pos-app-main">
         @include('pos.partials.app.category-rail', ['categories' => $categories, 'activeShift' => $activeShift])
 
@@ -79,6 +83,16 @@
             @include('pos.partials.terminal.cart', ['posAppShell' => true])
         </div>
     </div>
+
+    <button type="button" id="pos-app-cart-backdrop" class="pos-app-cart-backdrop" aria-label="Close cart"></button>
+
+    <button type="button" id="pos-app-cart-fab" class="pos-app-cart-fab" data-pos-cart-toggle aria-label="Open cart">
+        <span class="pos-app-cart-fab__icon" aria-hidden="true"><i class="fe fe-shopping-cart"></i></span>
+        <span class="pos-app-cart-fab__meta">
+            <span class="pos-app-cart-fab__count" x-show="$store.pos.cart.length > 0" x-text="$store.pos.cart.length"></span>
+            <span class="pos-app-cart-fab__total pos-tabular" x-text="$store.pos.moneyLabel($store.pos.total)"></span>
+        </span>
+    </button>
 
     @include('pos.partials.modals')
 </div>

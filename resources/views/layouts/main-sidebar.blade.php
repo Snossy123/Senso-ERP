@@ -44,7 +44,8 @@
 
 					$showOperationsMenu = $can('suppliers.view') || $can('warehouses.view');
 
-					$showRelationshipsMenu = $canAny(['suppliers.view', 'warehouses.view']);
+					$showRelationshipsMenu = $canAny(['suppliers.view', 'warehouses.view', 'customers.view']);
+					$showCrmMenu = $can('customers.view');
 
 					$showInventorySection = $showStockMenu || $showOperationsMenu || $showRelationshipsMenu;
 
@@ -142,6 +143,19 @@
 							<i class="side-menu__icon fe fe-clock"></i>
 							<span class="side-menu__label">{{ __('messages.sidebar.shift_management') }}</span>
 						</a>
+					</li>
+					@endif
+					@if($showCrmMenu)
+					<li class="slide">
+						<a class="side-menu__item" data-toggle="slide" href="#">
+							<i class="side-menu__icon fe fe-users"></i>
+							<span class="side-menu__label">CRM</span>
+							<i class="angle fe fe-chevron-down"></i>
+						</a>
+						<ul class="slide-menu">
+							<li><a class="slide-item" href="{{ route('crm.customers.index') }}">Customers</a></li>
+							<li><a class="slide-item" href="{{ route('crm.tags.index') }}">Tags</a></li>
+						</ul>
 					</li>
 					@endif
 

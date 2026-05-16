@@ -11,6 +11,7 @@ use App\Models\Sale;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class POSTest extends TestCase
@@ -94,7 +95,7 @@ class POSTest extends TestCase
         \App\Models\AccountSetting::create(['tenant_id' => $tid, 'key' => 'pos_variance', 'account_id' => $this->varianceAccount->id]);
     }
 
-    /** @test */
+    #[Test]
     public function a_user_can_open_a_pos_shift()
     {
         $response = $this->actingAs($this->user)->postJson(route('pos.shift.open'), [
@@ -112,7 +113,7 @@ class POSTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function a_sale_requires_an_active_shift()
     {
         // No shift opened
@@ -131,7 +132,7 @@ class POSTest extends TestCase
         $response->assertStatus(422);
     }
 
-    /** @test */
+    #[Test]
     public function a_user_can_process_a_sale_with_an_active_shift_and_creates_journal_entry()
     {
         $shift = PosShift::factory()->create(['user_id' => $this->user->id, 'tenant_id' => $this->tenantId]);
@@ -170,7 +171,7 @@ class POSTest extends TestCase
         $this->assertDatabaseHas('journal_entry_lines', ['account_id' => $this->taxAccount->id, 'credit' => 10]);
     }
 
-    /** @test */
+    #[Test]
     public function closing_a_shift_with_variance_creates_journal_entry()
     {
         $shift = PosShift::factory()->create([
@@ -210,7 +211,7 @@ class POSTest extends TestCase
         $this->assertDatabaseHas('journal_entry_lines', ['account_id' => $this->cashAccount->id, 'credit' => 10]);
     }
 
-    /** @test */
+    #[Test]
     public function a_user_can_refund_a_sale_and_reverses_accounting()
     {
         $shift = PosShift::factory()->create(['user_id' => $this->user->id, 'tenant_id' => $this->tenantId]);
@@ -228,10 +229,10 @@ class POSTest extends TestCase
         ])->assertStatus(200);
 
         $sale = Sale::where('shift_id', $shift->id)->latest('id')->firstOrFail();
+        $saleItem = $sale->items()->firstOrFail();
 
-        // Refund request
         $response = $this->actingAs($this->user)->postJson(route('pos.sales.refund', $sale), [
-            'amount' => 100,
+            'items' => [['sale_item_id' => $saleItem->id, 'qty' => 1]],
             'reason' => 'Defective product',
             'method' => 'cash',
             'restock' => true,

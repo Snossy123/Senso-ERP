@@ -1,0 +1,331 @@
+/**
+ * POS /pos/app — phone & tablet compact UI (cart FAB + list-style products).
+ */
+
+/* ─── Floating cart (mobile only) ─── */
+.pos-app-cart-fab,
+.pos-app-cart-backdrop {
+  display: none;
+}
+
+.pos-cart-sheet-close {
+  display: none;
+}
+
+.pos-cart-header-end {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 991px) {
+  .pos-app {
+    --pos-app-chrome-h: 152px;
+  }
+
+  .pos-app:has(.pos-app-offline-strip:not([style*='display: none'])) {
+    --pos-app-chrome-h: 184px;
+  }
+
+  .pos-app-main {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-areas: 'catalog';
+    padding-bottom: max(72px, calc(12px + env(safe-area-inset-bottom)));
+  }
+
+  .pos-app-catalog-col {
+    grid-area: catalog;
+    min-height: 0;
+  }
+
+  /* Cart → bottom sheet */
+  .pos-app-cart-col {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2100;
+    max-height: min(78vh, 560px);
+    max-height: min(78dvh, 560px);
+    padding: 0 8px max(8px, env(safe-area-inset-bottom));
+    transform: translateY(calc(100% + 12px));
+    transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+    pointer-events: none;
+    flex: none;
+    min-height: 0;
+  }
+
+  body.pos-app-cart-open .pos-app-cart-col {
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .pos-app-cart-col #pos-cart-pane {
+    max-height: min(78vh, 560px);
+    border-radius: 16px 16px 12px 12px;
+    box-shadow: 0 -16px 48px rgba(15, 23, 42, 0.2);
+  }
+
+  .pos-app-cart-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 2090;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: rgba(15, 23, 42, 0.45);
+    cursor: pointer;
+  }
+
+  body.pos-app-cart-open .pos-app-cart-backdrop {
+    display: block;
+  }
+
+  body.pos-app-cart-open {
+    overflow: hidden;
+  }
+
+  .pos-cart-sheet-close {
+    display: inline-flex;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  /* FAB — bottom left, above content */
+  .pos-app-cart-fab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    position: fixed;
+    left: max(10px, env(safe-area-inset-left));
+    bottom: max(10px, env(safe-area-inset-bottom));
+    z-index: 2050;
+    max-width: calc(100vw - 20px);
+    padding: 8px 12px 8px 10px;
+    border: none;
+    border-radius: 999px;
+    background: var(--pos-gradient-brand);
+    color: var(--pos-color-text-inverse);
+    box-shadow: 0 8px 28px var(--pos-palette-emerald-muted);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+
+  .pos-app-cart-fab:active {
+    transform: scale(0.97);
+  }
+
+  body.pos-app-cart-open .pos-app-cart-fab {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(8px);
+  }
+
+  .pos-app-cart-fab__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    font-size: 1rem;
+  }
+
+  .pos-app-cart-fab__meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    min-width: 0;
+  }
+
+  .pos-app-cart-fab__count {
+    font-size: 0.65rem;
+    font-weight: 700;
+    opacity: 0.9;
+    line-height: 1.1;
+  }
+
+  .pos-app-cart-fab__count:empty {
+    display: none;
+  }
+
+  .pos-app-cart-fab__total {
+    font-size: 0.82rem;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+
+  .pos-catalog-grid-wrap--app {
+    padding-bottom: 12px !important;
+  }
+
+  /* Compact product tiles — name + price only */
+  .pos-catalog-grid-wrap--app .pos-catalog-card-modern {
+    flex-direction: row;
+    align-items: center;
+    min-height: 0;
+    padding: 8px 10px;
+    border-radius: 10px;
+    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.05);
+  }
+
+  .pos-catalog-grid-wrap--app .pos-catalog-card-modern:hover:not(.pos-catalog-card-modern--out) {
+    transform: none;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--pos-color-primary) 35%, transparent);
+  }
+
+  .pos-catalog-grid-wrap--app .pos-catalog-card-modern-media {
+    display: none !important;
+  }
+
+  .pos-catalog-grid-wrap--app .pos-catalog-card-modern-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 0;
+  }
+
+  .pos-catalog-grid-wrap--app .pos-catalog-card-modern-name {
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.25;
+    -webkit-line-clamp: 2;
+    margin: 0;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .pos-catalog-grid-wrap--app .pos-catalog-card-modern-price {
+    font-size: 0.75rem;
+    font-weight: 800;
+    flex-shrink: 0;
+    margin: 0;
+    color: var(--pos-color-primary);
+  }
+
+  /* Compact cart sheet */
+  .pos-app-cart-col .pos-cart-header {
+    padding: 8px 10px;
+  }
+
+  .pos-app-cart-col .pos-cart-header-title {
+    font-size: 0.8rem;
+  }
+
+  .pos-app-cart-col .pos-cart-header-badge {
+    padding: 4px 8px;
+    font-size: 0.65rem;
+  }
+
+  .pos-app-cart-col .pos-cart-row {
+    padding: 8px 10px;
+  }
+
+  .pos-app-cart-col .pos-cart-line-title {
+    font-size: 0.75rem;
+  }
+
+  .pos-app-cart-col .pos-cart-line-meta,
+  .pos-app-cart-col .pos-cart-line-qty-pill {
+    font-size: 0.65rem;
+  }
+
+  .pos-app-cart-col .pos-cart-line-total {
+    font-size: 0.78rem;
+  }
+
+  .pos-app-cart-col .pos-cart-line-remove,
+  .pos-app-cart-col .pos-cart-line-expand-btn {
+    min-width: 28px;
+    min-height: 28px;
+    width: 28px;
+    height: 28px;
+  }
+
+  .pos-app-cart-col .pos-cart-order-discount {
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .pos-app-cart-col .pos-cart-order-discount-label {
+    font-size: 0.62rem;
+  }
+
+  .pos-app-cart-col .pos-cart-order-discount-hint {
+    display: none;
+  }
+
+  .pos-app-cart-col .pos-cart-order-discount-input,
+  .pos-app-cart-col .pos-cart-order-discount input {
+    min-height: 36px;
+    width: 100%;
+    max-width: none;
+    font-size: 0.8rem;
+  }
+
+  .pos-app-cart-col .pos-cart-summary-panel {
+    padding: 8px 10px 10px;
+  }
+
+  .pos-app-cart-col .pos-cart-totals {
+    font-size: 0.72rem;
+    gap: 4px;
+  }
+
+  .pos-app-cart-col .pos-cart-due-amount {
+    font-size: 1.15rem !important;
+  }
+
+  .pos-app-cart-col .pos-cart-cta {
+    padding: 10px 12px;
+    font-size: 0.85rem;
+  }
+
+  .pos-app-cart-col .pos-cart-cta-sub {
+    font-size: 0.62rem;
+  }
+
+  .pos-app-cart-col .pos-cart-footer-hints {
+    display: none;
+  }
+
+  .pos-app-cart-col #cart-scroll-area {
+    flex: 1 1 0;
+    max-height: none;
+  }
+}
+
+@media (max-width: 576px) {
+  .pos-catalog-grid-wrap--app #pos-product-grid.pos-catalog-product-grid--retail {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .pos-app-cart-fab__total {
+    font-size: 0.76rem;
+  }
+}
+
+@media (min-width: 576px) and (max-width: 991px) {
+  .pos-catalog-grid-wrap--app #pos-product-grid.pos-catalog-product-grid--retail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+}
