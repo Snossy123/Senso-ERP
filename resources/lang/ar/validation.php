@@ -112,5 +112,9 @@ return [
         ],
     ],
 
-    'attributes' => [],
+    'attributes' => [
+        'image' => 'صورة المنتج',
+        'name' => 'اسم المنتج',
+        'sku' => 'رمز SKU',
+    ],
 ];

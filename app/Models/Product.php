@@ -100,10 +100,32 @@ class Product extends Model
         return $this->stock_quantity <= $this->min_stock_alert;
     }
 
-    public function getImageUrlAttribute(): string
+    public function getImageUrlAttribute(): ?string
     {
-        return $this->image
-            ? asset('storage/'.$this->image)
-            : 'data:image/svg+xml;base64,'.base64_encode('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="#f4f5f8"/><path d="M70 70 L130 130 M130 70 L70 130" stroke="#d0d0d0" stroke-width="2"/><text x="100" y="150" font-family="sans-serif" font-size="14" fill="#a0a0a0" text-anchor="middle">No Image</text></svg>');
+        if (! $this->image) {
+            return null;
+        }
+
+        if (str_starts_with($this->image, 'http://') || str_starts_with($this->image, 'https://')) {
+            return $this->image;
+        }
+
+        return \Illuminate\Support\Facades\Storage::disk('public')->url($this->image);
+    }
+
+    public function getImageDisplayUrlAttribute(): string
+    {
+        return $this->image_url ?? $this->placeholderImageUrl();
+    }
+
+    protected function placeholderImageUrl(): string
+    {
+        return 'data:image/svg+xml;base64,'.base64_encode(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">'
+            .'<rect width="200" height="200" fill="#f4f5f8"/>'
+            .'<path d="M70 70 L130 130 M130 70 L70 130" stroke="#d0d0d0" stroke-width="2"/>'
+            .'<text x="100" y="150" font-family="sans-serif" font-size="14" fill="#a0a0a0" text-anchor="middle">No Image</text>'
+            .'</svg>'
+        );
     }
 }

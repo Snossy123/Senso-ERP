@@ -121,8 +121,7 @@
                             </div>
                         </div>
                         <div class="col-lg-4">
-                             <label class="form-label">Product Image</label>
-                             <input type="file" name="image" class="form-control mt-1">
+                            @include('inventory.products.partials.image-field')
                         </div>
                     </div>
 

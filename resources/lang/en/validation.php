@@ -146,6 +146,10 @@ return [
     |
     */
 
-    'attributes' => [],
+    'attributes' => [
+        'image' => 'product image',
+        'name' => 'product name',
+        'sku' => 'SKU',
+    ],
 
 ];

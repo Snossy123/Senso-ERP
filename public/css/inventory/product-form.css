@@ -1,0 +1,80 @@
+/* Inventory product create / edit */
+
+.product-form {
+  width: 100%;
+  max-width: 100%;
+  padding-bottom: 5rem;
+}
+
+.product-form__card {
+  border: 1px solid #e6eaf4;
+  border-radius: 14px;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
+}
+
+.product-form__aside {
+  position: sticky;
+  top: 88px;
+}
+
+@media (max-width: 991px) {
+  .product-form__aside {
+    position: static;
+    margin-bottom: 1.25rem;
+  }
+}
+
+.product-form__options {
+  background: #f8fafc;
+  border: 1px solid #e6eaf4;
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  margin-top: 1rem;
+}
+
+.product-form__options .custom-control {
+  margin-bottom: 0.65rem;
+}
+
+.product-form__options .custom-control:last-child {
+  margin-bottom: 0;
+}
+
+.product-form .form-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.35rem;
+}
+
+.product-form .form-footer,
+.product-form__footer {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 1rem 1.25rem !important;
+  margin-top: 1.5rem;
+  background: #fff !important;
+  border-top: 1px solid #e2e8f0 !important;
+  position: sticky;
+  bottom: 0;
+  z-index: 100;
+  box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.product-form__header .btn-primary {
+  min-width: 120px;
+}
+
+[dir="rtl"] .product-form,
+.rtl .product-form {
+  width: 100%;
+}
+
+[dir="rtl"] .product-form .form-footer,
+[dir="rtl"] .product-form__footer,
+.rtl .product-form .form-footer,
+.rtl .product-form__footer {
+  justify-content: flex-start;
+}

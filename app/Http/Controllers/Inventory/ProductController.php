@@ -9,12 +9,16 @@ use App\Models\Supplier;
 use App\Models\Unit;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class ProductController extends Controller
 {
+    private const IMAGE_MAX_KB = 5120;
+
     public function __construct()
     {
         $this->middleware('auth');
@@ -52,7 +56,7 @@ class ProductController extends Controller
             'min_stock_alert' => 'integer|min:0',
             'weight' => 'nullable|numeric',
             'barcode' => 'nullable|string|max:100',
-            'image' => 'nullable|image|max:2048',
+            'image' => $this->imageValidationRules(),
             'is_ecommerce' => 'boolean',
             'has_variants' => 'boolean',
             'valuation_method' => 'required|in:fifo,average',
@@ -61,9 +65,7 @@ class ProductController extends Controller
             'variants.*.sku' => 'required_with:variants|unique:product_variants,sku',
         ]);
 
-        if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('products', 'public');
-        }
+        $data['image'] = $this->storeUploadedImage($request);
 
         $data['slug'] = Str::slug($data['name']);
         $data['is_active'] = $request->boolean('is_active', true);
@@ -102,6 +104,8 @@ class ProductController extends Controller
         $warehouses = Warehouse::where('is_active', true)->get();
         $units = Unit::all();
 
+        $product->load('variants');
+
         return view('inventory.products.edit', compact('product', 'categories', 'suppliers', 'warehouses', 'units'));
     }
 
@@ -120,18 +124,18 @@ class ProductController extends Controller
             'min_stock_alert' => 'integer|min:0',
             'weight' => 'nullable|numeric',
             'barcode' => 'nullable|string|max:100',
-            'image' => 'nullable|image|max:2048',
+            'image' => $this->imageValidationRules(),
+            'remove_image' => 'nullable|boolean',
             'is_ecommerce' => 'boolean',
             'has_variants' => 'boolean',
             'valuation_method' => 'required|in:fifo,average',
         ]);
 
-        if ($request->hasFile('image')) {
-            if ($product->image) {
-                Storage::disk('public')->delete($product->image);
-            }
-            $data['image'] = $request->file('image')->store('products', 'public');
+        if ($request->boolean('remove_image') || $request->hasFile('image')) {
+            $data['image'] = $this->storeUploadedImage($request, $product);
         }
+
+        unset($data['remove_image']);
 
         $data['slug'] = Str::slug($data['name']);
         $data['is_active'] = $request->boolean('is_active');
@@ -148,5 +152,53 @@ class ProductController extends Controller
         $product->delete();
 
         return redirect()->route('inventory.products.index')->with('success', 'Product deleted.');
+    }
+
+    /** @return array<int, string> */
+    private function imageValidationRules(): array
+    {
+        return ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:'.self::IMAGE_MAX_KB];
+    }
+
+    private function storeUploadedImage(Request $request, ?Product $product = null): ?string
+    {
+        if ($request->boolean('remove_image')) {
+            if ($product?->image) {
+                Storage::disk('public')->delete($product->image);
+            }
+
+            return null;
+        }
+
+        if (! $request->hasFile('image')) {
+            return $product?->image;
+        }
+
+        $file = $request->file('image');
+        $this->assertUploadValid($file);
+
+        Storage::disk('public')->makeDirectory('products');
+
+        if ($product?->image) {
+            Storage::disk('public')->delete($product->image);
+        }
+
+        return $file->store('products', 'public');
+    }
+
+    private function assertUploadValid(UploadedFile $file): void
+    {
+        if ($file->isValid()) {
+            return;
+        }
+
+        $message = match ($file->getError()) {
+            UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => __('inventory.image_too_large', [
+                'max' => (int) (self::IMAGE_MAX_KB / 1024),
+            ]),
+            default => __('inventory.image_upload_failed'),
+        };
+
+        throw ValidationException::withMessages(['image' => [$message]]);
     }
 }
