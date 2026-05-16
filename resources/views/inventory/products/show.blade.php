@@ -21,7 +21,7 @@
             </div>
             <div class="card-body">
                 @if($product->image)
-                <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="img-fluid mb-4 rounded">
+                <img src="{{ $product->image_display_url }}" alt="{{ $product->name }}" class="img-fluid mb-4 rounded">
                 @else
                 <div class="text-center p-5 bg-light rounded mb-4">
                     <i class="fe fe-package tx-60 text-muted"></i>

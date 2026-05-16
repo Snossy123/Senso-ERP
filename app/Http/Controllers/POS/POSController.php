@@ -297,7 +297,7 @@ class POSController extends Controller
                 'min_stock' => (float) $p->min_stock_alert,
                 'category' => $p->category?->name,
                 'category_id' => $p->category_id,
-                'image' => $p->image_url,
+                'image' => $p->image_display_url,
                 'has_variants' => (bool) $p->has_variants,
                 'variants' => $p->variants->map(fn ($v) => [
                     'id' => $v->id,
