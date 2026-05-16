@@ -16,9 +16,29 @@
 }
 
 .pos-cart-pane--slice2 .pos-cart-qty-cluster .qty-input-flat {
-  min-height: var(--pos-touch-min);
+  min-height: 36px;
   font-weight: 700;
-  width: 56px;
+  width: 48px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
+  -webkit-appearance: textfield;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.pos-cart-pane--slice2 .pos-cart-qty-cluster .qty-input-flat:focus,
+.pos-cart-pane--slice2 .pos-cart-qty-cluster .qty-input-flat:focus-visible {
+  border: none;
+  box-shadow: none;
+  outline: none;
+}
+
+.pos-cart-pane--slice2 .pos-cart-qty-cluster .qty-btn {
+  border: none;
+  background: var(--pos-color-surface);
+  box-shadow: 0 0 0 1px var(--pos-color-border-subtle);
 }
 
 .pos-cart-totals-row:not(.pos-cart-totals-row--due) span:first-child {
@@ -33,8 +53,13 @@
 }
 
 .pos-cart-pane--slice2 .pos-cart-header-badge {
-  min-height: var(--pos-touch-min);
-  padding: var(--pos-space-1) var(--pos-space-3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  min-height: 0;
+  padding: 6px 12px;
+  line-height: 1;
   border-radius: var(--pos-radius-full);
   background: var(--pos-color-surface-muted);
   font-size: var(--pos-font-step--1);
@@ -94,14 +119,112 @@
   opacity: 0.9;
 }
 
-/* ─── Line rows ─── */
-.pos-cart-pane--slice2 .pos-cart-row {
-  padding: var(--pos-space-4);
-  border-bottom: 1px solid var(--pos-color-border-subtle);
+/* ─── Line rows + splitters ─── */
+.pos-cart-line-wrap {
+  display: block;
 }
 
-.pos-cart-pane--slice2 .pos-cart-row:last-of-type {
+.pos-cart-item-split {
+  height: 0;
+  margin: 0 var(--pos-space-4) var(--pos-space-3);
+  border: 0;
+  border-top: 1px solid var(--pos-color-border);
+  opacity: 0.9;
+}
+
+.pos-cart-pane--slice2 .pos-cart-row {
+  padding: 10px 12px;
   border-bottom: none;
+  cursor: pointer;
+}
+
+.pos-cart-pane--slice2 .pos-cart-row-expanded {
+  padding: 12px 14px 14px;
+}
+
+.pos-cart-line-compact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pos-space-2);
+}
+
+.pos-cart-line-compact-end {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.pos-cart-line-qty-pill {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: var(--pos-radius-full);
+  background: var(--pos-color-surface-muted);
+  font-size: var(--pos-font-step--1);
+  font-weight: 700;
+  color: var(--pos-color-text);
+}
+
+.pos-cart-line-disc-tag {
+  margin-left: 6px;
+  font-size: var(--pos-font-step--1);
+  font-weight: 600;
+  color: var(--pos-color-danger);
+}
+
+.pos-cart-line-expand-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--pos-radius-sm);
+  background: transparent;
+  color: var(--pos-color-text-muted);
+  cursor: pointer;
+}
+
+.pos-cart-line-expand-btn:hover {
+  background: var(--pos-color-surface-muted);
+  color: var(--pos-color-text);
+}
+
+.pos-cart-pane--slice2 .pos-cart-row .pos-cart-line-remove {
+  min-width: 32px;
+  min-height: 32px;
+}
+
+.pos-cart-line-details {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--pos-color-border-subtle);
+}
+
+.pos-cart-pane--slice2 .pos-cart-row-expanded .pos-cart-line-title {
+  -webkit-line-clamp: 2;
+}
+
+.pos-cart-pane--slice2 .pos-cart-row:not(.pos-cart-row-expanded) .pos-cart-line-title {
+  font-size: var(--pos-font-step-1);
+  -webkit-line-clamp: 1;
+}
+
+.pos-cart-pane--slice2 .pos-cart-row:not(.pos-cart-row-expanded) .pos-cart-line-total {
+  font-size: var(--pos-font-step-1);
+}
+
+.pos-cart-line-discount-label {
+  font-size: var(--pos-font-step--1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pos-color-text-muted);
+  margin-right: 4px;
 }
 
 .pos-cart-line-top {
@@ -145,12 +268,12 @@
   background: color-mix(in srgb, var(--pos-color-danger) 10%, transparent);
 }
 
-.pos-cart-line-actions {
-  margin-top: var(--pos-space-4);
+.pos-cart-line-details .pos-cart-line-actions {
+  margin-top: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: var(--pos-space-3);
 }
 
@@ -170,7 +293,7 @@
   letter-spacing: -0.02em;
 }
 
-.pos-cart-line-discount {
+.pos-cart-line-details .pos-cart-line-discount {
   margin-top: var(--pos-space-3);
   display: flex;
   align-items: center;
@@ -213,6 +336,14 @@
   margin-bottom: var(--pos-space-4);
   border-radius: var(--pos-radius-md);
   background: var(--pos-color-surface-muted);
+  border: 1px solid var(--pos-color-border-subtle);
+}
+
+.pos-cart-order-discount-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .pos-cart-order-discount-label {
@@ -224,12 +355,44 @@
   margin: 0;
 }
 
+.pos-cart-order-discount-hint {
+  font-size: var(--pos-font-step--1);
+  color: var(--pos-color-text-muted);
+  opacity: 0.85;
+}
+
+.pos-cart-order-discount-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--pos-space-2);
+  flex-shrink: 0;
+}
+
+.pos-disc-mode-toggle--order {
+  flex-shrink: 0;
+}
+
+.pos-cart-order-discount-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--pos-space-2);
+  flex-shrink: 0;
+}
+
+.pos-cart-order-discount-prefix {
+  font-size: var(--pos-font-step-1);
+  font-weight: 800;
+  color: var(--pos-color-primary);
+}
+
+.pos-cart-order-discount-input,
 .pos-cart-order-discount input {
-  width: 112px;
+  width: 120px;
   min-height: var(--pos-touch-min);
   padding: var(--pos-space-2) var(--pos-space-3);
   border-radius: var(--pos-radius-sm);
   border: 1px solid var(--pos-color-border);
+  background: var(--pos-color-surface);
   font-weight: 700;
   text-align: right;
 }
@@ -320,6 +483,17 @@
   padding: 2px 6px;
   border: 1px solid var(--pos-color-border);
   background: var(--pos-color-surface-muted);
+  color: var(--pos-color-text, #1e293b);
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-family: inherit;
+  line-height: 1.2;
+}
+
+[data-pos-theme="dark"] .pos-cart-footer-hints kbd {
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 /* App shell row cards (keep selection) */
@@ -335,6 +509,19 @@
   background: var(--pos-color-primary-muted);
   border-color: rgba(67, 56, 202, 0.35);
   box-shadow: inset 3px 0 0 var(--pos-color-primary);
+}
+
+/* Scrollable cart lines — content height until cap, then scroll */
+.pos-cart-pane--slice2 #cart-scroll-area {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pos-cart-pane--app.pos-cart-pane--slice2 #cart-scroll-area {
+  max-height: calc(100% - 11.5rem);
 }
 
 /* Retail POS harmony — catalog-aligned green accent + soft list canvas */
@@ -391,7 +578,7 @@
 
 .pos-checkout-due-hero {
   margin-top: var(--pos-space-2);
-  padding: var(--pos-space-5) var(--pos-space-4);
+  padding: var(--pos-space-4) var(--pos-space-4);
   border-radius: var(--pos-radius-lg);
   background: var(--pos-color-text);
   color: var(--pos-color-text-inverse);
@@ -465,9 +652,44 @@
   background: color-mix(in srgb, var(--pos-color-success) 12%, transparent);
 }
 
+.pos-checkout-change-strip--short {
+  border-color: color-mix(in srgb, var(--pos-color-danger) 40%, var(--pos-color-border-subtle));
+  background: color-mix(in srgb, var(--pos-color-danger) 10%, transparent);
+  color: var(--pos-color-danger);
+}
+
+.pos-checkout-change-strip--change {
+  border-color: color-mix(in srgb, var(--pos-color-success) 45%, var(--pos-color-border-subtle));
+  background: color-mix(in srgb, var(--pos-color-success) 14%, transparent);
+  color: var(--pos-color-success-deep);
+}
+
+.pos-checkout-change-strip--exact {
+  border-color: var(--pos-color-border-subtle);
+  background: var(--pos-color-surface-muted);
+  color: var(--pos-color-text-muted);
+}
+
 .pos-checkout-change-strip.text-danger,
 .pos-checkout-change-strip.bg-danger-transparent {
   background: color-mix(in srgb, var(--pos-color-danger) 10%, transparent);
+}
+
+.pos-checkout-modal-root .pos-checkout-submit.btn-dark {
+  background: var(--pos-gradient-checkout);
+  border: none;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(5, 120, 87, 0.28);
+}
+
+.pos-checkout-modal-root .pos-checkout-submit.btn-dark:hover:not(:disabled) {
+  filter: brightness(1.06);
+  color: #fff;
+}
+
+.pos-checkout-modal-root .pos-checkout-submit.btn-dark:disabled {
+  opacity: 0.52;
+  cursor: not-allowed;
 }
 
 .pos-checkout-submit {

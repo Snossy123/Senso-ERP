@@ -9,6 +9,7 @@ use App\Models\Customer;
 use App\Models\PosShift;
 use App\Models\HeldOrder;
 use App\Models\User;
+use App\Services\POS\ShiftSummaryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -22,7 +23,7 @@ class POSController extends Controller
     {
         $categories = Category::where('is_active', true)->get();
 
-        $customers = Customer::orderBy('name')->get(['id', 'name', 'email', 'phone']);
+        $customers = Customer::orderBy('name')->limit(50)->get(['id', 'name', 'email', 'phone']);
 
         $activeShift = PosShift::where('user_id', Auth::id())
             ->where('status', 'open')
@@ -97,12 +98,14 @@ class POSController extends Controller
         }
 
         $shift->close((float) $request->closing_float, $request->notes);
+        $summary = app(ShiftSummaryService::class)->summarize($shift->fresh());
 
         return response()->json([
             'success'       => true,
             'variance'      => $shift->variance,
             'expected_cash' => $shift->expected_cash,
             'total_sales'   => $shift->totalSales(),
+            'summary'       => $summary,
         ]);
     }
 
@@ -131,8 +134,32 @@ class POSController extends Controller
 
     public function shiftShow(PosShift $shift)
     {
-        $shift->load(['user', 'sales.items.product', 'sales.customer']);
-        return view('pos.shifts.show', compact('shift'));
+        $shift->load([
+            'user',
+            'sales' => fn ($q) => $q->with('customer')->orderBy('created_at'),
+        ]);
+        $shiftSummary = app(ShiftSummaryService::class)->summarize($shift);
+
+        return view('pos.shifts.show', compact('shift', 'shiftSummary'));
+    }
+
+    public function searchCustomers(Request $request)
+    {
+        $q = trim((string) $request->input('q', ''));
+        $query = Customer::query()->orderBy('name');
+
+        if ($q !== '') {
+            $query->where(function ($sub) use ($q) {
+                $sub->where('name', 'like', "%{$q}%")
+                    ->orWhere('email', 'like', "%{$q}%")
+                    ->orWhere('phone', 'like', "%{$q}%")
+                    ->orWhere('company', 'like', "%{$q}%");
+            });
+        }
+
+        $customers = $query->limit(20)->get(['id', 'name', 'email', 'phone', 'company']);
+
+        return response()->json(['data' => $customers]);
     }
 
     // ── Held Orders ─────────────────────────────────────────────────────────────

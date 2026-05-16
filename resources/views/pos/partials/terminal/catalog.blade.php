@@ -37,11 +37,11 @@
         <div class="flex-1 flex flex-col min-h-0 overflow-hidden pos-catalog-grid-view">
             <div class="pos-catalog-grid-scroller flex-1 min-h-0 overflow-y-auto pos-scroll pos-catalog-grid-wrap p-3 @if(!empty($posAppShell)) pos-catalog-grid-wrap--app @endif">
                 <template x-if="$store.pos.loadingProducts && !$store.pos.filteredProducts.length">
-                    <div class="product-skeleton-grid pos-mb-gap pos-catalog-skel-grid" aria-busy="true">
-                        @for ($s = 0; $s < 10; $s++)
-                            <div class="pos-skel-card pos-catalog-retail-card pos-catalog-retail-card--skeleton">
-                                <div class="pos-skel-shimmer pos-catalog-retail-media-skel" aria-hidden="true"></div>
-                                <div class="pos-catalog-retail-body-skel">
+                    <div class="pos-catalog-skel-grid" aria-busy="true">
+                        @for ($s = 0; $s < 12; $s++)
+                            <div class="pos-catalog-card-modern pos-catalog-card-modern--skel">
+                                <div class="pos-skel-shimmer pos-catalog-card-modern-media-skel" aria-hidden="true"></div>
+                                <div class="pos-catalog-card-modern-body-skel">
                                     <div class="pos-skel-line pos-skel-shimmer rounded mb-2"></div>
                                     <div class="pos-skel-line pos-skel-shimmer pos-skel-w40 rounded"></div>
                                 </div>
@@ -53,37 +53,29 @@
                 <div id="pos-product-grid" class="product-grid-rows pos-product-grid-gap pos-catalog-product-grid pos-catalog-product-grid--retail" data-pos-catalog-root="1">
                     <template x-for="(product, pIdx) in $store.pos.catalogPagedProducts" :key="product.id + '-' + $store.pos.catalogUiPage">
                         <article
-                            class="product-card relative pos-catalog-retail-card pos-catalog-chip"
+                            class="pos-catalog-card-modern"
                             :data-pos-prod-idx="pIdx"
                             :class="{
-                                'out-stock': product.out_of_stock,
-                                'product-card-keyboard': pIdx === $store.pos.keyboardProductIndex,
-                                'product-card-scan': product.id === $store.pos.recentFlashProductId,
-                                'product-card-lowpulse': product.low_stock && !product.out_of_stock,
-                                'product-card-stale': $store.pos.catalogStale
+                                'pos-catalog-card-modern--out': product.out_of_stock,
+                                'pos-catalog-card-modern--keyboard': pIdx === $store.pos.keyboardProductIndex,
+                                'pos-catalog-card-modern--scan': product.id === $store.pos.recentFlashProductId,
                             }"
                             @click.prevent="!product.out_of_stock && $store.pos.openCatalogProductDetail(pIdx, product)"
                             role="button"
                             tabindex="-1"
                             :aria-current="pIdx === $store.pos.keyboardProductIndex ? 'true' : 'false'"
                         >
-                            <div class="pos-catalog-retail-media">
+                            <div class="pos-catalog-card-modern-media">
                                 <template x-if="product.image">
                                     <img loading="lazy" decoding="async" :src="product.image" :alt="product.name"
-                                        class="pos-catalog-retail-img">
+                                        class="pos-catalog-card-modern-img">
                                 </template>
-                                <div x-show="!product.image" class="pos-catalog-retail-ph" x-cloak
+                                <div x-show="!product.image" class="pos-catalog-card-modern-ph" x-cloak
                                     x-text="$store.pos.initialsFromName(product.name)"></div>
-                                <span x-show="product.badge === 'low'" class="pos-catalog-retail-badge pos-catalog-retail-badge--low">Low</span>
-                                <span x-show="product.badge === 'out'" class="pos-catalog-retail-badge pos-catalog-retail-badge--out">Out</span>
                             </div>
-                            <div class="pos-catalog-retail-body">
-                                <h4 class="pos-catalog-retail-name product-title-lines" x-text="product.name"></h4>
-                                <p class="pos-catalog-retail-price pos-tabular" x-text="$store.pos.moneyLabel(product.price)"></p>
-                                <span class="pos-catalog-retail-stocknote"
-                                    x-show="product.low_stock || product.out_of_stock"
-                                    :class="product.out_of_stock ? 'pos-catalog-retail-stocknote--out' : 'pos-catalog-retail-stocknote--low'"
-                                    x-text="product.out_of_stock ? 'Unavailable' : 'Low stock'"></span>
+                            <div class="pos-catalog-card-modern-body">
+                                <h4 class="pos-catalog-card-modern-name" x-text="product.name"></h4>
+                                <p class="pos-catalog-card-modern-price pos-tabular" x-text="$store.pos.moneyLabel(product.price)"></p>
                             </div>
                         </article>
                     </template>

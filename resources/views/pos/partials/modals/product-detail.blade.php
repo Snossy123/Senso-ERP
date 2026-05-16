@@ -73,12 +73,32 @@
                                         aria-label="Increase quantity"><i class="fe fe-plus"></i></button>
                                 </div>
                             </div>
-                            <div class="pos-product-detail-field mb-0">
-                                <label class="pos-product-detail-label" for="detailModalDisc">Line discount %</label>
+                            <div class="pos-product-detail-field">
+                                <label class="pos-product-detail-label">Line discount</label>
+                                <div class="pos-disc-mode-toggle mb-2">
+                                    <button type="button" class="pos-disc-mode-btn"
+                                        :class="{ active: $store.pos.detailModalDiscountMode !== 'amount' }"
+                                        @click="$store.pos.detailModalDiscountMode = 'pct'">%</button>
+                                    <button type="button" class="pos-disc-mode-btn"
+                                        :class="{ active: $store.pos.detailModalDiscountMode === 'amount' }"
+                                        @click="$store.pos.detailModalDiscountMode = 'amount'">$</button>
+                                </div>
                                 <input id="detailModalDisc" type="number" min="0" max="100" step="0.5"
+                                    x-show="$store.pos.detailModalDiscountMode !== 'amount'"
                                     class="pos-product-detail-disc form-control border-0 pos-tabular"
-                                    x-model.number="$store.pos.detailModalDiscountPct"
-                                    placeholder="0">
+                                    x-model.number="$store.pos.detailModalDiscountPct" placeholder="0">
+                                <input type="number" min="0" step="0.01"
+                                    x-show="$store.pos.detailModalDiscountMode === 'amount'" x-cloak
+                                    class="pos-product-detail-disc form-control border-0 pos-tabular"
+                                    x-model.number="$store.pos.detailModalDiscountAmount" placeholder="0.00">
+                            </div>
+                            <div class="pos-product-detail-field mb-0">
+                                <label class="pos-product-detail-label" for="detailModalNotes">Notes</label>
+                                <textarea id="detailModalNotes"
+                                    class="pos-product-detail-notes form-control border-0"
+                                    x-model="$store.pos.detailModalNotes"
+                                    placeholder="Add a note (optional)"
+                                    rows="2"></textarea>
                             </div>
                         </div>
                     </div>

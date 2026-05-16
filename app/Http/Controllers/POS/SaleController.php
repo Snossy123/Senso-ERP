@@ -12,6 +12,7 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SaleRefund;
+use App\Models\SaleRefundItem;
 use App\Events\Domain\Sales\SaleRecorded;
 use App\Models\User;
 use App\Notifications\LowStockAlertNotification;
@@ -30,7 +31,7 @@ class SaleController extends Controller
 
     public function index(Request $request)
     {
-        $query = Sale::with('user', 'customer')->orderBy('created_at', 'desc');
+        $query = Sale::with('user', 'customer')->withCount('items')->orderBy('created_at', 'desc');
 
         if ($request->filled('cashier_id')) {
             $query->where('user_id', $request->cashier_id);
@@ -62,6 +63,8 @@ class SaleController extends Controller
             'items.*.qty' => 'required|integer|min:1',
             'items.*.price' => 'required|numeric|min:0',
             'items.*.discount_pct' => 'nullable|numeric|min:0|max:100',
+            'items.*.discount_amount' => 'nullable|numeric|min:0',
+            'items.*.discount_mode' => 'nullable|in:pct,amount',
             'payment_method' => 'required|in:cash,card,bank_transfer,split',
             'discount' => 'nullable|numeric|min:0',
             'tax_rate' => 'nullable|numeric|min:0|max:100',
@@ -124,18 +127,26 @@ class SaleController extends Controller
 
             // Calculate totals
             foreach ($items as $item) {
-                $itemDiscountPct = (float) ($item['discount_pct'] ?? 0);
+                $product = Product::findOrFail($item['id']);
+                $lineGross = (float) $item['price'] * (int) $item['qty'];
+                $mode = ($item['discount_mode'] ?? 'pct') === 'amount' ? 'amount' : 'pct';
 
-                // Item-level discount permission check
-                if ($itemDiscountPct > 0 && ! Auth::user()->hasPermission('pos.discount')) {
+                if ($mode === 'amount') {
+                    $itemDiscount = min($lineGross, (float) ($item['discount_amount'] ?? 0));
+                    $itemDiscountPct = $lineGross > 0 ? round(($itemDiscount / $lineGross) * 100, 2) : 0;
+                } else {
+                    $itemDiscountPct = (float) ($item['discount_pct'] ?? 0);
+                    $itemDiscount = $lineGross * $itemDiscountPct / 100;
+                }
+
+                if ($itemDiscount > 0 && ! Auth::user()->hasPermission('pos.discount')) {
                     $maxItemDisc = (float) \App\Models\Setting::get('pos_max_discount_no_perm', 0, $tenant->id);
                     if ($itemDiscountPct > $maxItemDisc) {
-                        throw new \Exception("You do not have permission to apply {$itemDiscountPct}% discount on {$product->name}. Max allowed: {$maxItemDisc}%");
+                        throw new \Exception("You do not have permission to apply discount on {$product->name}. Max allowed: {$maxItemDisc}%");
                     }
                 }
 
-                $itemDiscount = ($item['price'] * $item['qty'] * $itemDiscountPct / 100);
-                $subtotal += ($item['price'] * $item['qty']) - $itemDiscount;
+                $subtotal += $lineGross - $itemDiscount;
             }
 
             $taxAmount = round(($subtotal - $discountAmt) * $taxRate / 100, 2);
@@ -183,9 +194,15 @@ class SaleController extends Controller
             foreach ($items as $item) {
                 $product = Product::lockForUpdate()->findOrFail($item['id']);
                 $variantId = $item['variant_id'] ?? null;
-                $discountPct = (float) ($item['discount_pct'] ?? 0);
-                $lineTotal = $item['price'] * $item['qty'];
-                $lineDisc = $lineTotal * $discountPct / 100;
+                $lineTotal = (float) $item['price'] * (int) $item['qty'];
+                $mode = ($item['discount_mode'] ?? 'pct') === 'amount' ? 'amount' : 'pct';
+                if ($mode === 'amount') {
+                    $lineDisc = min($lineTotal, (float) ($item['discount_amount'] ?? 0));
+                    $discountPct = $lineTotal > 0 ? round(($lineDisc / $lineTotal) * 100, 2) : 0;
+                } else {
+                    $discountPct = (float) ($item['discount_pct'] ?? 0);
+                    $lineDisc = $lineTotal * $discountPct / 100;
+                }
 
                 SaleItem::create([
                     'tenant_id' => $tenant->id,
@@ -283,9 +300,43 @@ class SaleController extends Controller
 
     public function show(Sale $sale)
     {
-        $sale->load('items.product', 'customer', 'user', 'refunds');
+        $sale->load('items.product', 'customer', 'user', 'shift', 'refunds.items.saleItem');
 
         return view('pos.sales.show', compact('sale'));
+    }
+
+    public function receipt(Request $request, Sale $sale)
+    {
+        $sale->load('items.product', 'customer', 'user');
+
+        $currency = config('app.currency_symbol', '$');
+        $receipt = [
+            'tenant_name' => optional($sale->tenant)->name ?? config('app.name'),
+            'sale_id' => $sale->id,
+            'sale_number' => $sale->sale_number,
+            'sale_date' => $sale->created_at->format('M d, Y H:i'),
+            'cashier_name' => $sale->user?->name ?? '',
+            'customer_name' => $sale->customer?->name ?? $sale->customer_name ?? 'Walk-in',
+            'lines' => $sale->items->map(fn ($i) => [
+                'qty' => $i->quantity,
+                'name' => $i->product?->name ?? 'Item',
+                'total' => $currency.number_format((float) $i->total, 2),
+            ])->all(),
+            'subtotal' => $currency.number_format((float) $sale->subtotal, 2),
+            'discount' => $sale->discount_amount > 0
+                ? '-'.$currency.number_format((float) $sale->discount_amount, 2)
+                : null,
+            'tax' => $currency.number_format((float) $sale->tax_amount, 2),
+            'total' => $currency.number_format((float) $sale->total, 2),
+            'payment' => strtoupper(str_replace('_', ' ', $sale->payment_method)),
+            'change' => $currency.number_format((float) $sale->change_due, 2),
+            'compact' => true,
+        ];
+
+        return view('pos.receipt.print', [
+            'receipt' => $receipt,
+            'autoPrint' => $request->boolean('print'),
+        ]);
     }
 
     // ── Void Sale ─────────────────────────────────────────────────────────────────
@@ -352,10 +403,13 @@ class SaleController extends Controller
     public function refund(Request $request, Sale $sale)
     {
         $request->validate([
-            'amount' => 'required|numeric|min:0.01|max:'.$sale->total,
+            'items' => 'required|array|min:1',
+            'items.*.sale_item_id' => 'required|integer|exists:sale_items,id',
+            'items.*.qty' => 'required|integer|min:1',
             'reason' => 'required|string|max:255',
             'method' => 'required|in:original,cash,credit',
             'restock' => 'nullable|boolean',
+            'amount' => 'nullable|numeric|min:0.01',
         ]);
 
         if (! Auth::user()->hasPermission('pos.refund')) {
@@ -373,57 +427,96 @@ class SaleController extends Controller
         $inventory = $this->inventoryPostingService;
         $warehouseId = $sale->shift?->warehouse_id;
 
-        DB::transaction(function () use ($sale, $request, $tenant, $restock, $inventory, $warehouseId) {
+        $refundAmount = 0.0;
+        $linePayloads = [];
+
+        foreach ($request->input('items') as $row) {
+            $saleItem = $sale->items->firstWhere('id', (int) $row['sale_item_id']);
+            if (! $saleItem) {
+                return response()->json(['error' => 'Invalid sale line.'], 422);
+            }
+            $qty = (int) $row['qty'];
+            $available = $saleItem->refundableQty();
+            if ($qty > $available) {
+                return response()->json([
+                    'error' => "Cannot return {$qty} units — only {$available} refundable.",
+                ], 422);
+            }
+            $unitShare = (float) $saleItem->quantity > 0
+                ? (float) $saleItem->total / (float) $saleItem->quantity
+                : (float) $saleItem->unit_price;
+            $lineAmount = round($unitShare * $qty, 2);
+            $refundAmount += $lineAmount;
+            $linePayloads[] = [
+                'sale_item' => $saleItem,
+                'qty' => $qty,
+                'line_amount' => $lineAmount,
+            ];
+        }
+
+        if ($refundAmount <= 0) {
+            return response()->json(['error' => 'Refund amount must be greater than zero.'], 422);
+        }
+
+        $alreadyRefunded = (float) $sale->refunds()->sum('amount');
+        if ($alreadyRefunded + $refundAmount > (float) $sale->total + 0.001) {
+            return response()->json(['error' => 'Refund exceeds sale total.'], 422);
+        }
+
+        DB::transaction(function () use ($sale, $request, $tenant, $restock, $inventory, $warehouseId, $refundAmount, $linePayloads) {
             $refund = SaleRefund::create([
                 'tenant_id' => $tenant?->id ?? $sale->tenant_id,
                 'sale_id' => $sale->id,
                 'user_id' => Auth::id(),
                 'refund_number' => SaleRefund::generateRefundNumber(),
-                'amount' => $request->amount,
+                'amount' => $refundAmount,
                 'reason' => $request->reason,
                 'method' => $request->method,
             ]);
 
-            // Restore stock pro-rated by refund amount ratio
-            if ($restock && $sale->total > 0) {
-                $ratio = $request->amount / $sale->total;
-                foreach ($sale->items as $saleItem) {
-                    $restoreQty = (int) round($saleItem->quantity * $ratio);
-                    if ($restoreQty <= 0) {
-                        continue;
-                    }
+            foreach ($linePayloads as $payload) {
+                /** @var SaleItem $saleItem */
+                $saleItem = $payload['sale_item'];
+                $qty = $payload['qty'];
+                $restockedQty = 0;
 
+                if ($restock) {
                     $product = $saleItem->product;
-                    if (! $product) {
-                        continue;
+                    if ($product) {
+                        $unitCost = (float) $product->purchase_price;
+                        $inventory->postInbound(
+                            StockPostingData::forPosRefundLine(
+                                tenantId: (int) ($tenant?->id ?? $sale->tenant_id),
+                                productId: $saleItem->product_id,
+                                productVariantId: $saleItem->product_variant_id,
+                                warehouseId: $warehouseId,
+                                quantity: $qty,
+                                unitCost: $unitCost,
+                                totalValue: $qty * $unitCost,
+                                reference: 'REF-'.$refund->refund_number,
+                                userId: (int) Auth::id(),
+                            )
+                        );
+                        $restockedQty = $qty;
                     }
-
-                    $unitCost = (float) $product->purchase_price;
-                    $totalValue = $restoreQty * $unitCost;
-
-                    $inventory->postInbound(
-                        StockPostingData::forPosRefundLine(
-                            tenantId: (int) ($tenant?->id ?? $sale->tenant_id),
-                            productId: $saleItem->product_id,
-                            productVariantId: $saleItem->product_variant_id,
-                            warehouseId: $warehouseId,
-                            quantity: $restoreQty,
-                            unitCost: $unitCost,
-                            totalValue: $totalValue,
-                            reference: 'REF-'.$refund->refund_number,
-                            userId: (int) Auth::id(),
-                        )
-                    );
                 }
+
+                SaleRefundItem::create([
+                    'sale_refund_id' => $refund->id,
+                    'sale_item_id' => $saleItem->id,
+                    'quantity' => $qty,
+                    'line_amount' => $payload['line_amount'],
+                    'restocked_qty' => $restockedQty,
+                ]);
+
+                $saleItem->increment('qty_refunded', $qty);
             }
 
-            // If full refund, mark the sale
-            $totalRefunded = $sale->refunds()->sum('amount') + $request->amount;
-            if ($totalRefunded >= $sale->total) {
+            $totalRefunded = (float) $sale->refunds()->sum('amount');
+            if ($totalRefunded >= (float) $sale->total - 0.001) {
                 $sale->update(['status' => 'refunded']);
             }
 
-            // ── Create Journal Entry ─────────────────────────────────────
             try {
                 $generator = \App\Services\Accounting\JournalEntryFactory::getGenerator($refund);
                 $jeData = $generator->generate($refund);
@@ -439,13 +532,13 @@ class SaleController extends Controller
             \App\Models\Activity::log(
                 'pos',
                 'refund',
-                "Refund #{$refund->refund_number} of {$request->amount} for Sale #{$sale->sale_number}",
-                ['refund_id' => $refund->id, 'amount' => $request->amount],
+                "Refund #{$refund->refund_number} of {$refundAmount} for Sale #{$sale->sale_number}",
+                ['refund_id' => $refund->id, 'amount' => $refundAmount, 'lines' => count($linePayloads)],
                 $refund,
                 'warning'
             );
         });
 
-        return response()->json(['success' => true]);
+        return response()->json(['success' => true, 'amount' => $refundAmount]);
     }
 }

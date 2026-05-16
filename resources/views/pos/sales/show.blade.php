@@ -1,206 +1,337 @@
 @extends('layouts.master')
+
 @section('page-header')
-<div class="breadcrumb-header justify-content-between flex-wrap gap-3">
+<div class="pos-sale-show__header breadcrumb-header justify-content-between">
     <div class="my-auto">
         <div class="d-flex flex-wrap align-items-center">
             <h4 class="content-title mb-0 my-auto">POS</h4>
-            <span class="text-muted mt-1 tx-13 mx-2 mb-0">/ Receipt</span>
-            <span class="badge badge-primary-transparent border rounded-pill px-3 py-1 tx-13 font-weight-bold">{{ $sale->sale_number }}</span>
+            <span class="text-muted tx-13">/ {{ __('messages.sidebar.sales_history') }}</span>
+            <span class="pos-sale-show__badge">{{ $sale->sale_number }}</span>
         </div>
     </div>
-    <div class="d-flex flex-wrap my-xl-auto right-content gap-2">
-        <a href="{{ route('pos.sales.index') }}" class="btn btn-secondary rounded-pill"><i class="fe fe-arrow-left mr-1"></i> Back</a>
-        <button type="button" onclick="window.print()" class="btn btn-outline-secondary rounded-pill"><i class="fe fe-printer mr-1"></i> Print</button>
-        @if(!$sale->isVoided() && !$sale->isRefunded())
-            <button type="button" class="btn btn-warning rounded-pill" onclick="$('#refundModal').modal('show')"><i class="fe fe-rotate-ccw mr-1"></i> Refund</button>
-            <button type="button" class="btn btn-danger rounded-pill" onclick="$('#voidModal').modal('show')"><i class="fe fe-slash mr-1"></i> Void</button>
+    <div class="pos-sale-show__actions right-content">
+        <a href="{{ route('pos.sales.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+            <i class="fe fe-arrow-left me-1"></i> Back
+        </a>
+        <button type="button" onclick="window.print()" class="btn btn-primary btn-sm rounded-pill px-3">
+            <i class="fe fe-printer me-1"></i> Print
+        </button>
+        @if(!$sale->isVoided() && $sale->items->sum(fn ($i) => $i->refundableQty()) > 0)
+            <button type="button" class="btn btn-warning btn-sm rounded-pill px-3" onclick="$('#refundModal').modal('show')">
+                <i class="fe fe-rotate-ccw me-1"></i> Return
+            </button>
+            <button type="button" class="btn btn-danger btn-sm rounded-pill px-3" onclick="$('#voidModal').modal('show')">
+                <i class="fe fe-slash me-1"></i> Void
+            </button>
         @endif
     </div>
 </div>
 @endsection
 
 @section('css')
-<style>
-    .receipt-shell { background: linear-gradient(145deg,#eef2ff,#f8fafc); padding-bottom: 32px; border-radius:20px; padding:20px;}
-    .receipt-stack { border-radius: 20px; overflow: hidden; border: 1px solid #eceff7; box-shadow: 0 12px 42px rgba(15,23,42,0.08); background: #fff; }
-    .receipt-line { display:flex; justify-content:space-between; padding:.55rem 0; font-size:.93rem; border-bottom:1px solid #f2f4fb; }
-    .receipt-line:last-child { border-bottom:0; }
-    .receipt-muted { color:#8b95b8; font-weight:600; text-transform:uppercase; font-size:.62rem; letter-spacing:.08em; }
-    .status-pill-prem { padding:.28rem .95rem; border-radius:999px; font-weight:800; letter-spacing:.06em; font-size:.65rem; text-transform:uppercase; display:inline-block; }
-    .status-pill-prem.completed { background:#dcfce7;color:#166534;}
-    .status-pill-prem.refunded { background:#fef3c7;color:#92400e;}
-    .status-pill-prem.voided { background:#fee2e2;color:#991b1b;}
-    .sticky-totals { position:sticky; top:92px; border-radius:20px; overflow:hidden; border:1px solid #e2e8f0; box-shadow:0 22px 56px rgba(15,23,42,0.12); background:linear-gradient(140deg,#0f172a,#312e81); color:#fff; }
-    .refund-chip { border-left: 4px solid #fbbf24; background:#fffaf0; padding:14px 16px 16px; border-radius:16px; margin-bottom: .75rem; box-shadow:0 6px 18px rgba(251,191,36,0.15); }
-    .timeline-marker { width:13px;height:13px;border-radius:50%;background:#4f46e5;border:3px solid #e0e7ff;margin-top:.35rem;margin-right:.75rem;}
-    .timeline-rail { width:3px;background:#eef2ff;position:absolute;top:36px;bottom:24px;left:6px;border-radius:3px;}
-    @media print {
-        .breadcrumb-header, .btn, .breadcrumb, footer, #refundModal, #voidModal, .sidebar, .sidebar-mini { display:none !important; }
-        .sticky-totals { position: relative !important; top: 0 !important; box-shadow: none !important; }
-        .receipt-stack { box-shadow: none !important; border:none !important;}
-    }
-</style>
+<link href="{{ asset('css/pos/sale-show.css') }}?v=1" rel="stylesheet">
 @endsection
 
 @section('content')
-<div class="receipt-shell">
-<div class="row">
-    <div class="col-lg-8">
+@php
+    $currency = config('app.currency');
+    $tendered = $sale->payment_method === 'cash'
+        ? (float) (($sale->amount_tendered ?? 0) > 0 ? $sale->amount_tendered : $sale->total)
+        : (float) ($sale->amount_tendered ?? 0);
+    $changeDue = (float) ($sale->change_due ?? 0);
+@endphp
 
-        <div class="card receipt-stack mb-4 rounded-xl">
-            <div class="card-header bg-white py-4 border-0 px-4 d-flex justify-content-between align-items-start flex-wrap">
-                <div>
-                    <small class="receipt-muted mb-2 d-inline-block">Line items</small>
-                    <h5 class="mb-2 font-weight-bold text-dark">{{ $sale->sale_number }}</h5>
-                    <div class="d-flex gap-3 flex-wrap text-muted tx-13">
-                        <span><i class="fe fe-calendar mr-1 text-primary"></i>{{ $sale->created_at->format('M d, Y · H:i') }}</span>
-                        <span><i class="fe fe-user mr-1 text-success"></i>{{ $sale->user?->name ?? 'Cashier unknown' }}</span>
+<div class="pos-sale-show">
+    <div class="pos-sale-show__layout">
+        <div class="pos-sale-show__main">
+            <section class="pos-sale-show__panel">
+                <div class="pos-sale-show__panel-head">
+                    <div>
+                        <h5>{{ $sale->sale_number }}</h5>
+                        <div class="pos-sale-show__meta">
+                            <span><i class="fe fe-calendar me-1"></i>{{ $sale->created_at->format('M d, Y · H:i') }}</span>
+                            <span><i class="fe fe-user me-1"></i>{{ $sale->user?->name ?? '—' }}</span>
+                        </div>
                     </div>
+                    <span class="pos-sale-show__status pos-sale-show__status--{{ $sale->status }}">{{ $sale->status }}</span>
                 </div>
-                <span class="status-pill-prem {{ $sale->status }}">{{ $sale->status }}</span>
+
+                <div class="pos-sale-show__table-wrap">
+                    <table class="pos-sale-show__table">
+                        <thead>
+                            <tr>
+                                <th class="col-product">Product</th>
+                                <th class="col-qty">Qty</th>
+                                <th class="col-money">Unit</th>
+                                <th class="col-money">Disc</th>
+                                <th class="col-total">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($sale->items as $item)
+                                <tr>
+                                    <td class="col-product">
+                                        <span class="pos-sale-show__product-name">{{ $item->product?->name ?: 'Unavailable SKU' }}</span>
+                                        @if($item->product_variant_id)
+                                            <br><small class="text-muted">Variant #{{ $item->product_variant_id }}</small>
+                                        @endif
+                                    </td>
+                                    <td class="col-qty">{{ $item->quantity }}</td>
+                                    <td class="col-money">{{ $currency }} {{ number_format($item->unit_price, 2) }}</td>
+                                    <td class="col-money text-muted">
+                                        @if($item->discount_pct > 0)
+                                            −{{ $currency }} {{ number_format($item->discount_amount, 2) }}
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
+                                    <td class="col-total">{{ $currency }} {{ number_format($item->total, 2) }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            @if($sale->refunds->count())
+                <h6 class="pos-sale-show__section-title"><i class="fe fe-repeat me-1 text-warning"></i> Refunds</h6>
+                @foreach($sale->refunds as $refund)
+                    <div class="pos-sale-show__refund">
+                        <div class="pos-sale-show__refund-head">
+                            <span class="font-weight-bold">{{ $refund->refund_number }}</span>
+                            <span class="font-weight-bold text-warning">{{ $currency }} {{ number_format($refund->amount, 2) }}</span>
+                        </div>
+                        <small class="text-muted d-block">{{ $refund->created_at->format('M d · H:i') }} · {{ $refund->user?->name }} · {{ ucfirst($refund->method) }}</small>
+                        @if($refund->reason)
+                            <p class="mb-0 mt-2 small">{{ $refund->reason }}</p>
+                        @endif
+                    </div>
+                @endforeach
+            @endif
+
+            @if($sale->isVoided())
+                <div class="pos-sale-show__void-alert">
+                    <strong>Voided</strong> — {{ $sale->void_reason }}
+                    · {{ $sale->voidedBy?->name ?? '—' }}
+                    · {{ optional($sale->voided_at)->format('M d · H:i') }}
+                </div>
+            @endif
+        </div>
+
+        <aside class="pos-sale-show__aside">
+            <div class="pos-sale-show__totals">
+                <div class="pos-sale-show__totals-title">Payment summary</div>
+                <div class="pos-sale-show__row">
+                    <span class="pos-sale-show__row-label">Subtotal</span>
+                    <span class="pos-sale-show__row-value">{{ $currency }} {{ number_format($sale->subtotal, 2) }}</span>
+                </div>
+                @if($sale->discount_amount > 0)
+                    <div class="pos-sale-show__row pos-sale-show__row--discount">
+                        <span class="pos-sale-show__row-label">Discount</span>
+                        <span class="pos-sale-show__row-value">− {{ $currency }} {{ number_format($sale->discount_amount, 2) }}</span>
+                    </div>
+                @endif
+                @if($sale->tax_amount > 0)
+                    <div class="pos-sale-show__row">
+                        <span class="pos-sale-show__row-label">Tax</span>
+                        <span class="pos-sale-show__row-value">{{ $currency }} {{ number_format($sale->tax_amount, 2) }}</span>
+                    </div>
+                @endif
+                <div class="pos-sale-show__grand">
+                    <span class="pos-sale-show__grand-label">Total</span>
+                    <span class="pos-sale-show__grand-value">{{ $currency }} {{ number_format($sale->total, 2) }}</span>
+                </div>
+                @if($sale->payment_method === 'cash')
+                    <div class="pos-sale-show__cash-extra">
+                        <div class="pos-sale-show__row">
+                            <span class="pos-sale-show__row-label">Tendered</span>
+                            <span class="pos-sale-show__row-value">{{ $currency }} {{ number_format($tendered, 2) }}</span>
+                        </div>
+                        <div class="pos-sale-show__row">
+                            <span class="pos-sale-show__row-label">Change due</span>
+                            <span class="pos-sale-show__row-value">{{ $currency }} {{ number_format($changeDue, 2) }}</span>
+                        </div>
+                    </div>
+                @endif
             </div>
-            <div class="table-responsive px-2 px-md-4 pb-2">
-                <table class="table mb-2">
-                    <thead class="text-muted tx-11"><tr><th>Product</th><th class="text-center">Qty</th><th class="text-right">Unit</th><th class="text-right">Disc</th><th class="text-right pr-md-4">Total</th></tr></thead>
+
+            <div class="pos-sale-show__meta-card">
+                <div class="pos-sale-show__totals-title">Details</div>
+                <div class="pos-sale-show__meta-row">
+                    <span class="pos-sale-show__meta-label">Customer</span>
+                    <span class="pos-sale-show__meta-value">{{ $sale->customer?->name ?? 'Walk-in' }}</span>
+                </div>
+                <div class="pos-sale-show__meta-row">
+                    <span class="pos-sale-show__meta-label">Tender</span>
+                    <span class="pos-sale-show__meta-value">{{ ucwords(str_replace('_', ' ', $sale->payment_method)) }}</span>
+                </div>
+                <div class="pos-sale-show__meta-row">
+                    <span class="pos-sale-show__meta-label">Shift</span>
+                    <span class="pos-sale-show__meta-value">
+                        @if($sale->shift)
+                            {{ $sale->shift->terminal_id }} · {{ $sale->shift->opened_at->format('M d, H:i') }}
+                        @else
+                            —
+                        @endif
+                    </span>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>
+
+@if(!$sale->isVoided() && $sale->items->sum(fn ($i) => $i->refundableQty()) > 0)
+<div class="modal fade" id="refundModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 rounded-xl shadow-xl">
+            <div class="modal-header bg-warning text-white border-0">
+                <h5 class="modal-title mb-0">Return items — {{ $sale->sale_number }}</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body px-4 py-4 bg-light">
+                <table class="table table-sm bg-white rounded-lg mb-3">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Product</th>
+                            <th class="text-center">Sold</th>
+                            <th class="text-center">Return</th>
+                            <th class="text-end">Est.</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         @foreach($sale->items as $item)
-                        <tr>
-                            <td class="border-0 pl-3">
-                                <div class="font-weight-bold">{{ $item->product?->name ?: 'Unavailable SKU' }}</div>
-                                @if($item->product_variant_id)<small class="text-muted tx-11">Variant #{{ $item->product_variant_id }}</small>@endif
-                            </td>
-                            <td class="border-0 text-center">{{ $item->quantity }}</td>
-                            <td class="border-0 text-right">{{ config('app.currency') }} {{ number_format($item->unit_price, 2) }}</td>
-                            <td class="border-0 text-right text-muted">
-                                @if($item->discount_pct > 0)
-                                    −{{ config('app.currency') }} {{ number_format($item->discount_amount, 2) }}
-                                @else —
-                                @endif
-                            </td>
-                            <td class="border-0 text-right pr-md-4 font-weight-semibold">{{ config('app.currency') }} {{ number_format($item->total, 2) }}</td>
-                        </tr>
+                            @php
+                                $max = $item->refundableQty();
+                                $unit = $item->quantity > 0 ? $item->total / $item->quantity : $item->unit_price;
+                            @endphp
+                            @if($max > 0)
+                                <tr data-sale-item-id="{{ $item->id }}" data-unit-price="{{ $unit }}">
+                                    <td><input type="checkbox" class="refund-line-check" data-max="{{ $max }}"></td>
+                                    <td>{{ $item->product?->name ?? 'Item' }}</td>
+                                    <td class="text-center">{{ $item->quantity }} ({{ $max }} left)</td>
+                                    <td class="text-center">
+                                        <input type="number" class="form-control form-control-sm refund-line-qty text-center" min="0" max="{{ $max }}" value="0" disabled>
+                                    </td>
+                                    <td class="text-end refund-line-est">{{ $currency }} 0.00</td>
+                                </tr>
+                            @endif
                         @endforeach
                     </tbody>
                 </table>
-            </div>
-        </div>
-
-        @if($sale->refunds->count())
-        <div class="mb-4">
-            <div class="d-flex align-items-center mb-3">
-                <span class="rounded-circle mr-3" style="width:12px;height:12px;background:#fbbf24;"></span>
-                <h5 class="mb-0 font-weight-bold"><i class="fe fe-repeat mr-2 text-warning"></i>Refund timeline</h5>
-            </div>
-            @foreach($sale->refunds as $refund)
-                <div class="refund-chip shadow-sm border">
-                    <div class="d-flex justify-content-between flex-wrap mb-2">
-                        <div class="font-weight-bold">{{ $refund->refund_number }}</div>
-                        <div class="text-warning tx-17 font-weight-bolder">{{ config('app.currency') }} {{ number_format($refund->amount, 2) }}</div>
-                    </div>
-                    <div class="text-muted tx-12">
-                        {{ $refund->created_at->format('M d · H:i') }} · {{ $refund->user?->name }} · Method {{ ucfirst($refund->method) }}
-                    </div>
-                    <p class="mb-0 tx-13 mt-2 text-dark">{{ $refund->reason }}</p>
+                <div class="d-flex justify-content-between font-weight-bold mb-3">
+                    <span>Refund total</span>
+                    <span id="refundTotalPreview">{{ $currency }} 0.00</span>
                 </div>
-            @endforeach
-        </div>
-        @endif
-
-        @if($sale->isVoided())
-            <div class="alert shadow-sm border-danger text-danger rounded-xl bg-white mb-4">
-                <strong>Void locked</strong> — {{ $sale->void_reason }} · {{ $sale->voidedBy?->name ?? 'Cashier N/A' }} · {{ optional($sale->voided_at)->format('M d · H:i') }}
-            </div>
-        @endif
-    </div>
-
-    <div class="col-lg-4">
-        <div class="sticky-totals p-4 rounded-xl mb-4">
-            <div class="d-flex justify-content-between tx-13 opacity-80"><span class="text-uppercase">Subtotal</span><span>{{ config('app.currency') }} {{ number_format($sale->subtotal, 2) }}</span></div>
-            @if($sale->discount_amount > 0)
-            <div class="d-flex justify-content-between tx-13 mt-3" style="color:#fde68a;"><span class="opacity-85">Discount</span><span class="font-weight-semibold">- {{ config('app.currency') }} {{ number_format($sale->discount_amount, 2) }}</span></div>
-            @endif
-            @if($sale->tax_amount > 0)
-            <div class="d-flex justify-content-between tx-13 mt-3 opacity-80"><span>Tax</span><span>{{ config('app.currency') }} {{ number_format($sale->tax_amount, 2) }}</span></div>
-            @endif
-            <div class="border-top mt-4 pt-4 mb-4" style="border-color:rgba(255,255,255,0.2)!important;">
-                <div class="d-flex justify-content-between align-items-baseline">
-                    <span class="text-uppercase tx-13 opacity-80">Collected</span>
-                    <span style="font-size:1.85rem;letter-spacing:-0.03em;line-height:1;" class="font-weight-bolder">{{ config('app.currency') }} {{ number_format($sale->total, 2) }}</span>
+                <label class="font-weight-semibold">Method</label>
+                <select id="refundMethod" class="form-control mb-3">
+                    <option value="original">Original ({{ ucwords(str_replace('_', ' ', $sale->payment_method)) }})</option>
+                    <option value="cash">Cash</option>
+                    <option value="credit">Store credit</option>
+                </select>
+                <label class="font-weight-semibold">Reason *</label>
+                <textarea id="refundReason" rows="2" class="form-control rounded-lg"></textarea>
+                <div class="custom-control custom-switch mt-3">
+                    <input type="checkbox" class="custom-control-input" id="refundRestock" checked>
+                    <label class="custom-control-label" for="refundRestock">Restock</label>
                 </div>
-                @if($sale->payment_method === 'cash')
-                    <div class="d-flex justify-content-between tx-12 mt-3 opacity-80"><span>Tendered</span><span>{{ config('app.currency') }} {{ number_format($sale->amount_tendered, 2) }}</span></div>
-                    <div class="d-flex justify-content-between tx-12 mt-2 opacity-80"><span>Change due</span><span>{{ config('app.currency') }} {{ number_format($sale->change_due, 2) }}</span></div>
-                @endif
+                <div id="refundError" class="alert alert-danger rounded-lg mt-3 d-none"></div>
             </div>
-            <div class="receipt-muted mb-3">Operational metadata</div>
-            @php $rows = [['label'=>'Customer','value'=>$sale->customer?->name ?? 'Walk-in'],
-                    ['label'=>'Status','value'=>ucfirst($sale->status)],
-                    ['label'=>'Tender','value'=>ucwords(str_replace('_',' ',$sale->payment_method))],
-                    ['label'=>'Shift','value'=>$sale->shift ? $sale->shift->terminal_id.' · '.$sale->shift->opened_at->format('H:i') : '—']]; @endphp
-            <div class="position-relative pl-4">
-                <span class="timeline-rail"></span>
-                @foreach($rows as $row)
-                <div class="d-flex pb-4 position-relative">
-                    <span class="timeline-marker"></span>
-                    <div>
-                        <div class="receipt-muted mb-1">{{ $row['label'] }}</div>
-                        <div class="tx-13 font-weight-semibold">{{ $row['value'] }}</div>
-                    </div>
-                </div>
-                @endforeach
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light px-4" data-dismiss="modal">Cancel</button>
+                <button type="button" onclick="submitRefund()" class="btn btn-warning px-4 font-weight-bold">Confirm return</button>
             </div>
         </div>
     </div>
 </div>
 
-@if(!$sale->isVoided() && !$sale->isRefunded())
-<div class="modal fade" id="refundModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 rounded-xl shadow-xl">
-    <div class="modal-header bg-warning text-white border-0"><h5 class="modal-title mb-0">Refund — {{ $sale->sale_number }}</h5><button type="button" class="close text-white" data-dismiss="modal">&times;</button></div>
-    <div class="modal-body px-4 py-4 bg-light">
-        <label class="font-weight-semibold">Amount <small>(max {{ config('app.currency') }} {{ number_format($sale->total, 2) }})</small></label>
-        <div class="input-group mb-3"><div class="input-group-prepend"><span class="input-group-text">{{ config('app.currency') }}</span></div>
-            <input type="number" id="refundAmount" class="form-control" step="0.01" max="{{ $sale->total }}" value="{{ number_format($sale->total, 2, '.', '') }}"></div>
-        <label class="font-weight-semibold">Method</label>
-        <select id="refundMethod" class="form-control mb-3"><option value="original">Original ({{ ucwords(str_replace('_',' ',$sale->payment_method)) }})</option><option value="cash">Cash</option><option value="credit">Store credit</option></select>
-        <label class="font-weight-semibold">Reason *</label>
-        <textarea id="refundReason" rows="3" class="form-control rounded-lg"></textarea>
-        <div class="custom-control custom-switch mt-3"><input type="checkbox" class="custom-control-input" id="refundRestock" checked><label class="custom-control-label" for="refundRestock">Restock</label></div>
-        <div id="refundError" class="alert alert-danger rounded-lg mt-3 d-none"></div>
+<div class="modal fade" id="voidModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 rounded-xl shadow-xl">
+            <div class="modal-header bg-danger text-white border-0 rounded-top">
+                <h5 class="modal-title mb-0">Void sale</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body p-4 bg-white">
+                <p class="text-muted small">Stock returns and accounting reversing entries run immediately.</p>
+                <label class="font-weight-semibold text-danger">Audit reason</label>
+                <textarea id="voidReason" class="form-control rounded-lg mb-3" rows="3"></textarea>
+                <div id="voidError" class="alert alert-danger rounded-lg d-none"></div>
+            </div>
+            <div class="modal-footer border-0 pb-4">
+                <button class="btn btn-light px-4" type="button" data-dismiss="modal">Cancel</button>
+                <button type="button" onclick="submitVoid()" class="btn btn-danger px-5 font-weight-semibold">Void</button>
+            </div>
+        </div>
     </div>
-    <div class="modal-footer border-0"><button type="button" class="btn btn-light px-4" data-dismiss="modal">Cancel</button><button type="button" onclick="submitRefund()" class="btn btn-warning px-4 font-weight-bold">Confirm refund</button></div>
-</div></div></div>
-<div class="modal fade" id="voidModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content border-0 rounded-xl shadow-xl">
-    <div class="modal-header bg-danger text-white border-0 rounded-top"><h5 class="modal-title mb-0">Void sale</h5><button type="button" class="close text-white" data-dismiss="modal">&times;</button></div>
-    <div class="modal-body p-4 bg-white"><p class="text-muted">Stock returns and accounting reversing entries run immediately.</p>
-        <label class="font-weight-semibold text-danger">Audit reason</label><textarea id="voidReason" class="form-control rounded-lg mb-3" rows="3"></textarea>
-        <div id="voidError" class="alert alert-danger rounded-lg d-none"></div></div>
-    <div class="modal-footer border-0 pb-4"><button class="btn btn-light px-4" type="button" data-dismiss="modal">Cancel</button><button type="button" onclick="submitVoid()" class="btn btn-danger px-5 font-weight-semibold">Void</button></div>
-</div></div></div>
+</div>
 @endif
-</div>
-
 @endsection
 
 @section('js')
 <script>
     const CSRF    = '{{ csrf_token() }}';
     const SALE_ID = {{ $sale->id }};
+    const CURRENCY = @json(config('app.currency'));
+
+    function recalcRefundPreview() {
+        let total = 0;
+        document.querySelectorAll('[data-sale-item-id]').forEach(row => {
+            const chk = row.querySelector('.refund-line-check');
+            const qtyIn = row.querySelector('.refund-line-qty');
+            const est = row.querySelector('.refund-line-est');
+            const unit = parseFloat(row.dataset.unitPrice) || 0;
+            const qty = chk.checked ? Math.max(0, parseInt(qtyIn.value, 10) || 0) : 0;
+            const line = unit * qty;
+            total += line;
+            if (est) est.textContent = CURRENCY + ' ' + line.toFixed(2);
+        });
+        const el = document.getElementById('refundTotalPreview');
+        if (el) el.textContent = CURRENCY + ' ' + total.toFixed(2);
+    }
+
+    document.querySelectorAll('.refund-line-check').forEach(chk => {
+        chk.addEventListener('change', () => {
+            const row = chk.closest('tr');
+            const qtyIn = row.querySelector('.refund-line-qty');
+            qtyIn.disabled = !chk.checked;
+            if (chk.checked && (parseInt(qtyIn.value, 10) || 0) < 1) {
+                qtyIn.value = chk.dataset.max || 1;
+            }
+            recalcRefundPreview();
+        });
+    });
+    document.querySelectorAll('.refund-line-qty').forEach(inp => {
+        inp.addEventListener('input', recalcRefundPreview);
+    });
 
     function submitRefund() {
-        const amount  = document.getElementById('refundAmount').value;
         const reason  = document.getElementById('refundReason').value.trim();
         const method  = document.getElementById('refundMethod').value;
         const restock = document.getElementById('refundRestock').checked;
         const errEl   = document.getElementById('refundError');
+        const items = [];
+        document.querySelectorAll('[data-sale-item-id]').forEach(row => {
+            const chk = row.querySelector('.refund-line-check');
+            const qtyIn = row.querySelector('.refund-line-qty');
+            if (!chk.checked) return;
+            const qty = parseInt(qtyIn.value, 10) || 0;
+            if (qty > 0) items.push({ sale_item_id: parseInt(row.dataset.saleItemId, 10), qty });
+        });
         if (!reason) {
             errEl.textContent = 'Reason required.';
+            errEl.classList.remove('d-none');
+            return;
+        }
+        if (!items.length) {
+            errEl.textContent = 'Select at least one line to return.';
             errEl.classList.remove('d-none');
             return;
         }
         fetch(`/pos/sales/${SALE_ID}/refund`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
-            body: JSON.stringify({ amount, reason, method, restock })
+            body: JSON.stringify({ items, reason, method, restock })
         }).then(r => r.json()).then(d => {
             if (d.success) location.reload();
             else { errEl.textContent = d.error || 'Error'; errEl.classList.remove('d-none'); }
