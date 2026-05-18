@@ -115,7 +115,8 @@
 </div>
 @endsection
 
-@push('scripts')
+@section('js')
+<script type="application/json" id="transfer-products">@json($products)</script>
 <script>
 function transferForm() {
     return {
@@ -123,8 +124,8 @@ function transferForm() {
         items: [
             { product_id: '', product_variant_id: '', quantity: 1 }
         ],
-        products: @json($products),
-        
+        products: JSON.parse(document.getElementById('transfer-products').textContent),
+
         getVariants(productId) {
             if (!productId) return [];
             const p = this.products.find(p => p.id == productId);
@@ -141,4 +142,4 @@ function transferForm() {
     }
 }
 </script>
-@endpush
+@endsection

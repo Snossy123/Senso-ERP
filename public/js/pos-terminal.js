@@ -505,6 +505,20 @@ function initPosTerminal() {
             return this.currencySymbol + x.toFixed(2);
         },
 
+        /** Product image URL — relative /storage paths follow the current host:port (Docker, 127.0.0.1, etc.). */
+        productImageUrl(url) {
+            if (!url) return '';
+            if (String(url).startsWith('data:')) return url;
+            try {
+                if (/^https?:\/\//i.test(url)) {
+                    return new URL(url).pathname;
+                }
+            } catch (_) { /* fall through */ }
+            const path = String(url).replace(/\\/g, '/');
+            if (path.startsWith('/')) return path;
+            return '/storage/' + path.replace(/^\/+/, '');
+        },
+
         /** Compact thumbnail initials when no product image (catalog tiles). */
         initialsFromName(name) {
             const n = String(name || '').trim();

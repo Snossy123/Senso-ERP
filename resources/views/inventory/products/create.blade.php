@@ -11,9 +11,21 @@
 @section('content')
 <div class="row">
     <div class="col-lg-12 col-md-12">
+        @if(session('error'))
+            <div class="alert alert-danger">{{ session('error') }}</div>
+        @endif
+        @if($errors->any())
+            <div class="alert alert-danger">
+                <ul class="mb-0 pl-3">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
         <div class="card">
             <div class="card-body">
-                <form action="{{ route('inventory.products.store') }}" method="POST" enctype="multipart/form-data" x-data="{ hasVariants: false }">
+                <form action="{{ route('inventory.products.store') }}" method="POST" enctype="multipart/form-data" x-data="{ hasVariants: {{ old('has_variants') ? 'true' : 'false' }}, variants: @js(old('variants', [['name' => '', 'sku' => '']])) }">
                     @csrf
                     <div class="row row-sm">
                         <div class="col-lg-4">
@@ -58,21 +70,23 @@
                         <div class="col-lg-3">
                             <div class="form-group">
                                 <label class="form-label">Unit of Measure <span class="tx-danger">*</span></label>
-                                <select name="unit_id" class="form-control" required>
+                                <select name="unit_id" class="form-control @error('unit_id') is-invalid @enderror" required>
                                     <option value="">Select Unit...</option>
                                     @foreach($units as $u)
                                         <option value="{{ $u->id }}" {{ old('unit_id') == $u->id ? 'selected' : '' }}>{{ $u->name }} ({{ $u->short_name }})</option>
                                     @endforeach
                                 </select>
+                                @error('unit_id') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                             </div>
                         </div>
                         <div class="col-lg-3">
                             <div class="form-group">
                                 <label class="form-label">Valuation <span class="tx-danger">*</span></label>
-                                <select name="valuation_method" class="form-control" required>
-                                    <option value="fifo" {{ old('valuation_method') == 'fifo' ? 'selected' : '' }}>FIFO</option>
+                                <select name="valuation_method" class="form-control @error('valuation_method') is-invalid @enderror" required>
+                                    <option value="fifo" {{ old('valuation_method', 'fifo') == 'fifo' ? 'selected' : '' }}>FIFO</option>
                                     <option value="average" {{ old('valuation_method') == 'average' ? 'selected' : '' }}>AVCO (Average Costing)</option>
                                 </select>
+                                @error('valuation_method') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                             </div>
                         </div>
                     </div>
@@ -81,13 +95,15 @@
                         <div class="col-lg-4">
                             <div class="form-group">
                                 <label class="form-label">Purchase Price <span class="tx-danger">*</span></label>
-                                <input class="form-control" name="purchase_price" value="{{ old('purchase_price', 0) }}" type="number" step="0.01" required>
+                                <input class="form-control @error('purchase_price') is-invalid @enderror" name="purchase_price" value="{{ old('purchase_price', 0) }}" type="number" step="0.01" required>
+                                @error('purchase_price') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                             </div>
                         </div>
                         <div class="col-lg-4">
                             <div class="form-group">
                                 <label class="form-label">Selling Price <span class="tx-danger">*</span></label>
-                                <input class="form-control" name="selling_price" value="{{ old('selling_price', 0) }}" type="number" step="0.01" required>
+                                <input class="form-control @error('selling_price') is-invalid @enderror" name="selling_price" value="{{ old('selling_price', 0) }}" type="number" step="0.01" required>
+                                @error('selling_price') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                             </div>
                         </div>
                         <div class="col-lg-4">
@@ -125,37 +141,38 @@
                         </div>
                     </div>
 
-                    <!-- Variants Section -->
-                    <div class="card bg-gray-100 border-0 mb-4" x-show="hasVariants" x-transition>
-                        <div class="card-body" x-data="{ variants: [{ name: '', sku: '' }] }">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="tx-14 font-weight-bold mb-0">Define Variants</h5>
-                                <button type="button" class="btn btn-sm btn-info" @click="variants.push({ name: '', sku: '' })">
-                                    <i class="fa fa-plus mr-1"></i> Add Variant
-                                </button>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Variant Name (e.g. Size: XL)</th>
-                                            <th>Variant SKU</th>
-                                            <th style="width: 50px"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <template x-for="(v, index) in variants" :key="index">
+                    <template x-if="hasVariants">
+                        <div class="card bg-gray-100 border-0 mb-4">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="tx-14 font-weight-bold mb-0">Define Variants</h5>
+                                    <button type="button" class="btn btn-sm btn-info" @click="variants.push({ name: '', sku: '' })">
+                                        <i class="fa fa-plus mr-1"></i> Add Variant
+                                    </button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
                                             <tr>
-                                                <td><input type="text" :name="`variants[${index}][name]`" class="form-control form-control-sm" x-model="v.name" placeholder="Name" :required="hasVariants"></td>
-                                                <td><input type="text" :name="`variants[${index}][sku]`" class="form-control form-control-sm" x-model="v.sku" placeholder="SKU" :required="hasVariants"></td>
-                                                <td><button type="button" class="btn btn-sm btn-link text-danger" @click="variants.splice(index, 1)" x-show="variants.length > 1"><i class="fa fa-times"></i></button></td>
+                                                <th>Variant Name (e.g. Size: XL)</th>
+                                                <th>Variant SKU</th>
+                                                <th style="width: 50px"></th>
                                             </tr>
-                                        </template>
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            <template x-for="(v, index) in variants" :key="index">
+                                                <tr>
+                                                    <td><input type="text" :name="`variants[${index}][name]`" class="form-control form-control-sm" x-model="v.name" placeholder="Name" required></td>
+                                                    <td><input type="text" :name="`variants[${index}][sku]`" class="form-control form-control-sm" x-model="v.sku" placeholder="SKU" required></td>
+                                                    <td><button type="button" class="btn btn-sm btn-link text-danger" @click="variants.splice(index, 1)" x-show="variants.length > 1"><i class="fa fa-times"></i></button></td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </template>
 
                     <div class="form-footer mt-4">
                         <button type="submit" class="btn btn-primary px-5">Create Product</button>

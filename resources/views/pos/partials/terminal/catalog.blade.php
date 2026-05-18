@@ -67,7 +67,7 @@
                         >
                             <div class="pos-catalog-card-modern-media">
                                 <template x-if="product.image">
-                                    <img loading="lazy" decoding="async" :src="product.image" :alt="product.name"
+                                    <img loading="lazy" decoding="async" :src="$store.pos.productImageUrl(product.image)" :alt="product.name"
                                         class="pos-catalog-card-modern-img">
                                 </template>
                                 <div x-show="!product.image" class="pos-catalog-card-modern-ph" x-cloak

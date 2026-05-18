@@ -110,7 +110,11 @@ class Product extends Model
             return $this->image;
         }
 
-        return \Illuminate\Support\Facades\Storage::disk('public')->url($this->image);
+        if (str_starts_with($this->image, '/storage/')) {
+            return $this->image;
+        }
+
+        return '/storage/'.ltrim(str_replace('\\', '/', $this->image), '/');
     }
 
     public function getImageDisplayUrlAttribute(): string

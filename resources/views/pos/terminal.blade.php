@@ -5,35 +5,41 @@
 @endsection
 
 @section('content')
+@php
+    $posTerminalConfig = [
+        'products' => [],
+        'customers' => $customers,
+        'categories' => $categories,
+        'heldOrders' => $heldOrders->values(),
+        'shiftId' => $activeShift?->id,
+        'taxRate' => (float) config('app.tax_rate', 0),
+        'currencySymbol' => config('app.currency_symbol', '$'),
+        'csrfToken' => csrf_token(),
+        'tenantName' => $tenantName,
+        'cashierName' => $cashierName ?? '',
+        'routes' => [
+            'storeSale' => route('pos.sale.store'),
+            'quickCustomer' => route('pos.customer.quick-store'),
+            'holdOrder' => route('pos.hold'),
+            'resumeOrder' => '/pos/held/:id/resume',
+            'productsFeed' => route('pos.products.feed'),
+            'openShift' => route('pos.shift.open'),
+            'closeShift' => '/pos/shift/:id/close',
+            'customerDisplay' => route('pos.display'),
+            'customerSearch' => route('pos.customers.search'),
+            'saleReceipt' => '/pos/sales/:id/receipt',
+        ],
+    ];
+    $posRealtimeEchoConfig = [
+        'tenantId' => Auth::user()?->tenant_id,
+        'shiftId' => $activeShift?->id,
+    ];
+@endphp
+<script type="application/json" id="pos-realtime-echo-config">@json($posRealtimeEchoConfig)</script>
+<script type="application/json" id="pos-terminal-config">@json($posTerminalConfig)</script>
 <script>
-    window.posRealtimeEchoConfig = {
-        tenantId: @json(Auth::user()?->tenant_id),
-        shiftId: @json($activeShift?->id),
-    };
-</script>
-<script>
-    window.posTerminalConfig = {
-        products: [],
-        customers: @json($customers),
-        categories: @json($categories),
-        heldOrders: @json($heldOrders->values()),
-        shiftId: {{ $activeShift?->id ?? 'null' }},
-        taxRate: {{ config('app.tax_rate', 0) }},
-        currencySymbol: '{{ config('app.currency_symbol', '$') }}',
-        csrfToken: '{{ csrf_token() }}',
-        tenantName: @json($tenantName),
-        cashierName: @json($cashierName ?? ''),
-        routes: {
-            storeSale: '{{ route('pos.sale.store') }}',
-            quickCustomer: '{{ route('pos.customer.quick-store') }}',
-            holdOrder: '{{ route('pos.hold') }}',
-            resumeOrder: '/pos/held/:id/resume',
-            productsFeed: '{{ route('pos.products.feed') }}',
-            openShift: '{{ route('pos.shift.open') }}',
-            closeShift: '/pos/shift/:id/close',
-            customerDisplay: '{{ route('pos.display') }}'
-        }
-    };
+    window.posRealtimeEchoConfig = JSON.parse(document.getElementById('pos-realtime-echo-config').textContent);
+    window.posTerminalConfig = JSON.parse(document.getElementById('pos-terminal-config').textContent);
 </script>
 
 <div class="pos-terminal-wrapper pos-shell pos-terminal-shell p-3 flex flex-col min-h-0" x-data x-init="$store.pos.initStore(window.posTerminalConfig)">

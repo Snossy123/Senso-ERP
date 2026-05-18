@@ -134,15 +134,16 @@
 </div>
 @endsection
 
-@push('scripts')
+@section('js')
+<script type="application/json" id="purchase-order-products">@json($products)</script>
 <script>
 function purchaseOrderForm() {
     return {
         items: [
             { product_id: '', product_variant_id: '', quantity: 1, unit_cost: 0 }
         ],
-        products: @json($products),
-        
+        products: JSON.parse(document.getElementById('purchase-order-products').textContent),
+
         getVariants(productId) {
             if (!productId) return [];
             const p = this.products.find(p => p.id == productId);
@@ -171,4 +172,4 @@ function purchaseOrderForm() {
     }
 }
 </script>
-@endpush
+@endsection
