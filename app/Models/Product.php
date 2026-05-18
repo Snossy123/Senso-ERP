@@ -110,11 +110,10 @@ class Product extends Model
             return $this->image;
         }
 
-        if (str_starts_with($this->image, '/storage/')) {
-            return $this->image;
-        }
+        $path = str_replace('\\', '/', $this->image);
+        $path = preg_replace('#^/?storage/#', '', $path);
 
-        return '/storage/'.ltrim(str_replace('\\', '/', $this->image), '/');
+        return asset('storage/'.ltrim($path, '/'));
     }
 
     public function getImageDisplayUrlAttribute(): string
