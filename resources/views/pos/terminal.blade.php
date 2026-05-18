@@ -17,6 +17,7 @@
         'csrfToken' => csrf_token(),
         'tenantName' => $tenantName,
         'cashierName' => $cashierName ?? '',
+        'appOrigin' => rtrim((string) config('app.url'), '/'),
         'routes' => [
             'storeSale' => route('pos.sale.store'),
             'quickCustomer' => route('pos.customer.quick-store'),

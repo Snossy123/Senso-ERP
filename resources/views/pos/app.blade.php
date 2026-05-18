@@ -21,6 +21,7 @@
         csrfToken: '{{ csrf_token() }}',
         tenantName: @json($tenantName),
         cashierName: @json($cashierName ?? ''),
+        appOrigin: @json(rtrim((string) config('app.url'), '/')),
         routes: {
             storeSale: '{{ route('pos.sale.store') }}',
             quickCustomer: '{{ route('pos.customer.quick-store') }}',

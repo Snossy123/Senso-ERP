@@ -505,18 +505,32 @@ function initPosTerminal() {
             return this.currencySymbol + x.toFixed(2);
         },
 
-        /** Product image URL — relative /storage paths follow the current host:port (Docker, 127.0.0.1, etc.). */
+        /** Full product image URL — uses APP origin; rewrites host when API URL ≠ current page (Docker ports). */
         productImageUrl(url) {
             if (!url) return '';
-            if (String(url).startsWith('data:')) return url;
+            const s = String(url).trim();
+            if (!s || s.startsWith('data:')) return s;
+
+            const origin = String(this.appOrigin || window.location.origin || '').replace(/\/$/, '');
+
+            const toAbsolute = (pathname) => {
+                const path = pathname.startsWith('/') ? pathname : '/storage/' + pathname.replace(/^\/+/, '');
+                return origin ? origin + path : path;
+            };
+
             try {
-                if (/^https?:\/\//i.test(url)) {
-                    return new URL(url).pathname;
+                if (/^https?:\/\//i.test(s)) {
+                    const parsed = new URL(s);
+                    if (origin && parsed.origin !== origin) {
+                        return origin + parsed.pathname;
+                    }
+                    return s;
                 }
             } catch (_) { /* fall through */ }
-            const path = String(url).replace(/\\/g, '/');
-            if (path.startsWith('/')) return path;
-            return '/storage/' + path.replace(/^\/+/, '');
+
+            const path = s.replace(/\\/g, '/');
+            if (path.startsWith('/')) return toAbsolute(path);
+            return toAbsolute('/storage/' + path.replace(/^\/+/, ''));
         },
 
         /** Compact thumbnail initials when no product image (catalog tiles). */
@@ -1076,6 +1090,7 @@ function initPosTerminal() {
                 this.customers = config.customers || [];
                 this.tenantName = config.tenantName || '';
                 this.cashierName = config.cashierName || '';
+                this.appOrigin = config.appOrigin || '';
             }
             if (window.Pos?.Telemetry) {
                 Pos.Telemetry.mount('pos-toast-root');
