@@ -43,6 +43,10 @@ class ProductController extends Controller
 
     public function store(Request $request)
     {
+        if (! $request->boolean('has_variants')) {
+            $request->request->remove('variants');
+        }
+
         $data = $request->validate([
             'sku' => 'required|unique:products,sku',
             'name' => 'required|string|max:255',
@@ -60,10 +64,13 @@ class ProductController extends Controller
             'is_ecommerce' => 'boolean',
             'has_variants' => 'boolean',
             'valuation_method' => 'required|in:fifo,average',
-            'variants' => 'nullable|array',
-            'variants.*.name' => 'required_with:variants|string|max:100',
-            'variants.*.sku' => 'required_with:variants|unique:product_variants,sku',
+            'variants' => 'nullable|array|required_if:has_variants,1',
+            'variants.*.name' => 'required_if:has_variants,1|string|max:100',
+            'variants.*.sku' => 'required_if:has_variants,1|distinct|unique:product_variants,sku',
         ]);
+
+        $variants = $data['variants'] ?? null;
+        unset($data['variants']);
 
         $data['image'] = $this->storeUploadedImage($request);
 
@@ -77,11 +84,11 @@ class ProductController extends Controller
             return redirect()->back()->with('error', 'You have reached your product limit.');
         }
 
-        DB::transaction(function () use ($data, $request) {
+        DB::transaction(function () use ($data, $variants) {
             $product = Product::create($data);
 
-            if ($product->has_variants && $request->has('variants')) {
-                foreach ($request->variants as $vData) {
+            if ($product->has_variants && $variants) {
+                foreach ($variants as $vData) {
                     $product->variants()->create($vData);
                 }
             }
