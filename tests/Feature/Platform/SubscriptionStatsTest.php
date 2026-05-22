@@ -99,4 +99,39 @@ class SubscriptionStatsTest extends TestCase
         $this->assertSame(2, $kpis['active_subscriptions']);
         $this->assertEqualsWithDelta(200.0, $kpis['monthly_revenue'], 0.01);
     }
+
+    public function test_active_subscriptions_exclude_inaccessible_tenants_despite_active_status(): void
+    {
+        $this->seed(PlanSeeder::class);
+        $plan = Plan::first();
+
+        Tenant::create([
+            'name' => 'Accessible',
+            'slug' => 'accessible-'.uniqid(),
+            'status' => 'active',
+            'is_active' => true,
+            'plan_id' => $plan->id,
+        ]);
+
+        Tenant::create([
+            'name' => 'Deactivated Label',
+            'slug' => 'deactivated-'.uniqid(),
+            'status' => 'active',
+            'is_active' => false,
+            'plan_id' => $plan->id,
+        ]);
+
+        Tenant::create([
+            'name' => 'Suspended Label',
+            'slug' => 'suspended-label-'.uniqid(),
+            'status' => 'suspended',
+            'is_active' => false,
+            'suspended_at' => now(),
+            'plan_id' => $plan->id,
+        ]);
+
+        $kpis = app(SubscriptionStatsService::class)->kpis();
+
+        $this->assertSame(1, $kpis['active_subscriptions']);
+    }
 }

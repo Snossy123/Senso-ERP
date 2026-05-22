@@ -6,6 +6,7 @@ use App\Models\Plan;
 use App\Models\PlatformInvoice;
 use App\Models\Tenant;
 use App\Services\Platform\PlatformInvoiceService;
+use App\Services\TenantService;
 use Database\Seeders\PlanSeeder;
 use Database\Seeders\PlatformSettingSeeder;
 use PHPUnit\Framework\Attributes\Group;
@@ -156,6 +157,44 @@ class PlatformInvoiceTest extends TestCase
 
         $invoice->refresh();
         $this->assertSame('paid', $invoice->status);
+    }
+
+    public function test_mark_paid_activates_suspended_tenant_and_re_enables_users(): void
+    {
+        $plan = Plan::where('slug', 'basic')->first();
+        $tenant = $this->createTenantWithClonedRoles([
+            'name' => 'Suspended Pay Co',
+            'slug' => 'susp-pay-'.uniqid(),
+            'status' => 'active',
+            'is_active' => true,
+            'plan_id' => $plan->id,
+            'payment_status' => 'pending',
+        ]);
+
+        $user = $this->makeTenantAdmin($tenant, ['is_active' => true]);
+
+        app(TenantService::class)->suspendTenant($tenant);
+
+        $tenant->refresh();
+        $user->refresh();
+
+        $this->assertFalse($tenant->allowsApplicationAccess());
+        $this->assertSame('suspended', $tenant->status);
+        $this->assertFalse($user->is_active);
+
+        $invoice = app(PlatformInvoiceService::class)->createForTenant($tenant, $plan);
+        app(PlatformInvoiceService::class)->markPaid($invoice);
+
+        $tenant->refresh();
+        $user->refresh();
+
+        $this->assertSame('paid', $invoice->fresh()->status);
+        $this->assertSame('paid', $tenant->payment_status);
+        $this->assertTrue($tenant->allowsApplicationAccess());
+        $this->assertSame('active', $tenant->status);
+        $this->assertTrue($tenant->is_active);
+        $this->assertNull($tenant->suspended_at);
+        $this->assertTrue($user->is_active);
     }
 
     public function test_invoices_index_requires_platform_operator(): void

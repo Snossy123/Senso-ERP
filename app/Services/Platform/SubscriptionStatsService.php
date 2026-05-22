@@ -67,8 +67,8 @@ class SubscriptionStatsService
                 ->where('enabled', true)
                 ->pluck('plan_id');
 
-            $tenantCounts[$module->key] = Tenant::whereIn('plan_id', $planIds)
-                ->where('status', 'active')
+            $tenantCounts[$module->key] = $this->activeSubscriptionQuery()
+                ->whereIn('plan_id', $planIds)
                 ->count();
         }
 
@@ -88,6 +88,7 @@ class SubscriptionStatsService
     protected function activeSubscriptionQuery()
     {
         return Tenant::query()
+            ->withApplicationAccess()
             ->where('status', 'active')
             ->whereNotNull('plan_id')
             ->where(function ($q) {

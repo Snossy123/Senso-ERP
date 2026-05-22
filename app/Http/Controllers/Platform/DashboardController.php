@@ -13,7 +13,7 @@ class DashboardController extends Controller
     {
         $stats = [
             'total' => Tenant::count(),
-            'active' => Tenant::where('status', 'active')->count(),
+            'active' => Tenant::withApplicationAccess()->where('status', 'active')->count(),
             'trial' => Tenant::where('status', 'trial')->count(),
             'suspended' => Tenant::where('status', 'suspended')->count(),
             'expired' => Tenant::where('status', 'expired')->count(),

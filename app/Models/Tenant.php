@@ -154,6 +154,29 @@ class Tenant extends Model
         return in_array($this->status, ['active', 'trial'], true);
     }
 
+    /**
+     * Tenants that can sign in and use the ERP (mirrors allowsApplicationAccess()).
+     */
+    public function scopeWithApplicationAccess($query)
+    {
+        return $query
+            ->where('is_active', true)
+            ->where(function ($q) {
+                $q->where('status', '!=', 'suspended')
+                    ->where(function ($q2) {
+                        $q2->whereNull('suspended_at')
+                            ->orWhere('suspended_at', '<=', now());
+                    });
+            })
+            ->where('status', '!=', 'expired')
+            ->where(function ($q) {
+                $q->where('status', '!=', 'trial')
+                    ->orWhereNull('trial_ends_at')
+                    ->orWhere('trial_ends_at', '>', now());
+            })
+            ->whereIn('status', ['active', 'trial']);
+    }
+
     public function isExpired(): bool
     {
         return $this->status === 'expired' ||

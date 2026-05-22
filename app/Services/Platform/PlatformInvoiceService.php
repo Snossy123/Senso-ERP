@@ -6,12 +6,16 @@ use App\Models\Plan;
 use App\Models\PlatformInvoice;
 use App\Models\PlatformSetting;
 use App\Models\Tenant;
+use App\Services\TenantService;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class PlatformInvoiceService
 {
+    public function __construct(
+        protected TenantService $tenantService
+    ) {}
     protected const INVOICE_SEQUENCE_KEY = 'invoice_next_sequence';
 
     /**
@@ -109,10 +113,17 @@ class PlatformInvoiceService
 
     public function markPaid(PlatformInvoice $invoice): void
     {
-        $invoice->markPaid();
+        DB::transaction(function () use ($invoice) {
+            $invoice->markPaid();
 
-        if ($invoice->tenant) {
-            $invoice->tenant->update(['payment_status' => 'paid']);
-        }
+            $tenant = $invoice->tenant;
+
+            if (! $tenant) {
+                return;
+            }
+
+            $tenant->update(['payment_status' => 'paid']);
+            $this->tenantService->activateTenant($tenant->fresh());
+        });
     }
 }
