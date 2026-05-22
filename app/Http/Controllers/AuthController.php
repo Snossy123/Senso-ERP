@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Activity;
+use App\Models\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -11,7 +12,13 @@ class AuthController extends Controller
     public function showLogin()
     {
         if (Auth::check()) {
-            return redirect()->route('dashboard');
+            $user = Auth::user();
+
+            if ($user->mustChangePassword()) {
+                return redirect()->route('password.change');
+            }
+
+            return redirect()->intended($this->homeFor($user));
         }
 
         return view('signin');
@@ -24,15 +31,41 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
+        $credentials['is_active'] = true;
+
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
-            Activity::logLogin(Auth::user());
+            $user = Auth::user();
 
-            return redirect()->intended(route('dashboard'));
+            if ($user->tenant_id) {
+                $tenant = Tenant::find($user->tenant_id);
+                if (! $tenant || ! $tenant->allowsApplicationAccess()) {
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+
+                    return back()
+                        ->withErrors(['email' => __('messages.errors.tenant_access_unavailable')])
+                        ->onlyInput('email');
+                }
+            }
+
+            Activity::logLogin($user);
+
+            if ($user->mustChangePassword()) {
+                return redirect()->route('password.change');
+            }
+
+            return redirect()->intended($this->homeFor($user));
         }
 
-        return back()->withErrors(['email' => 'Invalid credentials.'])->onlyInput('email');
+        return back()->withErrors(['email' => __('auth_pages.signin.invalid_credentials')])->onlyInput('email');
+    }
+
+    protected function homeFor($user): string
+    {
+        return $user->applicationHomeRoute();
     }
 
     public function logout(Request $request)

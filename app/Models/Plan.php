@@ -12,6 +12,7 @@ class Plan extends Model
         'slug',
         'description',
         'price',
+        'currency',
         'billing_cycle',
         'max_users',
         'max_products',
@@ -20,6 +21,7 @@ class Plan extends Model
         'sort_order',
         'is_active',
         'is_featured',
+        'trial_ends_at',
     ];
 
     protected $casts = [
@@ -27,11 +29,34 @@ class Plan extends Model
         'features' => 'array',
         'is_active' => 'boolean',
         'is_featured' => 'boolean',
+        'trial_ends_at' => 'datetime',
     ];
 
     public function tenants(): HasMany
     {
         return $this->hasMany(Tenant::class);
+    }
+
+    public function planModules(): HasMany
+    {
+        return $this->hasMany(PlanModule::class);
+    }
+
+    public function addons(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(PlatformAddon::class, 'plan_addon', 'plan_id', 'platform_addon_id');
+    }
+
+    public function moduleLimits(string $moduleKey): ?array
+    {
+        $row = $this->planModules()->where('module_key', $moduleKey)->first();
+
+        return $row?->limits;
+    }
+
+    public function enabledPlanModules(): HasMany
+    {
+        return $this->planModules()->where('enabled', true);
     }
 
     public function hasFeature(string $feature): bool
@@ -46,6 +71,13 @@ class Plan extends Model
 
     public function getFormattedPriceAttribute(): string
     {
-        return '$'.number_format($this->price, 2);
+        $symbol = match ($this->currency ?? 'USD') {
+            'USD' => '$',
+            'EUR' => '€',
+            'SAR' => '﷼',
+            default => $this->currency.' ',
+        };
+
+        return $symbol.number_format((float) $this->price, 2);
     }
 }

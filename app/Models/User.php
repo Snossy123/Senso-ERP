@@ -82,6 +82,13 @@ class User extends Authenticatable
         return $this->tenant_id === null;
     }
 
+    public function applicationHomeRoute(): string
+    {
+        return $this->isPlatformOperator()
+            ? route('platform.dashboard')
+            : route('dashboard');
+    }
+
     public function canAccessRole(Role $role): bool
     {
         if ($this->tenant_id !== null) {

@@ -1,4 +1,4 @@
-@extends('layouts.master')
+@extends('layouts.platform.master')
 @section('title', $tenant->name)
 
 @section('page-header')
@@ -16,7 +16,7 @@
                         <i class="fas fa-pause"></i> {{ __('tenants.suspend') }}
                     </button>
                 @else
-                    <form action="{{ route('tenants.activate', $tenant) }}" method="POST" class="d-inline">
+                    <form action="{{ route('platform.tenants.activate', $tenant) }}" method="POST" class="d-inline">
                         @csrf
                         <button type="submit" class="btn btn-success">
                             <i class="fas fa-play"></i> {{ __('tenants.activate') }}
@@ -28,18 +28,18 @@
                     <i class="fas fa-sign-in-alt"></i> {{ __('tenants.login_as') }}
                 </button>
                 
-                <a href="{{ route('tenants.edit', $tenant) }}" class="btn btn-primary">
+                <a href="{{ route('platform.tenants.edit', $tenant) }}" class="btn btn-primary">
                     <i class="fas fa-edit"></i> {{ __('tenants.edit') }}
                 </a>
                 
-                <form action="{{ route('tenants.sync-usage', $tenant) }}" method="POST" class="d-inline">
+                <form action="{{ route('platform.tenants.sync-usage', $tenant) }}" method="POST" class="d-inline">
                     @csrf
                     <button type="submit" class="btn btn-warning">
                         <i class="fas fa-sync"></i> {{ __('tenants.sync_usage') }}
                     </button>
                 </form>
             </div>
-            <a href="{{ route('tenants.index') }}" class="btn btn-secondary mr-2">
+            <a href="{{ route('platform.tenants.index') }}" class="btn btn-secondary mr-2">
                 <i class="fas fa-arrow-left"></i> {{ __('tenants.back') }}
             </a>
         </div>
@@ -61,11 +61,19 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
-    @if(session('tenant_support_password'))
+    @if(session('tenant_admin_email') || session('tenant_support_password'))
         <div class="alert alert-warning alert-dismissible fade show" role="alert">
-            <strong>{{ __('tenants.support_password_alert_title') }}</strong>
-            <p class="mb-2 small">{{ __('tenants.support_password_alert_body') }}</p>
-            <code class="user-select-all d-block p-2 bg-light rounded border">{{ session('tenant_support_password') }}</code>
+            <strong>{{ __('tenants.credentials_alert_title') }}</strong>
+            <p class="mb-2 small">{{ __('tenants.credentials_alert_body') }}</p>
+            @if(session('tenant_admin_email'))
+                <p class="mb-1"><strong>{{ __('tenants.login_email') }}:</strong>
+                    <code class="user-select-all">{{ session('tenant_admin_email') }}</code></p>
+            @endif
+            @if(session('tenant_support_password'))
+                <p class="mb-2"><strong>{{ __('tenants.login_password') }}:</strong>
+                    <code class="user-select-all d-block p-2 bg-light rounded border mt-1">{{ session('tenant_support_password') }}</code></p>
+            @endif
+            <a href="{{ route('login') }}" class="btn btn-sm btn-primary" target="_blank">{{ __('tenants.open_login_page') }}</a>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
@@ -411,7 +419,7 @@
                 <h5 class="modal-title">Change Plan</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ route('tenants.upgrade-plan', $tenant) }}" method="POST">
+            <form action="{{ route('platform.tenants.upgrade-plan', $tenant) }}" method="POST">
                 @csrf
                 <div class="modal-body">
                     <div class="row">
@@ -467,7 +475,7 @@
                 <h5 class="modal-title">Suspend Tenant</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ route('tenants.suspend', $tenant) }}" method="POST">
+            <form action="{{ route('platform.tenants.suspend', $tenant) }}" method="POST">
                 @csrf
                 <div class="modal-body">
                     <p>Are you sure you want to suspend <strong>{{ $tenant->name }}</strong>?</p>
@@ -493,7 +501,7 @@
                 <h5 class="modal-title">Login as {{ $tenant->name }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ route('tenants.login-as', $tenant) }}" method="POST">
+            <form action="{{ route('platform.tenants.login-as', $tenant) }}" method="POST">
                 @csrf
                 <div class="modal-body">
                     <p>You will be logged in as the first user of this tenant. You can also select a specific user:</p>
@@ -528,7 +536,7 @@
                 <h5 class="modal-title">Regional Settings</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ route('tenants.settings', $tenant) }}" method="POST">
+            <form action="{{ route('platform.tenants.settings', $tenant) }}" method="POST">
                 @csrf
                 @method('PATCH')
                 <div class="modal-body">

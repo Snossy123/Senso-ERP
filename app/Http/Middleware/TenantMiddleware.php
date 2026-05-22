@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Tenant;
+use App\Services\Platform\ImpersonationService;
 use App\Services\TenantManager;
 use Closure;
 use Illuminate\Http\Request;
@@ -11,7 +12,8 @@ use Symfony\Component\HttpFoundation\Response;
 class TenantMiddleware
 {
     public function __construct(
-        protected TenantManager $tenantManager
+        protected TenantManager $tenantManager,
+        protected ImpersonationService $impersonation
     ) {}
 
     public function handle(Request $request, Closure $next): Response
@@ -26,10 +28,22 @@ class TenantMiddleware
             $tenant = Tenant::where('domain', $request->getHost())->first();
         }
 
-        if ($tenant && $tenant->isActive()) {
+        if ($tenant && $this->shouldBindTenant($tenant)) {
             $this->tenantManager->setCurrent($tenant);
+        } else {
+            $this->tenantManager->clear();
         }
 
         return $next($request);
+    }
+
+    protected function shouldBindTenant(Tenant $tenant): bool
+    {
+        if ($tenant->allowsApplicationAccess()) {
+            return true;
+        }
+
+        return $this->impersonation->isActive()
+            && (int) session('admin_logged_in_as_tenant') === (int) $tenant->id;
     }
 }

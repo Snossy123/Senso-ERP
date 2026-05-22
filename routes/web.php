@@ -3,6 +3,7 @@
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PasswordChangeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\Inventory\CategoryController;
@@ -25,7 +26,16 @@ use App\Http\Controllers\Store\AuthController as StoreAuthController;
 use App\Http\Controllers\Store\CartController;
 use App\Http\Controllers\Store\CheckoutController;
 use App\Http\Controllers\Store\ShopController;
-use App\Http\Controllers\TenantController;
+use App\Http\Controllers\Platform\DashboardController as PlatformDashboardController;
+use App\Http\Controllers\Platform\ImpersonationController;
+use App\Http\Controllers\Platform\PlanController as PlatformPlanController;
+use App\Http\Controllers\Platform\PlatformAddonController;
+use App\Http\Controllers\Platform\PlatformGatewayController;
+use App\Http\Controllers\Platform\PlatformInvoiceController;
+use App\Http\Controllers\Platform\PlatformModuleController;
+use App\Http\Controllers\Platform\PlatformSettingsController;
+use App\Http\Controllers\Platform\PlatformSystemLogController;
+use App\Http\Controllers\Platform\TenantController as PlatformTenantController;
 use App\Http\Controllers\UomoAssetController;
 use App\Http\Controllers\UserController;
 use App\Modules\StorefrontBuilder\Http\Controllers\StorefrontBuilderController;
@@ -47,7 +57,57 @@ Route::get('/__uomo/{path}', [UomoAssetController::class, 'show'])
     ->where('path', '.*')
     ->name('uomo.asset');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'password.must_change'])->group(function () {
+    Route::withoutMiddleware(['password.must_change'])->group(function () {
+        Route::get('/password/change', [PasswordChangeController::class, 'show'])->name('password.change');
+        Route::post('/password/change', [PasswordChangeController::class, 'update'])->name('password.change.update');
+
+        Route::post('platform/impersonation/stop', [ImpersonationController::class, 'destroy'])
+            ->middleware('impersonation.active')
+            ->name('platform.impersonation.stop');
+    });
+
+    // ── Platform Console (SaaS operators: tenant_id null) ─────
+    Route::middleware(['platform.no_impersonation', 'platform'])->prefix('platform')->name('platform.')->group(function () {
+        Route::get('/', [PlatformDashboardController::class, 'index'])->name('dashboard');
+
+        Route::resource('tenants', PlatformTenantController::class);
+        Route::post('tenants/{tenant}/toggle', [PlatformTenantController::class, 'toggleStatus'])->name('tenants.toggle');
+        Route::post('tenants/{tenant}/suspend', [PlatformTenantController::class, 'suspend'])->name('tenants.suspend');
+        Route::post('tenants/{tenant}/activate', [PlatformTenantController::class, 'activate'])->name('tenants.activate');
+        Route::post('tenants/{tenant}/upgrade-plan', [PlatformTenantController::class, 'upgradePlan'])->name('tenants.upgrade-plan');
+        Route::post('tenants/{tenant}/login-as', [PlatformTenantController::class, 'loginAs'])->name('tenants.login-as');
+        Route::post('tenants/{tenant}/sync-usage', [PlatformTenantController::class, 'syncUsage'])->name('tenants.sync-usage');
+        Route::patch('tenants/{tenant}/settings', [PlatformTenantController::class, 'updateSettings'])->name('tenants.settings');
+
+        Route::get('subscriptions', [PlatformPlanController::class, 'index'])->name('subscriptions.index');
+        Route::resource('plans', PlatformPlanController::class)->except(['show']);
+
+        Route::resource('invoices', PlatformInvoiceController::class)->only(['index', 'show']);
+        Route::post('invoices/{invoice}/mark-paid', [PlatformInvoiceController::class, 'markPaid'])->name('invoices.mark-paid');
+
+        Route::resource('modules', PlatformModuleController::class)->only(['index', 'update']);
+        Route::resource('addons', PlatformAddonController::class)->except(['show']);
+        Route::get('settings', [PlatformSettingsController::class, 'index'])->name('settings.index');
+        Route::patch('settings', [PlatformSettingsController::class, 'update'])->name('settings.update');
+        Route::resource('gateways', PlatformGatewayController::class)->except(['show']);
+        Route::get('logs', [PlatformSystemLogController::class, 'index'])->name('logs.index');
+    });
+
+    // Legacy tenant URLs → platform console
+    Route::middleware(['platform.no_impersonation', 'platform'])->group(function () {
+        Route::redirect('/tenants', '/platform/tenants', 301);
+        Route::redirect('/tenants/create', '/platform/tenants/create', 301);
+        Route::get('/tenants/{tenant}', function (\App\Models\Tenant $tenant) {
+            return redirect()->route('platform.tenants.show', $tenant);
+        });
+        Route::get('/tenants/{tenant}/edit', function (\App\Models\Tenant $tenant) {
+            return redirect()->route('platform.tenants.edit', $tenant);
+        });
+    });
+
+    // ── Tenant ERP (tenant staff only) ─────────────────────────
+    Route::middleware('tenant.staff')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     // POS — standalone cashier app (primary); `/pos` redirects for backward-compatible bookmarks
@@ -113,18 +173,6 @@ Route::middleware('auth')->group(function () {
 
     // Admin — Role Management
     Route::resource('admin/roles', RoleController::class)->names('admin.roles');
-
-    // Admin — Tenant Management (platform operators only: tenant_id must be null)
-    Route::middleware('platform')->group(function () {
-        Route::resource('tenants', TenantController::class);
-        Route::post('tenants/{tenant}/toggle', [TenantController::class, 'toggleStatus'])->name('tenants.toggle');
-        Route::post('tenants/{tenant}/suspend', [TenantController::class, 'suspend'])->name('tenants.suspend');
-        Route::post('tenants/{tenant}/activate', [TenantController::class, 'activate'])->name('tenants.activate');
-        Route::post('tenants/{tenant}/upgrade-plan', [TenantController::class, 'upgradePlan'])->name('tenants.upgrade-plan');
-        Route::post('tenants/{tenant}/login-as', [TenantController::class, 'loginAs'])->name('tenants.login-as');
-        Route::post('tenants/{tenant}/sync-usage', [TenantController::class, 'syncUsage'])->name('tenants.sync-usage');
-        Route::patch('tenants/{tenant}/settings', [TenantController::class, 'updateSettings'])->name('tenants.settings');
-    });
 
     // Admin — Settings
     Route::get('/admin/settings', [SettingsController::class, 'index'])->name('admin.settings');
@@ -195,6 +243,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/settings', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'settings'])->name('settings');
         Route::post('/settings', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'updateSettings'])->name('settings.update');
     });
+    }); // tenant.staff
 });
 
 // ── USER PORTAL — Store (prefix: /store) ────────────────────

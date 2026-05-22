@@ -1,4 +1,4 @@
-@extends('layouts.master')
+@extends('layouts.platform.master')
 @section('title', __('tenants.title'))
 
 @section('page-header')
@@ -10,7 +10,7 @@
             </div>
         </div>
         <div class="main-dashboard-header-right">
-            <a href="{{ route('tenants.create') }}" class="btn btn-primary">
+            <a href="{{ route('platform.tenants.create') }}" class="btn btn-primary">
                 <i class="fas fa-plus"></i> {{ __('tenants.add_tenant') }}
             </a>
         </div>
@@ -50,7 +50,7 @@
                         @forelse($tenants as $tenant)
                             <tr>
                                 <td>
-                                    <a href="{{ route('tenants.show', $tenant) }}">{{ $tenant->name }}</a>
+                                    <a href="{{ route('platform.tenants.show', $tenant) }}">{{ $tenant->name }}</a>
                                     <br><small class="text-muted">{{ $tenant->slug }}</small>
                                 </td>
                                 <td>{{ $tenant->domain ?? '-' }}</td>
@@ -91,19 +91,19 @@
                                 </td>
                                 <td class="text-nowrap">
                                     <div class="btn-group btn-group-sm flex-wrap gap-1" role="group" style="max-width: 100%;">
-                                        <a href="{{ route('tenants.show', $tenant) }}" class="btn btn-info" title="{{ __('tenants.view') }}">
+                                        <a href="{{ route('platform.tenants.show', $tenant) }}" class="btn btn-info" title="{{ __('tenants.view') }}">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{{ route('tenants.edit', $tenant) }}" class="btn btn-primary" title="{{ __('tenants.edit_action') }}">
+                                        <a href="{{ route('platform.tenants.edit', $tenant) }}" class="btn btn-primary" title="{{ __('tenants.edit_action') }}">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <form action="{{ route('tenants.toggle', $tenant) }}" method="POST" class="d-inline">
+                                        <form action="{{ route('platform.tenants.toggle', $tenant) }}" method="POST" class="d-inline">
                                             @csrf
                                             <button type="submit" class="btn btn-{{ $tenant->is_active ? 'warning' : 'success' }}" title="{{ $tenant->is_active ? 'Deactivate' : 'Activate' }}">
                                                 <i class="fas fa-{{ $tenant->is_active ? 'ban' : 'check' }}"></i>
                                             </button>
                                         </form>
-                                        <form action="{{ route('tenants.destroy', $tenant) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure?')">
+                                        <form action="{{ route('platform.tenants.destroy', $tenant) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure?')">
                                             @csrf @method('DELETE')
                                             <button type="submit" class="btn btn-danger" title="Delete">
                                                 <i class="fas fa-trash"></i>

@@ -15,13 +15,7 @@
 						</div>
 						<div class="user-info">
 							<h4 class="font-weight-semibold mt-3 mb-0">{{ Auth::user()->name }}</h4>
-							<span class="mb-0 text-muted">
-								@if(Auth::user()->tenant_id === null)
-									{{ __('messages.sidebar.platform_operator') }}
-								@else
-									{{ Auth::user()->role?->name ?? __('messages.sidebar.staff_member') }}
-								@endif
-							</span>
+							<span class="mb-0 text-muted">{{ Auth::user()->role?->name ?? __('messages.sidebar.staff_member') }}</span>
 						</div>
 					</div>
 				</div>
@@ -33,7 +27,6 @@
 					$showAdminSection = $can('users.view')
 						|| $can('roles.view')
 						|| $can('settings.view')
-						|| $sidebarUser->tenant_id === null
 						|| $sidebarUser->isAdmin();
 
 					$showPosSection = $canAny(['pos.view', 'pos.create', 'orders.view']);
@@ -90,14 +83,6 @@
 						<a class="side-menu__item" href="{{ route('admin.roles.index') }}">
 							<i class="side-menu__icon fe fe-shield"></i>
 							<span class="side-menu__label">{{ __('messages.sidebar.role_management') }}</span>
-						</a>
-					</li>
-					@endif
-					@if(Auth::user()->tenant_id === null)
-					<li class="slide">
-						<a class="side-menu__item" href="{{ route('tenants.index') }}">
-							<i class="side-menu__icon fe fe-grid"></i>
-							<span class="side-menu__label">{{ __('messages.sidebar.tenant_management') }}</span>
 						</a>
 					</li>
 					@endif

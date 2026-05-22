@@ -10,6 +10,10 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             PlanSeeder::class,
+            PlatformModuleSeeder::class,
+            PlanModuleSeeder::class,
+            PaymentGatewaySeeder::class,
+            PlatformSettingSeeder::class,
             RolePermissionSeeder::class,
             TenantSeeder::class,
             AccountSeeder::class,

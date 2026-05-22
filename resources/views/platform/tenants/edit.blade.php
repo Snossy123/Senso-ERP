@@ -1,4 +1,4 @@
-@extends('layouts.master')
+@extends('layouts.platform.master')
 @section('title', __('tenants.edit_title'))
 
 @section('page-header')
@@ -10,7 +10,7 @@
 						</div>
 					</div>
 					<div class="main-dashboard-header-right">
-						<a href="{{ route('tenants.index') }}" class="btn btn-secondary">
+						<a href="{{ route('platform.tenants.index') }}" class="btn btn-secondary">
 							<i class="fas fa-arrow-left"></i> {{ __('tenants.back') }}
 						</a>
 					</div>
@@ -22,7 +22,7 @@
 
     <div class="card shadow">
         <div class="card-body">
-            <form action="{{ route('tenants.update', $tenant) }}" method="POST">
+            <form action="{{ route('platform.tenants.update', $tenant) }}" method="POST">
                 @csrf @method('PUT')
                 <div class="row">
                     <div class="col-md-6 mb-3">

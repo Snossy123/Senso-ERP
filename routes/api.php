@@ -15,7 +15,7 @@ Route::middleware(['auth:sanctum', 'tenant'])->prefix('dashboard')->group(functi
     Route::post('/widgets/refresh', [DashboardController::class, 'refresh']);
 });
 
-Route::middleware(['auth:sanctum', 'tenant'])->prefix('tenants')->group(function () {
+Route::middleware(['auth:sanctum', 'platform'])->prefix('tenants')->group(function () {
     Route::get('/', [TenantApiController::class, 'index']);
     Route::get('/{tenant}', [TenantApiController::class, 'show']);
     Route::get('/{tenant}/usage', [TenantApiController::class, 'usage']);

@@ -22,7 +22,7 @@ class TenantManager
 
     public function getCurrentId(): ?int
     {
-        return $this->currentTenant?->id ?? session('tenant_id');
+        return $this->currentTenant?->id;
     }
 
     public function getFromRequest(): ?Tenant

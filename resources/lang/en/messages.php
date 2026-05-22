@@ -64,6 +64,8 @@ return [
     ],
     'errors' => [
         'platform_only' => 'This action is restricted to platform operators (accounts not bound to a tenant).',
+        'tenant_staff_only' => 'This area is for tenant staff only. Use the Platform Console to manage tenants.',
+        'tenant_access_unavailable' => 'Your organization account is suspended or inactive. Contact support to restore access.',
     ],
     'footer' => [
         'copyright' => 'Copyright © :year Senso ERP. All rights reserved.',
