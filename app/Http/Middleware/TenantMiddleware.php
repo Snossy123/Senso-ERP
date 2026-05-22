@@ -26,10 +26,22 @@ class TenantMiddleware
             $tenant = Tenant::where('domain', $request->getHost())->first();
         }
 
-        if ($tenant && $tenant->allowsApplicationAccess()) {
+        if ($tenant && $this->shouldBindTenant($tenant)) {
             $this->tenantManager->setCurrent($tenant);
+        } else {
+            $this->tenantManager->clear();
         }
 
         return $next($request);
+    }
+
+    protected function shouldBindTenant(Tenant $tenant): bool
+    {
+        if ($tenant->allowsApplicationAccess()) {
+            return true;
+        }
+
+        // Platform impersonation may access ERP for suspended/expired tenants.
+        return session()->has('platform_operator_id');
     }
 }

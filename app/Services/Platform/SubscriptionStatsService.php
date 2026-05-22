@@ -16,17 +16,18 @@ class SubscriptionStatsService
         $totalTenants = Tenant::count();
         $tenantsThisMonth = Tenant::where('created_at', '>=', now()->startOfMonth())->count();
 
-        $activeSubscriptions = Tenant::where('status', 'active')
-            ->where(function ($q) {
-                $q->whereNull('subscription_ends_at')
-                    ->orWhere('subscription_ends_at', '>', now());
-            })
-            ->count();
+        $activeSubscriptions = $this->activeSubscriptionQuery()->count();
 
-        $monthlyRevenue = Tenant::query()
-            ->where('status', 'active')
+        $monthlyRevenue = $this->activeSubscriptionQuery()
             ->join('plans', 'tenants.plan_id', '=', 'plans.id')
-            ->sum('plans.price');
+            ->selectRaw(
+                'SUM(CASE COALESCE(tenants.billing_cycle, plans.billing_cycle)
+                    WHEN ? THEN COALESCE(tenants.price, plans.price) / 12
+                    ELSE COALESCE(tenants.price, plans.price)
+                END) as monthly_revenue',
+                ['yearly']
+            )
+            ->value('monthly_revenue');
 
         $activePlans = Plan::where('is_active', true)->count();
         $totalPlans = Plan::count();
@@ -82,5 +83,16 @@ class SubscriptionStatsService
             'percentages' => array_map(fn ($v) => round(($v / $total) * 100, 1), $data),
             'modules' => $modules,
         ];
+    }
+
+    protected function activeSubscriptionQuery()
+    {
+        return Tenant::query()
+            ->where('status', 'active')
+            ->whereNotNull('plan_id')
+            ->where(function ($q) {
+                $q->whereNull('subscription_ends_at')
+                    ->orWhere('subscription_ends_at', '>', now());
+            });
     }
 }

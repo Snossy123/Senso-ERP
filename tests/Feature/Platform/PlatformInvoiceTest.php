@@ -25,6 +25,36 @@ class PlatformInvoiceTest extends TestCase
         $this->seed(PlatformSettingSeeder::class);
     }
 
+    public function test_invoice_numbers_are_unique_and_monotonic(): void
+    {
+        $plan = Plan::where('slug', 'basic')->first();
+        $service = app(PlatformInvoiceService::class);
+
+        $tenantA = Tenant::create([
+            'name' => 'Seq Tenant A',
+            'slug' => 'seq-a-'.uniqid(),
+            'status' => 'active',
+            'is_active' => true,
+        ]);
+        $tenantB = Tenant::create([
+            'name' => 'Seq Tenant B',
+            'slug' => 'seq-b-'.uniqid(),
+            'status' => 'active',
+            'is_active' => true,
+        ]);
+
+        $first = $service->createForTenant($tenantA, $plan);
+        $second = $service->createForTenant($tenantB, $plan);
+
+        $this->assertNotSame($first->number, $second->number);
+        $this->assertSame(1, preg_match('/^INV-\d{6}$/', $first->number));
+        $this->assertSame(1, preg_match('/^INV-\d{6}$/', $second->number));
+
+        $firstSeq = (int) substr($first->number, 4);
+        $secondSeq = (int) substr($second->number, 4);
+        $this->assertSame($firstSeq + 1, $secondSeq);
+    }
+
     public function test_upgrade_plan_creates_invoice(): void
     {
         $plan = Plan::where('slug', 'basic')->first();

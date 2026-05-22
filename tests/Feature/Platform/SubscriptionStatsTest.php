@@ -48,4 +48,55 @@ class SubscriptionStatsTest extends TestCase
 
         $this->assertGreaterThanOrEqual(1, $kpis['total_tenants']);
     }
+
+    public function test_monthly_revenue_normalizes_yearly_plans_and_excludes_expired_subscriptions(): void
+    {
+        $monthlyPlan = Plan::create([
+            'name' => 'Monthly MRR',
+            'slug' => 'monthly-mrr-'.uniqid(),
+            'price' => 100,
+            'currency' => 'USD',
+            'billing_cycle' => 'monthly',
+            'is_active' => true,
+        ]);
+
+        $yearlyPlan = Plan::create([
+            'name' => 'Yearly MRR',
+            'slug' => 'yearly-mrr-'.uniqid(),
+            'price' => 1200,
+            'currency' => 'USD',
+            'billing_cycle' => 'yearly',
+            'is_active' => true,
+        ]);
+
+        Tenant::create([
+            'name' => 'Monthly Active',
+            'slug' => 'monthly-active-'.uniqid(),
+            'status' => 'active',
+            'is_active' => true,
+            'plan_id' => $monthlyPlan->id,
+        ]);
+
+        Tenant::create([
+            'name' => 'Yearly Active',
+            'slug' => 'yearly-active-'.uniqid(),
+            'status' => 'active',
+            'is_active' => true,
+            'plan_id' => $yearlyPlan->id,
+        ]);
+
+        Tenant::create([
+            'name' => 'Expired Active Status',
+            'slug' => 'expired-active-'.uniqid(),
+            'status' => 'active',
+            'is_active' => true,
+            'plan_id' => $monthlyPlan->id,
+            'subscription_ends_at' => now()->subDay(),
+        ]);
+
+        $kpis = app(SubscriptionStatsService::class)->kpis();
+
+        $this->assertSame(2, $kpis['active_subscriptions']);
+        $this->assertEqualsWithDelta(200.0, $kpis['monthly_revenue'], 0.01);
+    }
 }
