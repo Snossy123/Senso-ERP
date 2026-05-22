@@ -19,7 +19,7 @@ class TenantService
     ) {}
 
     /**
-     * @return array{tenant: Tenant, support_password: ?string}
+     * @return array{tenant: Tenant, support_password: ?string, admin_email: ?string}
      */
     public function createTenant(array $data): array
     {
@@ -56,9 +56,15 @@ class TenantService
             $this->branchProvisioning->ensureDefaultBranchesForTenant($tenant);
 
             $supportPassword = null;
+            $adminEmail = null;
             $createSupport = filter_var($data['create_support_user'] ?? true, FILTER_VALIDATE_BOOLEAN);
             if ($createSupport) {
                 $supportPassword = $this->provisionTenantAdministrator($tenant, $data);
+                $adminEmail = $data['admin_email'] ?? $data['support_email'] ?? null;
+                if (! $adminEmail) {
+                    $domain = config('tenants.support_email_domain', 'tenants.invalid');
+                    $adminEmail = sprintf('support.t%d@%s', $tenant->id, $domain);
+                }
             }
 
             $this->syncUsage($tenant);
@@ -66,6 +72,7 @@ class TenantService
             return [
                 'tenant' => $tenant,
                 'support_password' => $supportPassword,
+                'admin_email' => $adminEmail,
             ];
         });
     }
@@ -84,15 +91,19 @@ class TenantService
             throw new \RuntimeException('Tenant administrator role is missing after role provisioning.');
         }
 
-        $plainPassword = Str::password(16);
-
-        $email = $data['support_email'] ?? null;
+        $email = $data['admin_email'] ?? $data['support_email'] ?? null;
         if (! $email) {
             $domain = config('tenants.support_email_domain', 'tenants.invalid');
             $email = sprintf('support.t%d@%s', $tenant->id, $domain);
         }
 
-        $name = $data['support_name'] ?? ($tenant->name.' Admin');
+        $name = $data['admin_name'] ?? $data['support_name'] ?? ($tenant->name.' Admin');
+
+        $plainPassword = ! empty($data['admin_password'])
+            ? (string) $data['admin_password']
+            : Str::password(16);
+
+        $mustChange = empty($data['admin_password']);
 
         User::withoutGlobalScopes()->create([
             'name' => $name,
@@ -101,7 +112,7 @@ class TenantService
             'tenant_id' => $tenant->id,
             'role_id' => $role->id,
             'is_active' => true,
-            'must_change_password' => true,
+            'must_change_password' => $mustChange,
             'created_by' => Auth::id(),
         ]);
 

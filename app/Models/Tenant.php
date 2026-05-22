@@ -51,6 +51,29 @@ class Tenant extends Model
         return $this->belongsTo(Plan::class);
     }
 
+    public function platformInvoices(): HasMany
+    {
+        return $this->hasMany(PlatformInvoice::class);
+    }
+
+    public function getSubscriptionBadgeAttribute(): string
+    {
+        if ($this->payment_status === 'overdue' || $this->isExpired()) {
+            return 'overdue';
+        }
+
+        if ($this->subscription_ends_at && $this->subscription_ends_at->isFuture()
+            && $this->subscription_ends_at->lte(now()->addDays(30))) {
+            return 'expiring_soon';
+        }
+
+        if ($this->status === 'active' || $this->isOnTrial()) {
+            return 'active';
+        }
+
+        return $this->status;
+    }
+
     public function usageTrackings(): HasMany
     {
         return $this->hasMany(UsageTracking::class);
@@ -109,6 +132,26 @@ class Tenant extends Model
     public function isActive(): bool
     {
         return $this->status === 'active' && $this->is_active;
+    }
+
+    /**
+     * Whether ERP login and tenant context should work (trial or active, not suspended/expired).
+     */
+    public function allowsApplicationAccess(): bool
+    {
+        if (! $this->is_active || $this->isSuspended()) {
+            return false;
+        }
+
+        if ($this->status === 'expired') {
+            return false;
+        }
+
+        if ($this->status === 'trial' && $this->trial_ends_at && $this->trial_ends_at->isPast()) {
+            return false;
+        }
+
+        return in_array($this->status, ['active', 'trial'], true);
     }
 
     public function isExpired(): bool
@@ -251,6 +294,11 @@ class Tenant extends Model
                     },
                 ]
             );
+        }
+
+        if ($plan->price > 0) {
+            app(\App\Services\Platform\PlatformInvoiceService::class)
+                ->createForTenant($this->fresh(), $plan);
         }
     }
 

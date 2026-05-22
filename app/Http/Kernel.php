@@ -69,5 +69,7 @@ class Kernel extends HttpKernel
         'tenant' => \App\Http\Middleware\TenantMiddleware::class,
         'storefront.boot' => \App\Http\Middleware\VerifyStorefrontBootToken::class,
         'platform' => \App\Http\Middleware\EnsurePlatformOperator::class,
+        'tenant.staff' => \App\Http\Middleware\EnsureTenantStaff::class,
+        'password.must_change' => \App\Http\Middleware\EnsurePasswordChanged::class,
     ];
 }

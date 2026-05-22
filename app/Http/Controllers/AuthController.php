@@ -11,7 +11,7 @@ class AuthController extends Controller
     public function showLogin()
     {
         if (Auth::check()) {
-            return redirect()->route('dashboard');
+            return redirect()->intended($this->homeFor(Auth::user()));
         }
 
         return view('signin');
@@ -24,15 +24,30 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
+        $credentials['is_active'] = true;
+
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
-            Activity::logLogin(Auth::user());
+            $user = Auth::user();
 
-            return redirect()->intended(route('dashboard'));
+            Activity::logLogin($user);
+
+            if ($user->mustChangePassword()) {
+                return redirect()->route('password.change');
+            }
+
+            return redirect()->intended($this->homeFor($user));
         }
 
-        return back()->withErrors(['email' => 'Invalid credentials.'])->onlyInput('email');
+        return back()->withErrors(['email' => __('auth_pages.signin.invalid_credentials')])->onlyInput('email');
+    }
+
+    protected function homeFor($user): string
+    {
+        return $user->isPlatformOperator()
+            ? route('platform.dashboard')
+            : route('dashboard');
     }
 
     public function logout(Request $request)

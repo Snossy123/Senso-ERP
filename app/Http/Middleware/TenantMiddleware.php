@@ -26,7 +26,7 @@ class TenantMiddleware
             $tenant = Tenant::where('domain', $request->getHost())->first();
         }
 
-        if ($tenant && $tenant->isActive()) {
+        if ($tenant && $tenant->allowsApplicationAccess()) {
             $this->tenantManager->setCurrent($tenant);
         }
 

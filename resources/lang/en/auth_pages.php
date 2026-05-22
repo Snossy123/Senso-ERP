@@ -13,7 +13,16 @@ return [
         'forgot' => 'Forgot password?',
         'no_account' => 'Don\'t have an account?',
         'create_account' => 'Create an Account',
+        'invalid_credentials' => 'Invalid email or password, or account is inactive.',
     ],
+    'change_password' => [
+        'title' => 'Set your password',
+        'subtitle' => 'You must choose a new password before using the ERP.',
+        'new_password' => 'New password',
+        'confirm' => 'Confirm password',
+        'submit' => 'Save and continue',
+    ],
+    'password_changed' => 'Password updated. You can use the ERP now.',
     'signup' => [
         'title' => 'Get Started',
         'subtitle' => 'It\'s free to signup and only takes a minute.',
