@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Activity;
+use App\Models\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -30,6 +31,19 @@ class AuthController extends Controller
             $request->session()->regenerate();
 
             $user = Auth::user();
+
+            if ($user->tenant_id) {
+                $tenant = Tenant::find($user->tenant_id);
+                if (! $tenant || ! $tenant->allowsApplicationAccess()) {
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+
+                    return back()
+                        ->withErrors(['email' => __('messages.errors.tenant_access_unavailable')])
+                        ->onlyInput('email');
+                }
+            }
 
             Activity::logLogin($user);
 

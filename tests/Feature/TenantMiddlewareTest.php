@@ -42,11 +42,15 @@ class TenantMiddlewareTest extends TestCase
         $this->actingAs($user)
             ->withSession(['tenant_id' => $tenant->id])
             ->get(route('inventory.products.index'))
-            ->assertOk();
+            ->assertRedirect(route('login'));
 
+        $this->assertGuest();
         $this->assertNull(session('tenant_id'));
         $this->assertNull(app(TenantManager::class)->getCurrentId());
-        $this->assertSame(2, Product::count());
+
+        $this->actingAs($user);
+        app(TenantManager::class)->clear();
+        $this->assertSame(0, Product::count());
     }
 
     public function test_expired_trial_clears_stale_session_tenant_context(): void
@@ -73,10 +77,41 @@ class TenantMiddlewareTest extends TestCase
         $this->actingAs($user)
             ->withSession(['tenant_id' => $tenant->id])
             ->get(route('inventory.products.index'))
-            ->assertOk();
+            ->assertRedirect(route('login'));
 
+        $this->assertGuest();
         $this->assertNull(session('tenant_id'));
         $this->assertNull(app(TenantManager::class)->getCurrentId());
         $this->assertFalse($tenant->fresh()->allowsApplicationAccess());
+
+        $this->actingAs($user);
+        app(TenantManager::class)->clear();
+        $this->assertSame(0, Product::count());
+    }
+
+    public function test_platform_impersonation_can_access_erp_for_suspended_tenant(): void
+    {
+        $this->seedRoleTemplates();
+
+        $tenant = $this->createTenantWithClonedRoles([
+            'slug' => 'imp-susp-'.str_replace('.', '', uniqid('', true)),
+            'status' => 'suspended',
+            'suspended_at' => now(),
+        ]);
+        $user = $this->makeTenantAdmin($tenant);
+        $platform = $this->makePlatformOperator();
+
+        Product::factory()->create(['tenant_id' => $tenant->id, 'name' => 'Suspended Product']);
+
+        $this->actingAs($user)
+            ->withSession([
+                'platform_operator_id' => $platform->id,
+                'tenant_id' => $tenant->id,
+            ])
+            ->get(route('inventory.products.index'))
+            ->assertOk();
+
+        $this->assertSame($tenant->id, app(TenantManager::class)->getCurrentId());
+        $this->assertSame(1, Product::count());
     }
 }
