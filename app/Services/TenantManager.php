@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Tenant;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 
 class TenantManager
 {
@@ -11,18 +12,24 @@ class TenantManager
 
     public function getCurrent(): ?Tenant
     {
+        if ($this->currentTenant === null && Session::has('tenant_id')) {
+            $this->currentTenant = Tenant::find(Session::get('tenant_id'));
+        }
+
         return $this->currentTenant;
     }
 
     public function setCurrent(Tenant $tenant): void
     {
         $this->currentTenant = $tenant;
-        session(['tenant_id' => $tenant->id]);
+        Session::put('tenant_id', $tenant->id);
     }
 
     public function getCurrentId(): ?int
     {
-        return $this->currentTenant?->id;
+        $id = $this->currentTenant?->id ?? Session::get('tenant_id');
+
+        return $id !== null ? (int) $id : null;
     }
 
     public function getFromRequest(): ?Tenant
@@ -33,8 +40,8 @@ class TenantManager
             return Tenant::find($user->tenant_id);
         }
 
-        if (session()->has('tenant_id')) {
-            return Tenant::find(session('tenant_id'));
+        if (Session::has('tenant_id')) {
+            return Tenant::find(Session::get('tenant_id'));
         }
 
         return null;
@@ -48,7 +55,7 @@ class TenantManager
     public function clear(): void
     {
         $this->currentTenant = null;
-        session()->forget('tenant_id');
+        Session::forget('tenant_id');
     }
 
     public function getSettings(): array
