@@ -3,28 +3,25 @@
 namespace App\Http\Controllers\Platform;
 
 use App\Http\Controllers\Controller;
+use App\Services\Platform\ImpersonationService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class ImpersonationController extends Controller
 {
+    public function __construct(
+        protected ImpersonationService $impersonation
+    ) {}
+
     public function destroy(Request $request)
     {
-        if (! session()->has('platform_operator_id')) {
-            return redirect()->route('dashboard');
+        if (! $this->impersonation->isActive()) {
+            abort(403, __('platform.impersonation.not_active'));
         }
 
-        session()->forget([
-            'platform_operator_id',
-            'admin_logged_in_as_tenant',
-            'admin_logged_in_as_user',
-        ]);
+        $this->impersonation->end($request);
 
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect()->route('login')
+        return redirect()
+            ->route('login')
             ->with('success', __('platform.impersonation.stopped'));
     }
 }

@@ -214,5 +214,41 @@ class TenantManagementTest extends TestCase
 
         $this->assertGuest();
         $this->assertNotEquals($platform->id, auth()->id());
+
+        $this->get(route('platform.dashboard'))
+            ->assertRedirect(route('login'));
+    }
+
+    public function test_impersonation_stop_requires_active_impersonation_session(): void
+    {
+        $this->withoutCsrf();
+        $this->seedRoleTemplates();
+        $tenant = $this->createTenantWithClonedRoles([
+            'slug' => 'tm-stop-'.str_replace('.', '', uniqid('', true)),
+        ]);
+        $tenantUser = $this->makeTenantAdmin($tenant);
+
+        $this->actingAs($tenantUser)
+            ->post(route('platform.impersonation.stop'))
+            ->assertForbidden();
+    }
+
+    public function test_platform_console_blocked_while_impersonating(): void
+    {
+        $this->seedRoleTemplates();
+        $platform = $this->makePlatformOperator();
+        $tenant = $this->createTenantWithClonedRoles([
+            'slug' => 'tm-block-'.str_replace('.', '', uniqid('', true)),
+        ]);
+        $tenantUser = $this->makeTenantAdmin($tenant);
+
+        $this->actingAs($tenantUser)
+            ->withSession([
+                'platform_operator_id' => $platform->id,
+                'admin_logged_in_as_tenant' => $tenant->id,
+                'admin_logged_in_as_user' => $tenantUser->id,
+            ])
+            ->get(route('platform.dashboard'))
+            ->assertRedirect(route('dashboard'));
     }
 }

@@ -63,11 +63,12 @@ Route::middleware(['auth', 'password.must_change'])->group(function () {
         Route::post('/password/change', [PasswordChangeController::class, 'update'])->name('password.change.update');
 
         Route::post('platform/impersonation/stop', [ImpersonationController::class, 'destroy'])
+            ->middleware('impersonation.active')
             ->name('platform.impersonation.stop');
     });
 
     // ── Platform Console (SaaS operators: tenant_id null) ─────
-    Route::middleware('platform')->prefix('platform')->name('platform.')->group(function () {
+    Route::middleware(['platform.no_impersonation', 'platform'])->prefix('platform')->name('platform.')->group(function () {
         Route::get('/', [PlatformDashboardController::class, 'index'])->name('dashboard');
 
         Route::resource('tenants', PlatformTenantController::class);
@@ -94,7 +95,7 @@ Route::middleware(['auth', 'password.must_change'])->group(function () {
     });
 
     // Legacy tenant URLs → platform console
-    Route::middleware('platform')->group(function () {
+    Route::middleware(['platform.no_impersonation', 'platform'])->group(function () {
         Route::redirect('/tenants', '/platform/tenants', 301);
         Route::redirect('/tenants/create', '/platform/tenants/create', 301);
         Route::get('/tenants/{tenant}', function (\App\Models\Tenant $tenant) {

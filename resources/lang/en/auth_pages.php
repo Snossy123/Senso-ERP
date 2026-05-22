@@ -21,6 +21,7 @@ return [
         'new_password' => 'New password',
         'confirm' => 'Confirm password',
         'submit' => 'Save and continue',
+        'not_required' => 'A password change is not required for this account.',
     ],
     'password_changed' => 'Password updated. You can use the ERP now.',
     'signup' => [

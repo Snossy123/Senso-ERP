@@ -62,4 +62,26 @@ class TenantClientLoginTest extends TestCase
             'password' => $password,
         ])->assertRedirect(route('password.change'));
     }
+
+    public function test_password_change_update_rejected_when_not_required(): void
+    {
+        $this->withoutCsrf();
+        $this->seedRoleTemplates();
+
+        $tenant = $this->createTenantWithClonedRoles([
+            'slug' => 'pw-no-force-'.str_replace('.', '', uniqid('', true)),
+        ]);
+        $user = $this->makeTenantAdmin($tenant, ['password' => 'password']);
+
+        $this->actingAs($user)
+            ->post(route('password.change.update'), [
+                'password' => 'NewSecurePass1!',
+                'password_confirmation' => 'NewSecurePass1!',
+            ])
+            ->assertForbidden();
+
+        $this->assertTrue(
+            \Illuminate\Support\Facades\Hash::check('password', $user->fresh()->password)
+        );
+    }
 }

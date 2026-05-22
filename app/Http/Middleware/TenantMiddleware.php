@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Tenant;
+use App\Services\Platform\ImpersonationService;
 use App\Services\TenantManager;
 use Closure;
 use Illuminate\Http\Request;
@@ -11,7 +12,8 @@ use Symfony\Component\HttpFoundation\Response;
 class TenantMiddleware
 {
     public function __construct(
-        protected TenantManager $tenantManager
+        protected TenantManager $tenantManager,
+        protected ImpersonationService $impersonation
     ) {}
 
     public function handle(Request $request, Closure $next): Response
@@ -41,7 +43,7 @@ class TenantMiddleware
             return true;
         }
 
-        // Platform impersonation may access ERP for suspended/expired tenants.
-        return session()->has('platform_operator_id');
+        return $this->impersonation->isActive()
+            && (int) session('admin_logged_in_as_tenant') === (int) $tenant->id;
     }
 }

@@ -179,5 +179,7 @@ return [
         'started' => 'Logged in to :name ERP.',
         'stopped' => 'Impersonation ended. Sign in to the Platform Console to continue.',
         'session_expired' => 'Impersonation session expired. Please sign in again.',
+        'not_active' => 'No active impersonation session.',
+        'console_blocked' => 'Exit tenant ERP impersonation before opening the Platform Console.',
     ],
 ];

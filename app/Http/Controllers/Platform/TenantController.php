@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Platform;
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
 use App\Models\Tenant;
+use App\Services\Platform\ImpersonationService;
 use App\Services\TenantService;
 use App\Support\Locale;
 use Illuminate\Http\Request;
@@ -14,7 +15,8 @@ use Illuminate\Validation\Rule;
 class TenantController extends Controller
 {
     public function __construct(
-        protected TenantService $tenantService
+        protected TenantService $tenantService,
+        protected ImpersonationService $impersonationService
     ) {}
 
     public function index()
@@ -229,15 +231,7 @@ class TenantController extends Controller
             }
         }
 
-        session([
-            'platform_operator_id' => auth()->id(),
-            'admin_logged_in_as_tenant' => $tenant->id,
-            'admin_logged_in_as_user' => $user->id,
-        ]);
-
-        auth()->login($user);
-
-        app(\App\Services\TenantManager::class)->setCurrent($tenant->fresh());
+        $this->impersonationService->start(auth()->user(), $tenant, $user);
 
         $redirect = redirect()->route('dashboard')
             ->with('success', __('platform.impersonation.started', ['name' => $tenant->name]));

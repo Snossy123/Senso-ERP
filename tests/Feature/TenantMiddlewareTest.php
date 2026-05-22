@@ -106,7 +106,8 @@ class TenantMiddlewareTest extends TestCase
         $this->actingAs($user)
             ->withSession([
                 'platform_operator_id' => $platform->id,
-                'tenant_id' => $tenant->id,
+                'admin_logged_in_as_tenant' => $tenant->id,
+                'admin_logged_in_as_user' => $user->id,
             ])
             ->get(route('inventory.products.index'))
             ->assertOk();

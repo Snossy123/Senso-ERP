@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
+use Symfony\Component\HttpFoundation\Response;
 
 class PasswordChangeController extends Controller
 {
@@ -15,7 +16,7 @@ class PasswordChangeController extends Controller
 
     public function show()
     {
-        $user = Auth::user();
+        $user = $this->staffUser();
 
         if (! $user || ! $user->mustChangePassword()) {
             return redirect()->to($user?->applicationHomeRoute() ?? route('dashboard'));
@@ -26,7 +27,11 @@ class PasswordChangeController extends Controller
 
     public function update(Request $request)
     {
-        $user = Auth::user();
+        $user = $this->staffUser();
+
+        if (! $user || ! $user->mustChangePassword()) {
+            abort(Response::HTTP_FORBIDDEN, __('auth_pages.change_password.not_required'));
+        }
 
         $validated = $request->validate([
             'password' => ['required', 'string', 'min:8', 'confirmed'],
@@ -40,5 +45,12 @@ class PasswordChangeController extends Controller
         return redirect()
             ->to($user->applicationHomeRoute())
             ->with('success', __('auth_pages.password_changed'));
+    }
+
+    protected function staffUser(): ?User
+    {
+        $user = Auth::user();
+
+        return $user instanceof User ? $user : null;
     }
 }

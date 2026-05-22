@@ -139,11 +139,7 @@ class Tenant extends Model
      */
     public function allowsApplicationAccess(): bool
     {
-        if (! $this->is_active || $this->isSuspended()) {
-            return false;
-        }
-
-        if ($this->status === 'expired') {
+        if (! $this->is_active || $this->isSuspended() || $this->isExpired()) {
             return false;
         }
 
@@ -169,6 +165,10 @@ class Tenant extends Model
                     });
             })
             ->where('status', '!=', 'expired')
+            ->where(function ($q) {
+                $q->whereNull('subscription_ends_at')
+                    ->orWhere('subscription_ends_at', '>', now());
+            })
             ->where(function ($q) {
                 $q->where('status', '!=', 'trial')
                     ->orWhereNull('trial_ends_at')
