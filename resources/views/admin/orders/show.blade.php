@@ -86,6 +86,15 @@
                  </form>
             </div>
         </div>
+        @if($order->isCollectible() && (auth()->user()->isAdmin() || auth()->user()->hasPermission('accounting.collect')))
+        <div class="card mt-3 border-success">
+            <div class="card-body">
+                <h5 class="tx-15 font-weight-bold">Record customer payment</h5>
+                <p class="text-muted tx-12 mb-3">Status: {{ strtoupper($order->payment_status) }} — posts cash receipt to GL.</p>
+                <button type="button" class="btn btn-success btn-block" data-toggle="modal" data-target="#collectOrderModal">Collect payment</button>
+            </div>
+        </div>
+        @endif
         <div class="card mt-3">
              <div class="card-body text-center py-4">
                  <p class="text-muted mb-3 tx-12">Ordered on: {{ $order->created_at->format('F j, Y g:i a') }}</p>
@@ -94,4 +103,41 @@
         </div>
     </div>
 </div>
+
+@if($order->isCollectible() && (auth()->user()->isAdmin() || auth()->user()->hasPermission('accounting.collect')))
+<div class="modal fade" id="collectOrderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ route('admin.orders.mark-paid', $order) }}" class="modal-content">
+            @csrf
+            <div class="modal-header">
+                <h5 class="modal-title">Collect — {{ $order->order_number }}</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Amount: <strong>{{ number_format($order->total, 2) }}</strong></p>
+                <div class="form-group">
+                    <label>Receipt date</label>
+                    <input type="date" name="payment_date" class="form-control" required value="{{ date('Y-m-d') }}">
+                </div>
+                <div class="form-group">
+                    <label>Collection method</label>
+                    <select name="payment_method" class="form-control" required>
+                        <option value="cash" {{ $order->payment_method === 'cash_on_delivery' ? 'selected' : '' }}>Cash</option>
+                        <option value="card" {{ $order->payment_method === 'online' ? 'selected' : '' }}>Card</option>
+                        <option value="bank_transfer">Bank transfer</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea name="notes" class="form-control" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-success">Record receipt</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
 @endsection

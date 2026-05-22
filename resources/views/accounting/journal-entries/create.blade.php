@@ -45,7 +45,7 @@
                             <tr>
                                 <td>
                                     <select name="lines[0][account_id]" class="form-control select2" required>
-                                        @foreach(\App\Models\Account::where('parent_id', '!=', null)->get() as $acc)
+                                        @foreach($accounts as $acc)
                                             <option value="{{ $acc->id }}">{{ $acc->name }} ({{ $acc->code }})</option>
                                         @endforeach
                                     </select>
@@ -58,7 +58,7 @@
                             <tr>
                                 <td>
                                     <select name="lines[1][account_id]" class="form-control select2" required>
-                                        @foreach(\App\Models\Account::where('parent_id', '!=', null)->get() as $acc)
+                                        @foreach($accounts as $acc)
                                             <option value="{{ $acc->id }}">{{ $acc->name }} ({{ $acc->code }})</option>
                                         @endforeach
                                     </select>
@@ -82,7 +82,7 @@
                     </div>
                 </div>
                 <div class="card-footer text-right">
-                    <button type="submit" class="btn btn-success" id="submitBtn">Post Entry</button>
+                    <button type="submit" class="btn btn-success" id="submitBtn">Save as Draft</button>
                 </div>
             </form>
         </div>
