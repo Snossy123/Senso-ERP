@@ -44,6 +44,26 @@ class TenantManagementTest extends TestCase
             ->assertOk();
     }
 
+    public function test_create_form_does_not_hardcode_admin_email_required(): void
+    {
+        $this->seedRoleTemplates();
+        $platform = $this->makePlatformOperator();
+
+        $response = $this->actingAs($platform)
+            ->withSession(['_old_input' => [
+                'create_support_user' => '0',
+                'name' => 'Retry Tenant',
+            ]])
+            ->get(route('platform.tenants.create'));
+
+        $response->assertOk();
+        $this->assertSame(
+            1,
+            preg_match('/<input[^>]*id="admin_email"[^>]*>/i', $response->getContent(), $matches)
+        );
+        $this->assertStringNotContainsString('required', $matches[0]);
+    }
+
     public function test_platform_operator_can_store_tenant_without_support_user(): void
     {
         $this->withoutCsrf();

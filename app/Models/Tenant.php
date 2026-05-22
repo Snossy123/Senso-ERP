@@ -268,20 +268,33 @@ class Tenant extends Model
 
     public function upgradePlan(Plan $plan): void
     {
-        $this->update([
+        $isSamePlan = (int) $this->plan_id === (int) $plan->id;
+        $preservePaidState = $isSamePlan && $this->payment_status === 'paid';
+
+        $update = [
             'plan_id' => $plan->id,
             'price' => $plan->price,
             'billing_cycle' => $plan->billing_cycle,
             'status' => 'active',
-            'subscription_start_at' => now(),
-            'subscription_ends_at' => $plan->billing_cycle === 'yearly'
+        ];
+
+        if (! $isSamePlan) {
+            $endsAt = $plan->billing_cycle === 'yearly'
                 ? now()->addYear()
-                : now()->addMonth(),
-            'next_billing_at' => $plan->billing_cycle === 'yearly'
-                ? now()->addYear()
-                : now()->addMonth(),
-            'payment_status' => 'pending',
-        ]);
+                : now()->addMonth();
+
+            $update['subscription_start_at'] = now();
+            $update['subscription_ends_at'] = $endsAt;
+            $update['next_billing_at'] = $endsAt;
+
+            if ($plan->price > 0) {
+                $update['payment_status'] = 'pending';
+            }
+        } elseif (! $preservePaidState && $plan->price > 0) {
+            $update['payment_status'] = 'pending';
+        }
+
+        $this->update($update);
 
         foreach (['users', 'products', 'orders'] as $resource) {
             $this->usageTrackings()->updateOrCreate(
@@ -296,10 +309,8 @@ class Tenant extends Model
             );
         }
 
-        if ($plan->price > 0) {
-            app(\App\Services\Platform\PlatformInvoiceService::class)
-                ->createForTenant($this->fresh(), $plan);
-        }
+        app(\App\Services\Platform\PlatformInvoiceService::class)
+            ->createForPlanUpgradeIfNeeded($this->fresh(), $plan);
     }
 
     public function getSetting(string $key, $default = null)

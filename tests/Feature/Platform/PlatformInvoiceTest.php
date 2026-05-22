@@ -44,6 +44,67 @@ class PlatformInvoiceTest extends TestCase
         ]);
     }
 
+    public function test_upgrade_same_paid_plan_does_not_duplicate_invoice_or_reset_payment(): void
+    {
+        $plan = Plan::where('slug', 'basic')->first();
+        $tenant = Tenant::create([
+            'name' => 'Paid Tenant',
+            'slug' => 'paid-'.uniqid(),
+            'status' => 'active',
+            'is_active' => true,
+            'plan_id' => $plan->id,
+            'payment_status' => 'paid',
+        ]);
+
+        PlatformInvoice::create([
+            'tenant_id' => $tenant->id,
+            'plan_id' => $plan->id,
+            'number' => 'INV-TEST-001',
+            'amount' => $plan->price,
+            'currency' => 'USD',
+            'status' => 'paid',
+            'issued_at' => now(),
+            'paid_at' => now(),
+        ]);
+
+        $invoiceCountBefore = PlatformInvoice::where('tenant_id', $tenant->id)->count();
+
+        $tenant->upgradePlan($plan);
+
+        $tenant->refresh();
+
+        $this->assertSame('paid', $tenant->payment_status);
+        $this->assertSame(
+            $invoiceCountBefore,
+            PlatformInvoice::where('tenant_id', $tenant->id)->count()
+        );
+    }
+
+    public function test_upgrade_same_unpaid_plan_does_not_stack_pending_invoices(): void
+    {
+        $plan = Plan::where('slug', 'basic')->first();
+        $tenant = Tenant::create([
+            'name' => 'Pending Tenant',
+            'slug' => 'pend-'.uniqid(),
+            'status' => 'active',
+            'is_active' => true,
+            'plan_id' => $plan->id,
+            'payment_status' => 'pending',
+        ]);
+
+        app(PlatformInvoiceService::class)->createForTenant($tenant, $plan);
+
+        $tenant->upgradePlan($plan);
+
+        $this->assertSame(
+            1,
+            PlatformInvoice::where('tenant_id', $tenant->id)
+                ->where('plan_id', $plan->id)
+                ->where('status', 'pending')
+                ->count()
+        );
+    }
+
     public function test_platform_operator_can_mark_invoice_paid(): void
     {
         $this->withoutCsrf();

@@ -9,6 +9,37 @@ use App\Models\Tenant;
 
 class PlatformInvoiceService
 {
+    /**
+     * Create a pending platform invoice only when a paid plan upgrade warrants billing.
+     * Skips duplicate invoices for the same plan and preserves an already-paid tenant state.
+     */
+    public function createForPlanUpgradeIfNeeded(Tenant $tenant, Plan $plan): ?PlatformInvoice
+    {
+        if ($plan->price <= 0) {
+            return null;
+        }
+
+        $isSamePlan = (int) $tenant->plan_id === (int) $plan->id;
+
+        if ($isSamePlan) {
+            if ($tenant->payment_status === 'paid') {
+                return null;
+            }
+
+            $hasPending = PlatformInvoice::query()
+                ->where('tenant_id', $tenant->id)
+                ->where('plan_id', $plan->id)
+                ->where('status', 'pending')
+                ->exists();
+
+            if ($hasPending) {
+                return null;
+            }
+        }
+
+        return $this->createForTenant($tenant, $plan);
+    }
+
     public function createForTenant(Tenant $tenant, ?Plan $plan = null): PlatformInvoice
     {
         $plan = $plan ?? $tenant->plan;

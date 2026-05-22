@@ -14,15 +14,13 @@
 			<h2 class="main-content-title tx-24 mg-b-1">{{ __('platform.subscriptions.title') }}</h2>
 			<p class="mg-b-0 text-muted">{{ __('platform.subscriptions.subtitle') }}</p>
 		</div>
-		</div>
 	</div>
 	<div class="main-dashboard-header-right">
 		<a href="{{ route('platform.plans.create') }}" class="btn btn-primary">
 			<i class="fe fe-plus"></i> {{ __('platform.subscriptions.create_plan') }}
 		</a>
 	</div>
-		</div>
-	</div>
+</div>
 @endsection
 
 @section('content')

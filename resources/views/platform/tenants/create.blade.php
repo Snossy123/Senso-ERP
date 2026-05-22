@@ -95,39 +95,41 @@
                     <div class="card-body">
                         <h6 class="card-title">{{ __('tenants.support_section_title') }}</h6>
                         <p class="card-text small text-muted mb-3">{{ __('tenants.support_section_hint') }}</p>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="admin_name" class="form-label">{{ __('tenants.admin_name') }}</label>
-                                <input type="text" class="form-control @error('admin_name') is-invalid @enderror" id="admin_name" name="admin_name" value="{{ old('admin_name') }}" autocomplete="off">
-                                @error('admin_name')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="admin_email" class="form-label">{{ __('tenants.admin_email') }} *</label>
-                                <input type="email" class="form-control @error('admin_email') is-invalid @enderror" id="admin_email" name="admin_email" value="{{ old('admin_email') }}" placeholder="owner@client.com" required autocomplete="off">
-                                <small class="text-muted">{{ __('tenants.admin_email_hint') }}</small>
-                                @error('admin_email')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="admin_password" class="form-label">{{ __('tenants.admin_password') }}</label>
-                                <input type="password" class="form-control @error('admin_password') is-invalid @enderror" id="admin_password" name="admin_password" minlength="8" autocomplete="new-password">
-                                <small class="text-muted">{{ __('tenants.admin_password_hint') }}</small>
-                                @error('admin_password')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-                        <div class="mb-0">
+                        <div class="mb-3">
                             <label for="create_support_user" class="form-label">{{ __('tenants.create_support_user') }}</label>
                             <select class="form-select" id="create_support_user" name="create_support_user">
                                 <option value="1" {{ old('create_support_user', '1') == '1' ? 'selected' : '' }}>{{ __('messages.common.yes') }}</option>
-                                <option value="0" {{ old('create_support_user') === '0' ? 'selected' : '' }}>{{ __('messages.common.no') }}</option>
+                                <option value="0" {{ old('create_support_user', '1') == '0' ? 'selected' : '' }}>{{ __('messages.common.no') }}</option>
                             </select>
+                        </div>
+                        <div id="support_user_fields">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="admin_name" class="form-label">{{ __('tenants.admin_name') }}</label>
+                                    <input type="text" class="form-control @error('admin_name') is-invalid @enderror" id="admin_name" name="admin_name" value="{{ old('admin_name') }}" autocomplete="off">
+                                    @error('admin_name')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="admin_email" class="form-label">{{ __('tenants.admin_email') }} <span id="admin_email_required_marker" class="text-danger"></span></label>
+                                    <input type="email" class="form-control @error('admin_email') is-invalid @enderror" id="admin_email" name="admin_email" value="{{ old('admin_email') }}" placeholder="owner@client.com" autocomplete="off">
+                                    <small class="text-muted">{{ __('tenants.admin_email_hint') }}</small>
+                                    @error('admin_email')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3 mb-md-0">
+                                    <label for="admin_password" class="form-label">{{ __('tenants.admin_password') }}</label>
+                                    <input type="password" class="form-control @error('admin_password') is-invalid @enderror" id="admin_password" name="admin_password" minlength="8" autocomplete="new-password">
+                                    <small class="text-muted">{{ __('tenants.admin_password_hint') }}</small>
+                                    @error('admin_password')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -150,4 +152,33 @@
         </div>
     </div>
 </div>
+<script>
+(function () {
+    const form = document.querySelector('form[action="{{ route('platform.tenants.store') }}"]');
+    const select = document.getElementById('create_support_user');
+    const email = document.getElementById('admin_email');
+    const marker = document.getElementById('admin_email_required_marker');
+    if (!select || !email) return;
+
+    function syncSupportUserFields() {
+        const enabled = select.value === '1';
+        if (enabled) {
+            email.setAttribute('required', 'required');
+        } else {
+            email.removeAttribute('required');
+        }
+        if (marker) marker.textContent = enabled ? '*' : '';
+    }
+
+    select.addEventListener('change', syncSupportUserFields);
+    if (form) {
+        form.addEventListener('submit', function () {
+            if (select.value !== '1') {
+                email.removeAttribute('required');
+            }
+        });
+    }
+    syncSupportUserFields();
+})();
+</script>
 @endsection
