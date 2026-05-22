@@ -3,20 +3,16 @@
 namespace App\Http\Controllers\Platform;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ImpersonationController extends Controller
 {
     public function destroy(Request $request)
     {
-        $platformOperatorId = session('platform_operator_id');
-
-        if (! $platformOperatorId) {
+        if (! session()->has('platform_operator_id')) {
             return redirect()->route('dashboard');
         }
-
-        $platformUser = User::withoutGlobalScopes()->find($platformOperatorId);
 
         session()->forget([
             'platform_operator_id',
@@ -24,17 +20,11 @@ class ImpersonationController extends Controller
             'admin_logged_in_as_user',
         ]);
 
-        if (! $platformUser || ! $platformUser->isPlatformOperator()) {
-            auth()->logout();
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
-            return redirect()->route('login')
-                ->with('error', __('platform.impersonation.session_expired'));
-        }
-
-        auth()->login($platformUser);
-        $request->session()->regenerate();
-
-        return redirect()->route('platform.dashboard')
+        return redirect()->route('login')
             ->with('success', __('platform.impersonation.stopped'));
     }
 }

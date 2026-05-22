@@ -18,7 +18,7 @@ class PasswordChangeController extends Controller
         $user = Auth::user();
 
         if (! $user || ! $user->mustChangePassword()) {
-            return redirect()->route('dashboard');
+            return redirect()->to($user?->applicationHomeRoute() ?? route('dashboard'));
         }
 
         return view('auth.change-password');
@@ -38,7 +38,7 @@ class PasswordChangeController extends Controller
         $user->save();
 
         return redirect()
-            ->route('dashboard')
+            ->to($user->applicationHomeRoute())
             ->with('success', __('auth_pages.password_changed'));
     }
 }

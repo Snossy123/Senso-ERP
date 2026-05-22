@@ -13,7 +13,6 @@ class EnsurePasswordChanged
         $user = $request->user();
 
         if ($user
-            && $user->tenant_id !== null
             && $user->mustChangePassword()
             && ! $request->routeIs('password.change', 'password.change.update', 'logout', 'platform.impersonation.stop')
         ) {

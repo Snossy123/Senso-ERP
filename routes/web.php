@@ -57,12 +57,14 @@ Route::get('/__uomo/{path}', [UomoAssetController::class, 'show'])
     ->where('path', '.*')
     ->name('uomo.asset');
 
-Route::middleware('auth')->group(function () {
-    Route::get('/password/change', [PasswordChangeController::class, 'show'])->name('password.change');
-    Route::post('/password/change', [PasswordChangeController::class, 'update'])->name('password.change.update');
+Route::middleware(['auth', 'password.must_change'])->group(function () {
+    Route::withoutMiddleware(['password.must_change'])->group(function () {
+        Route::get('/password/change', [PasswordChangeController::class, 'show'])->name('password.change');
+        Route::post('/password/change', [PasswordChangeController::class, 'update'])->name('password.change.update');
 
-    Route::post('platform/impersonation/stop', [ImpersonationController::class, 'destroy'])
-        ->name('platform.impersonation.stop');
+        Route::post('platform/impersonation/stop', [ImpersonationController::class, 'destroy'])
+            ->name('platform.impersonation.stop');
+    });
 
     // ── Platform Console (SaaS operators: tenant_id null) ─────
     Route::middleware('platform')->prefix('platform')->name('platform.')->group(function () {
@@ -104,7 +106,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // ── Tenant ERP (tenant staff only) ─────────────────────────
-    Route::middleware(['tenant.staff', 'password.must_change'])->group(function () {
+    Route::middleware('tenant.staff')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     // POS — standalone cashier app (primary); `/pos` redirects for backward-compatible bookmarks

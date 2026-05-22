@@ -52,6 +52,8 @@ trait AdministrationFixtures
             'tenant_id' => null,
             'role_id' => $role->id,
             'email' => 'platform-'.uniqid().'@test.local',
+            'password_changed_at' => now(),
+            'must_change_password' => false,
         ], $overrides));
     }
 
@@ -66,6 +68,8 @@ trait AdministrationFixtures
             'tenant_id' => $tenant->id,
             'role_id' => $role->id,
             'email' => 'admin-'.uniqid().'@test.local',
+            'password_changed_at' => now(),
+            'must_change_password' => false,
         ], $overrides));
     }
 
@@ -80,6 +84,8 @@ trait AdministrationFixtures
             'tenant_id' => $tenant->id,
             'role_id' => $role->id,
             'email' => 'cashier-'.uniqid().'@test.local',
+            'password_changed_at' => now(),
+            'must_change_password' => false,
         ], $overrides));
     }
 

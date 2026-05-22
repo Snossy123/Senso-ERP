@@ -177,7 +177,7 @@ return [
         'banner' => 'You are viewing the ERP as :tenant. Changes apply to this tenant.',
         'stop' => 'Back to Platform Console',
         'started' => 'Logged in to :name ERP.',
-        'stopped' => 'Returned to Platform Console.',
+        'stopped' => 'Impersonation ended. Sign in to the Platform Console to continue.',
         'session_expired' => 'Impersonation session expired. Please sign in again.',
     ],
 ];

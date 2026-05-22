@@ -12,7 +12,13 @@ class AuthController extends Controller
     public function showLogin()
     {
         if (Auth::check()) {
-            return redirect()->intended($this->homeFor(Auth::user()));
+            $user = Auth::user();
+
+            if ($user->mustChangePassword()) {
+                return redirect()->route('password.change');
+            }
+
+            return redirect()->intended($this->homeFor($user));
         }
 
         return view('signin');
@@ -59,9 +65,7 @@ class AuthController extends Controller
 
     protected function homeFor($user): string
     {
-        return $user->isPlatformOperator()
-            ? route('platform.dashboard')
-            : route('dashboard');
+        return $user->applicationHomeRoute();
     }
 
     public function logout(Request $request)

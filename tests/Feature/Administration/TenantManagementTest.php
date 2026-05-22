@@ -149,6 +149,26 @@ class TenantManagementTest extends TestCase
         ])->assertRedirect(route('platform.dashboard'));
     }
 
+    public function test_platform_operator_must_change_password_before_platform_access(): void
+    {
+        $this->seedRoleTemplates();
+        $platform = $this->makePlatformOperator(['must_change_password' => true]);
+
+        $this->actingAs($platform)
+            ->get(route('platform.dashboard'))
+            ->assertRedirect(route('password.change'));
+    }
+
+    public function test_authenticated_platform_operator_at_login_redirects_to_password_change(): void
+    {
+        $this->seedRoleTemplates();
+        $platform = $this->makePlatformOperator(['must_change_password' => true]);
+
+        $this->actingAs($platform)
+            ->get(route('login'))
+            ->assertRedirect(route('password.change'));
+    }
+
     public function test_impersonation_and_stop_returns_to_platform(): void
     {
         $this->withoutCsrf();
@@ -167,9 +187,32 @@ class TenantManagementTest extends TestCase
         $this->assertEquals($platform->id, session('platform_operator_id'));
 
         $this->post(route('platform.impersonation.stop'))
-            ->assertRedirect(route('platform.dashboard'));
+            ->assertRedirect(route('login'));
 
-        $this->assertAuthenticatedAs($platform);
+        $this->assertGuest();
         $this->assertNull(session('platform_operator_id'));
+    }
+
+    public function test_tenant_user_cannot_escalate_to_platform_via_impersonation_stop(): void
+    {
+        $this->withoutCsrf();
+        $this->seedRoleTemplates();
+        $platform = $this->makePlatformOperator();
+        $tenant = $this->createTenantWithClonedRoles([
+            'slug' => 'tm-esc-'.str_replace('.', '', uniqid('', true)),
+        ]);
+        $tenantUser = $this->makeTenantAdmin($tenant);
+
+        $this->actingAs($tenantUser)
+            ->withSession([
+                'platform_operator_id' => $platform->id,
+                'admin_logged_in_as_tenant' => $tenant->id,
+                'admin_logged_in_as_user' => $tenantUser->id,
+            ])
+            ->post(route('platform.impersonation.stop'))
+            ->assertRedirect(route('login'));
+
+        $this->assertGuest();
+        $this->assertNotEquals($platform->id, auth()->id());
     }
 }
