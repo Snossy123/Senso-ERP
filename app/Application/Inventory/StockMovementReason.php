@@ -10,6 +10,7 @@ enum StockMovementReason: string
     case GoodsReceipt = 'goods_receipt';
     case PosSale = 'pos_sale';
     case EcommerceOrder = 'ecommerce_order';
+    case SalesInvoice = 'sales_invoice';
     case Refund = 'refund';
     case Void = 'void';
     case Adjustment = 'adjustment';

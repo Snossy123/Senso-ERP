@@ -168,6 +168,36 @@ final readonly class StockPostingData
     /**
      * POS refund restock: prorated quantity inbound (same warehouse/variant semantics as the sale line).
      */
+    public static function forSalesInvoiceLine(
+        int $tenantId,
+        int $productId,
+        ?int $productVariantId,
+        ?int $warehouseId,
+        int $quantity,
+        float $unitCost,
+        float $totalValue,
+        string $invoiceNumber,
+        int $userId,
+        string $notes = 'Sales Invoice',
+    ): self {
+        return new self(
+            tenantId: $tenantId,
+            productId: $productId,
+            productVariantId: $productVariantId,
+            warehouseId: $warehouseId,
+            quantity: $quantity,
+            type: 'out',
+            unitCost: $unitCost,
+            totalValue: $totalValue,
+            reference: $invoiceNumber,
+            notes: $notes,
+            userId: $userId,
+            purchaseOrderId: null,
+            stockTransferId: null,
+            reason: StockMovementReason::SalesInvoice,
+        );
+    }
+
     public static function forPosRefundLine(
         int $tenantId,
         int $productId,

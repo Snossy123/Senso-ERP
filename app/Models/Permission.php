@@ -101,6 +101,14 @@ class Permission extends Model
                 'customers.edit',
                 'customers.delete',
             ],
+            'sales_invoices' => [
+                'sales_invoices.view',
+                'sales_invoices.create',
+                'sales_invoices.edit',
+                'sales_invoices.confirm',
+                'sales_invoices.cancel',
+                'sales_invoices.pay',
+            ],
             'reports' => [
                 'reports.view',
                 'reports.export',

@@ -39,6 +39,7 @@
 
 					$showRelationshipsMenu = $canAny(['suppliers.view', 'warehouses.view', 'customers.view']);
 					$showCrmMenu = $can('customers.view');
+					$showSalesInvoicesMenu = $can('sales_invoices.view');
 
 					$showInventorySection = $showStockMenu || $showOperationsMenu || $showRelationshipsMenu;
 
@@ -130,7 +131,7 @@
 						</a>
 					</li>
 					@endif
-					@if($showCrmMenu)
+					@if($showCrmMenu || $showSalesInvoicesMenu)
 					<li class="slide">
 						<a class="side-menu__item" data-toggle="slide" href="#">
 							<i class="side-menu__icon fe fe-users"></i>
@@ -138,8 +139,14 @@
 							<i class="angle fe fe-chevron-down"></i>
 						</a>
 						<ul class="slide-menu">
+							@if($can('customers.view'))
 							<li><a class="slide-item" href="{{ route('crm.customers.index') }}">Customers</a></li>
 							<li><a class="slide-item" href="{{ route('crm.tags.index') }}">Tags</a></li>
+							@endif
+							@if($showSalesInvoicesMenu)
+							<li><a class="slide-item" href="{{ route('sales.invoices.index') }}">{{ __('sales_invoices.title') }}</a></li>
+							<li><a class="slide-item" href="{{ route('sales.invoices.index', ['overdue_installments' => 1]) }}">{{ __('sales_invoices.overdue_installments') }}</a></li>
+							@endif
 						</ul>
 					</li>
 					@endif

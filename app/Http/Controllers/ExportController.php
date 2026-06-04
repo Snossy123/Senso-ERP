@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\SalesInvoice;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -127,5 +128,20 @@ class ExportController extends Controller
         ]);
 
         return $pdf->download('invoice-'.$order->order_number.'.pdf');
+    }
+
+    public function salesInvoicePdf(SalesInvoice $invoice)
+    {
+        if (! $invoice->isConfirmed()) {
+            abort(404);
+        }
+
+        $invoice->load(['lines.product', 'customer']);
+
+        $pdf = Pdf::loadView('exports.sales-invoice-pdf', [
+            'invoice' => $invoice,
+        ]);
+
+        return $pdf->download('sales-invoice-'.$invoice->invoice_number.'.pdf');
     }
 }
