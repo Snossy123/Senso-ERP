@@ -68,15 +68,11 @@ class EcommerceCheckoutCharacterizationTest extends TestCase
         ]);
     }
 
-    public function test_ecommerce_checkout_has_no_duplicate_order_guard_current_baseline(): void
+    public function test_ecommerce_orders_table_has_client_idempotency_key(): void
     {
-        $ordersTable = (new Order)->getTable();
-        $hasIdempotencyColumn = \Illuminate\Support\Facades\Schema::hasColumn($ordersTable, 'client_idempotency_key')
-            || \Illuminate\Support\Facades\Schema::hasColumn($ordersTable, 'idempotency_key');
-
-        $this->assertFalse(
-            $hasIdempotencyColumn,
-            'Characterization: ecommerce orders table has no client idempotency column in current schema.'
+        $this->assertTrue(
+            \Illuminate\Support\Facades\Schema::hasColumn((new Order)->getTable(), 'client_idempotency_key'),
+            'orders.client_idempotency_key enables duplicate checkout protection.'
         );
     }
 }

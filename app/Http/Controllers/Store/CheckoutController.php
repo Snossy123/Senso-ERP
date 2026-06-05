@@ -12,6 +12,8 @@ use App\Notifications\LowStockAlertNotification;
 use App\Notifications\OrderPlacedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use InvalidArgumentException;
 
 class CheckoutController extends Controller
 {
@@ -47,7 +49,19 @@ class CheckoutController extends Controller
 
         $storefrontRender = $this->storefrontRenderer->forPage('checkout');
 
-        return view('store.checkout.index', compact('items', 'subtotal', 'customer', 'storefrontRender'));
+        if (! session()->has('checkout_idempotency_key')) {
+            session(['checkout_idempotency_key' => (string) Str::uuid()]);
+        }
+
+        $checkoutIdempotencyKey = session('checkout_idempotency_key');
+
+        return view('store.checkout.index', compact(
+            'items',
+            'subtotal',
+            'customer',
+            'storefrontRender',
+            'checkoutIdempotencyKey'
+        ));
     }
 
     public function placeOrder(Request $request)
@@ -65,7 +79,11 @@ class CheckoutController extends Controller
             'city' => 'nullable|string|max:100',
             'payment_method' => 'required|in:cash_on_delivery,online',
             'notes' => 'nullable|string',
+            'client_idempotency_key' => 'nullable|string|max:191',
         ]);
+
+        $idempotencyKey = $data['client_idempotency_key']
+            ?? session('checkout_idempotency_key');
 
         $customer = Auth::guard('customer')->user();
 
@@ -75,7 +93,18 @@ class CheckoutController extends Controller
             return redirect()->back()->with('error', 'Monthly order limit reached for this store. Please contact support.');
         }
 
-        $result = $this->recordWebOrderService->record($cart, $data, $customer);
+        try {
+            $result = $this->recordWebOrderService->record($cart, $data, $customer, $idempotencyKey);
+        } catch (InvalidArgumentException $e) {
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
+        }
+
+        if ($result->duplicate) {
+            session(['last_order_number' => $result->order->order_number]);
+
+            return redirect()->route('store.checkout.success')
+                ->with('info', 'This order was already placed.');
+        }
 
         $order = $result->order;
         $orderNumber = $order->order_number;
@@ -93,7 +122,7 @@ class CheckoutController extends Controller
             }
         }
 
-        session()->forget('cart');
+        session()->forget(['cart', 'checkout_idempotency_key']);
         session(['last_order_number' => $orderNumber]);
 
         return redirect()->route('store.checkout.success');

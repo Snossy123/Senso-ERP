@@ -6,6 +6,7 @@
             <h3 class="fw-bold mb-5 text-primary"><i class="fa fa-map-marker-alt me-2"></i> Shipping & Billing</h3>
             <form action="{{ route('store.checkout.place') }}" method="POST">
                 @csrf
+                <input type="hidden" name="client_idempotency_key" value="{{ $checkoutIdempotencyKey }}">
                 <div class="row g-4">
                     <div class="col-12">
                         <label class="form-label fw-bold">Full Name <span class="text-danger">*</span></label>

@@ -20,5 +20,6 @@ final class RecordWebOrderResult
         public readonly array $warnings,
         public readonly bool $inventoryPosted,
         public readonly string $paymentStatus,
+        public readonly bool $duplicate = false,
     ) {}
 }

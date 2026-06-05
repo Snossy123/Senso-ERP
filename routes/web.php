@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PasswordChangeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExportController;
+use App\Http\Controllers\GoLiveController;
 use App\Http\Controllers\Inventory\CategoryController;
 use App\Http\Controllers\Inventory\ProductController;
 use App\Http\Controllers\Inventory\PurchaseOrderController;
@@ -109,6 +110,7 @@ Route::middleware(['auth', 'password.must_change'])->group(function () {
     // ── Tenant ERP (tenant staff only) ─────────────────────────
     Route::middleware('tenant.staff')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/go-live', [GoLiveController::class, 'index'])->name('go-live.index');
 
     // POS — standalone cashier app (primary); `/pos` redirects for backward-compatible bookmarks
     Route::get('/pos', function () {

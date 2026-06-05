@@ -3,6 +3,7 @@
 namespace App\Application\Sales;
 
 use App\Application\Inventory\InventoryPostingService;
+use App\Application\Inventory\StockAvailabilityService;
 use App\Application\Inventory\StockPostingData;
 use App\Events\Domain\Sales\WebOrderRecorded;
 use App\Models\Customer;
@@ -12,6 +13,7 @@ use App\Models\Product;
 use App\Models\Tenant;
 use App\Services\Accounting\CommerceRevenueRecognition;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
 
 /**
@@ -21,7 +23,8 @@ use InvalidArgumentException;
 class RecordWebOrderService
 {
     public function __construct(
-        private readonly InventoryPostingService $inventoryPostingService
+        private readonly InventoryPostingService $inventoryPostingService,
+        private readonly StockAvailabilityService $stockAvailability,
     ) {}
 
     /**
@@ -36,27 +39,56 @@ class RecordWebOrderService
      *   notes: ?string
      * } $checkoutData Request-validated checkout fields
      */
-    public function record(array $cart, array $checkoutData, ?Customer $customer = null): RecordWebOrderResult
-    {
+    public function record(
+        array $cart,
+        array $checkoutData,
+        ?Customer $customer = null,
+        ?string $clientIdempotencyKey = null
+    ): RecordWebOrderResult {
         if ($cart === []) {
             throw new InvalidArgumentException('Cart must not be empty.');
+        }
+
+        $tenantId = app(\App\Services\TenantManager::class)->getCurrentId();
+        if (
+            $tenantId
+            && filled($clientIdempotencyKey)
+            && Schema::hasColumn('orders', 'client_idempotency_key')
+        ) {
+            $existing = Order::query()
+                ->where('tenant_id', $tenantId)
+                ->where('client_idempotency_key', $clientIdempotencyKey)
+                ->first();
+
+            if ($existing) {
+                return new RecordWebOrderResult(
+                    order: $existing->fresh(['items']),
+                    lowStockProducts: [],
+                    warnings: [],
+                    inventoryPosted: false,
+                    paymentStatus: (string) $existing->payment_status,
+                    duplicate: true,
+                );
+            }
         }
 
         $order = null;
         $lowStockProducts = [];
 
-        DB::transaction(function () use ($cart, $checkoutData, $customer, &$order, &$lowStockProducts) {
+        DB::transaction(function () use ($cart, $checkoutData, $customer, $clientIdempotencyKey, &$order, &$lowStockProducts) {
             $subtotal = 0;
             $lines = [];
 
             foreach ($cart as $id => $item) {
                 $product = Product::lockForUpdate()->findOrFail($id);
-                $lineTotal = $product->selling_price * $item['qty'];
+                $qty = (int) $item['qty'];
+                $this->stockAvailability->assertAvailable($product, $qty);
+                $lineTotal = $product->selling_price * $qty;
                 $subtotal += $lineTotal;
-                $lines[] = ['product' => $product, 'qty' => $item['qty'], 'lineTotal' => $lineTotal];
+                $lines[] = ['product' => $product, 'qty' => $qty, 'lineTotal' => $lineTotal];
             }
 
-            $order = Order::create([
+            $orderAttrs = [
                 'order_number' => Order::generateOrderNumber(),
                 'customer_id' => $customer?->id,
                 'customer_name' => $checkoutData['customer_name'],
@@ -70,7 +102,13 @@ class RecordWebOrderService
                 'payment_status' => 'pending',
                 'status' => 'pending',
                 'notes' => $checkoutData['notes'],
-            ]);
+            ];
+
+            if (Schema::hasColumn('orders', 'client_idempotency_key') && filled($clientIdempotencyKey)) {
+                $orderAttrs['client_idempotency_key'] = $clientIdempotencyKey;
+            }
+
+            $order = Order::create($orderAttrs);
 
             $tenant = Tenant::find($order->tenant_id);
 
@@ -127,6 +165,7 @@ class RecordWebOrderService
             warnings: [],
             inventoryPosted: true,
             paymentStatus: (string) $order->payment_status,
+            duplicate: false,
         );
     }
 }

@@ -66,6 +66,12 @@
 							<span class="side-menu__label">{{ __('messages.sidebar.dashboard') }}</span>
 						</a>
 					</li>
+					<li class="slide">
+						<a class="side-menu__item" href="{{ route('go-live.index') }}">
+							<i class="side-menu__icon fe fe-check-square"></i>
+							<span class="side-menu__label">Go-Live</span>
+						</a>
+					</li>
 					@endif
 
 					@if($showAdminSection)

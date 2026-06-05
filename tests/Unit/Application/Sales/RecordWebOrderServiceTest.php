@@ -157,4 +157,32 @@ class RecordWebOrderServiceTest extends TestCase
 
         app(RecordWebOrderService::class)->record([], $this->checkoutPayload(), null);
     }
+
+    public function test_record_rejects_insufficient_stock(): void
+    {
+        $product = Product::factory()->create([
+            'tenant_id' => $this->foundationTenantId,
+            'stock_quantity' => 2,
+            'selling_price' => 15,
+            'is_ecommerce' => true,
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Insufficient stock');
+
+        try {
+            app(RecordWebOrderService::class)->record(
+                [$product->id => ['qty' => 5]],
+                $this->checkoutPayload(),
+                null,
+            );
+        } finally {
+            $this->assertSame(
+                0,
+                Order::query()->withoutGlobalScopes()->where('tenant_id', $this->foundationTenantId)->count(),
+                'Order must not persist when stock validation fails.'
+            );
+            $this->assertSame(2, $product->fresh()->stock_quantity);
+        }
+    }
 }

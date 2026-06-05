@@ -13,7 +13,7 @@ class Order extends Model
     use BelongsToTenant, Loggable;
 
     protected $fillable = [
-        'order_number', 'customer_id', 'customer_name', 'customer_email', 'customer_phone',
+        'order_number', 'client_idempotency_key', 'customer_id', 'customer_name', 'customer_email', 'customer_phone',
         'shipping_address', 'city', 'status',
         'subtotal', 'shipping_cost', 'tax_amount', 'total',
         'payment_method', 'payment_status', 'paid_at', 'notes',

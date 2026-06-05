@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\POS;
 
 use App\Application\Inventory\InventoryPostingService;
+use App\Application\Inventory\StockAvailabilityService;
 use App\Application\Inventory\StockPostingData;
 use App\Events\POS\InventoryBulkUpdated;
 use App\Events\POS\PosSaleCompleted;
@@ -24,7 +25,8 @@ use Illuminate\Support\Facades\Schema;
 class SaleController extends Controller
 {
     public function __construct(
-        private readonly InventoryPostingService $inventoryPostingService
+        private readonly InventoryPostingService $inventoryPostingService,
+        private readonly StockAvailabilityService $stockAvailability,
     ) {
         $this->middleware('auth');
     }
@@ -111,18 +113,24 @@ class SaleController extends Controller
         $lowStockProducts = [];
         $saleId = null;
 
-        DB::transaction(function () use ($request, &$lowStockProducts, &$saleId, $tenant, $idempotencyKey) {
+        try {
+            DB::transaction(function () use ($request, &$lowStockProducts, &$saleId, $tenant, $idempotencyKey) {
             $items = $request->input('items');
             $discountAmt = (float) $request->input('discount', 0);
             $taxRate = (float) $request->input('tax_rate', 0);
             $subtotal = 0;
+            $shift = PosShift::find($request->input('shift_id'));
+            $warehouseId = $shift?->warehouse_id;
 
-            // Validate stock availabilty before any write
             foreach ($items as $item) {
                 $product = Product::lockForUpdate()->findOrFail($item['id']);
-                if ($product->stock_quantity < $item['qty']) {
-                    throw new \Exception("Insufficient stock for product: {$product->name}. Available: {$product->stock_quantity}");
-                }
+                $variantId = isset($item['variant_id']) ? (int) $item['variant_id'] : null;
+                $this->stockAvailability->assertAvailable(
+                    $product,
+                    (int) $item['qty'],
+                    $warehouseId,
+                    $variantId ?: null
+                );
             }
 
             // Calculate totals
@@ -194,8 +202,6 @@ class SaleController extends Controller
 
             $sale = Sale::create($saleAttrs);
 
-            $shift = PosShift::find($request->input('shift_id'));
-
             foreach ($items as $item) {
                 $product = Product::lockForUpdate()->findOrFail($item['id']);
                 $variantId = $item['variant_id'] ?? null;
@@ -253,7 +259,13 @@ class SaleController extends Controller
                     payloadVersion: 1,
                 ));
             });
-        });
+            });
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 422);
+        }
 
         // Post-transaction: notifications
         foreach ($lowStockProducts as $product) {

@@ -15,6 +15,9 @@ use InvalidArgumentException;
  */
 class InventoryPostingService
 {
+    public function __construct(
+        private readonly StockAvailabilityService $stockAvailability
+    ) {}
     /**
      * Inbound: increment warehouse slice (when warehouse set), rolled-up product qty, record movement (type in).
      * Matches legacy PurchaseOrderController::receive ordering and fields.
@@ -45,6 +48,13 @@ class InventoryPostingService
         }
 
         $product = $this->resolveProduct($data);
+
+        $this->stockAvailability->assertAvailable(
+            $product,
+            $data->quantity,
+            $data->warehouseId,
+            $data->productVariantId
+        );
 
         $beforeQty = (int) $product->stock_quantity;
         $product->decrement('stock_quantity', $data->quantity);

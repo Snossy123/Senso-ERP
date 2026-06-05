@@ -15,7 +15,9 @@ class TenantService
 {
     public function __construct(
         protected RoleProvisioningService $roleProvisioning,
-        protected BranchProvisioningService $branchProvisioning
+        protected BranchProvisioningService $branchProvisioning,
+        protected AccountingProvisioningService $accountingProvisioning,
+        protected WarehouseProvisioningService $warehouseProvisioning,
     ) {}
 
     /**
@@ -54,6 +56,9 @@ class TenantService
             $this->roleProvisioning->cloneDefaultRolesForTenant($tenant);
 
             $this->branchProvisioning->ensureDefaultBranchesForTenant($tenant);
+
+            $this->accountingProvisioning->provisionForTenant($tenant);
+            $this->warehouseProvisioning->ensureDefaultWarehouseForTenant($tenant);
 
             $supportPassword = null;
             $adminEmail = null;

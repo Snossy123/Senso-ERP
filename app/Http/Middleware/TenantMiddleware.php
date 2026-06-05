@@ -18,15 +18,7 @@ class TenantMiddleware
 
     public function handle(Request $request, Closure $next): Response
     {
-        $tenant = null;
-
-        if (auth()->check() && auth()->user()->tenant_id) {
-            $tenant = Tenant::find(auth()->user()->tenant_id);
-        } elseif ($request->header('X-Tenant-ID')) {
-            $tenant = Tenant::find($request->header('X-Tenant-ID'));
-        } elseif ($request->subdomain) {
-            $tenant = Tenant::where('domain', $request->getHost())->first();
-        }
+        $tenant = $this->resolveTenant($request);
 
         if ($tenant && $this->shouldBindTenant($tenant)) {
             $this->tenantManager->setCurrent($tenant);
@@ -34,7 +26,42 @@ class TenantMiddleware
             $this->tenantManager->clear();
         }
 
+        if ($this->isStoreRequest($request) && ! $this->tenantManager->getCurrent()) {
+            abort(404, 'Store is not available for this domain.');
+        }
+
         return $next($request);
+    }
+
+    protected function resolveTenant(Request $request): ?Tenant
+    {
+        if (auth()->check() && auth()->user()->tenant_id) {
+            return Tenant::find(auth()->user()->tenant_id);
+        }
+
+        if ($request->header('X-Tenant-ID')) {
+            return Tenant::find($request->header('X-Tenant-ID'));
+        }
+
+        $host = $request->getHost();
+
+        if ($host !== '') {
+            $byDomain = Tenant::query()
+                ->where('domain', $host)
+                ->where('is_active', true)
+                ->first();
+
+            if ($byDomain) {
+                return $byDomain;
+            }
+        }
+
+        return null;
+    }
+
+    protected function isStoreRequest(Request $request): bool
+    {
+        return $request->is('store', 'store/*');
     }
 
     protected function shouldBindTenant(Tenant $tenant): bool
