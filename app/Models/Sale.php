@@ -14,7 +14,7 @@ class Sale extends Model
     protected $fillable = [
         'sale_number', 'customer_id', 'customer_name', 'customer_email', 'user_id', 'shift_id',
         'subtotal', 'discount_amount', 'tax_amount', 'total',
-        'payment_method', 'payment_status', 'amount_tendered', 'change_due',
+        'payment_method', 'payment_status', 'payment_fee_amount', 'amount_tendered', 'change_due',
         'status', 'notes', 'client_idempotency_key', 'void_reason', 'voided_by', 'voided_at',
     ];
 
@@ -23,6 +23,7 @@ class Sale extends Model
         'discount_amount' => 'decimal:2',
         'tax_amount' => 'decimal:2',
         'total' => 'decimal:2',
+        'payment_fee_amount' => 'decimal:4',
         'amount_tendered' => 'decimal:2',
         'change_due' => 'decimal:2',
         'voided_at' => 'datetime',

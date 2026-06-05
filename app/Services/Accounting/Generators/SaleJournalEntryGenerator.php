@@ -4,6 +4,7 @@ namespace App\Services\Accounting\Generators;
 
 use App\Models\AccountSetting;
 use App\Models\Sale;
+use App\Models\Tenant;
 use App\Services\Accounting\JournalEntryGeneratorInterface;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -18,12 +19,12 @@ class SaleJournalEntryGenerator implements JournalEntryGeneratorInterface
 
         $tenantId = $sale->tenant_id;
 
-        // Map payment method to account key
         $paymentAccountKey = match ($sale->payment_method) {
             'cash' => 'pos_cash',
             'card' => 'pos_card',
             'bank_transfer' => 'pos_bank',
-            default => 'pos_cash' // Fallback
+            'credit' => 'customer_receivable',
+            default => 'pos_cash',
         };
 
         $paymentAccountId = AccountSetting::getAccountId($paymentAccountKey, $tenantId);
@@ -36,24 +37,44 @@ class SaleJournalEntryGenerator implements JournalEntryGeneratorInterface
 
         $lines = [];
 
-        // Debit: Payment Account (Cash/Card/Bank)
+        $paymentDebit = (float) $sale->total;
+        if ($sale->payment_method === 'card') {
+            $feeGenerator = new PaymentFeeJournalEntryGenerator;
+            $fee = $feeGenerator->feeAmountForSale($sale, Tenant::find($tenantId));
+            $paymentDebit = round($paymentDebit - $fee, 2);
+        }
+
         $lines[] = [
             'account_id' => $paymentAccountId,
             'description' => "POS Sale #{$sale->sale_number} ({$sale->payment_method})",
-            'debit' => (float) $sale->total,
+            'debit' => $paymentDebit,
             'credit' => 0,
         ];
 
         $taxAmount = (float) ($sale->tax_amount ?? 0);
-        $revenueAmount = (float) ($sale->total - $taxAmount);
+        $discountAmount = (float) ($sale->discount_amount ?? 0);
+        $revenueAmount = (float) $sale->subtotal;
 
-        // Credit: Sales Revenue
+        // Credit: Sales Revenue (gross; discount posted separately)
         $lines[] = [
             'account_id' => $salesAccountId,
             'description' => "POS Sale Revenue #{$sale->sale_number}",
             'debit' => 0,
             'credit' => $revenueAmount,
         ];
+
+        if ($discountAmount > 0) {
+            $discountAccountId = AccountSetting::getAccountId('sales_discount', $tenantId);
+            if (! $discountAccountId) {
+                throw new Exception("Discount account mapping missing for Sale #{$sale->sale_number}");
+            }
+            $lines[] = [
+                'account_id' => $discountAccountId,
+                'description' => "Discount on Sale #{$sale->sale_number}",
+                'debit' => $discountAmount,
+                'credit' => 0,
+            ];
+        }
 
         // Credit: Tax Payable
         if ($taxAmount > 0) {

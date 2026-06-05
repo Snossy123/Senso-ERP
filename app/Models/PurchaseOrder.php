@@ -14,13 +14,16 @@ class PurchaseOrder extends Model
 
     protected $fillable = [
         'tenant_id', 'supplier_id', 'warehouse_id', 'reference_no', 'order_date',
-        'expected_date', 'status', 'total_amount', 'notes', 'created_by',
+        'expected_date', 'status', 'payment_status', 'total_amount', 'notes', 'created_by',
+        'received_at', 'paid_at',
     ];
 
     protected $casts = [
         'order_date' => 'date',
         'expected_date' => 'date',
         'total_amount' => 'decimal:2',
+        'received_at' => 'datetime',
+        'paid_at' => 'datetime',
     ];
 
     public function supplier(): BelongsTo
@@ -41,5 +44,15 @@ class PurchaseOrder extends Model
     public function items(): HasMany
     {
         return $this->hasMany(PurchaseOrderItem::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(SupplierPayment::class);
+    }
+
+    public function isPayable(): bool
+    {
+        return $this->status === 'received' && $this->payment_status !== 'paid';
     }
 }

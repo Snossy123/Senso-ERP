@@ -16,12 +16,15 @@ class JournalEntry extends Model
         'description',
         'status',
         'created_by',
+        'approved_by',
+        'approved_at',
         'source_type',
         'source_id',
     ];
 
     protected $casts = [
         'date' => 'date',
+        'approved_at' => 'datetime',
     ];
 
     public function tenant()
@@ -32,6 +35,11 @@ class JournalEntry extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function approver()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
     }
 
     public function lines()

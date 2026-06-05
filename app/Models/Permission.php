@@ -46,6 +46,7 @@ class Permission extends Model
             'Orders' => 'orders',
             'Customers' => 'customers',
             'Reports' => 'reports',
+            'Accounting' => 'accounting',
             'Users' => 'users',
             'Roles' => 'roles',
             'Settings' => 'settings',
@@ -112,6 +113,14 @@ class Permission extends Model
             'reports' => [
                 'reports.view',
                 'reports.export',
+            ],
+            'accounting' => [
+                'accounting.approve',
+                'accounting.post',
+                'accounting.periods.close',
+                'accounting.disburse',
+                'accounting.collect',
+                'accounting.reconcile',
             ],
             'users' => [
                 'users.view',

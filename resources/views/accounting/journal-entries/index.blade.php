@@ -37,6 +37,7 @@
                                 <th>Debits</th>
                                 <th>Credits</th>
                                 <th>Status</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -55,12 +56,33 @@
                                 <td><span class="text-success">${{ number_format($entry->total_debit, 2) }}</span></td>
                                 <td><span class="text-danger">${{ number_format($entry->total_credit, 2) }}</span></td>
                                 <td>
-                                    <span class="badge badge-{{ $entry->status == 'posted' ? 'success' : 'warning' }}">{{ ucfirst($entry->status) }}</span>
+                                    @php
+                                        $badge = match($entry->status) {
+                                            'posted' => 'success',
+                                            'approved' => 'info',
+                                            default => 'warning',
+                                        };
+                                    @endphp
+                                    <span class="badge badge-{{ $badge }}">{{ ucfirst($entry->status) }}</span>
+                                </td>
+                                <td>
+                                    @if(($canApprove ?? false) && $entry->status === 'draft')
+                                    <form action="{{ route('accounting.journal-entries.approve', $entry) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-xs btn-outline-primary">Approve</button>
+                                    </form>
+                                    @endif
+                                    @if(($canPost ?? false) && in_array($entry->status, ['draft', 'approved']))
+                                    <form action="{{ route('accounting.journal-entries.post', $entry) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-xs btn-success">Post</button>
+                                    </form>
+                                    @endif
                                 </td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="7" class="text-center">No journal entries found.</td>
+                                <td colspan="8" class="text-center">No journal entries found.</td>
                             </tr>
                             @endforelse
                         </tbody>

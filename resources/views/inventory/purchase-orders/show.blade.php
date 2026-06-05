@@ -35,8 +35,25 @@
                         {{ strtoupper($order->status) }}
                     </span>
                 </p>
+                @if($order->status === 'received')
+                <p class="mb-0"><strong>Payment:</strong>
+                    <span class="badge {{ ($order->payment_status ?? 'unpaid') === 'paid' ? 'badge-success' : 'badge-warning' }}">
+                        {{ strtoupper($order->payment_status ?? 'unpaid') }}
+                    </span>
+                </p>
+                @endif
             </div>
         </div>
+
+        @if($order->isPayable() && (auth()->user()->isAdmin() || auth()->user()->hasPermission('accounting.disburse')))
+        <div class="card mt-3 border-primary">
+            <div class="card-body">
+                <h5 class="tx-15 font-weight-bold">Supplier payment</h5>
+                <p class="text-muted tx-13 mb-3">Record cash disbursement and clear accounts payable.</p>
+                <button type="button" class="btn btn-primary btn-block" data-toggle="modal" data-target="#paySupplierModal">Pay supplier</button>
+            </div>
+        </div>
+        @endif
 
         <div class="card mt-3">
             <div class="card-body">
@@ -115,4 +132,40 @@
         </div>
     </div>
 </div>
+
+@if($order->isPayable() && (auth()->user()->isAdmin() || auth()->user()->hasPermission('accounting.disburse')))
+<div class="modal fade" id="paySupplierModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ route('inventory.purchase-orders.pay', $order) }}" class="modal-content">
+            @csrf
+            <div class="modal-header">
+                <h5 class="modal-title">Pay {{ $order->reference_no }}</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Amount: <strong>{{ number_format($order->total_amount, 2) }}</strong></p>
+                <div class="form-group">
+                    <label>Payment date</label>
+                    <input type="date" name="payment_date" class="form-control" required value="{{ date('Y-m-d') }}">
+                </div>
+                <div class="form-group">
+                    <label>Method</label>
+                    <select name="payment_method" class="form-control" required>
+                        <option value="bank_transfer">Bank transfer</option>
+                        <option value="cash">Cash</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea name="notes" class="form-control" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Record payment</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
 @endsection

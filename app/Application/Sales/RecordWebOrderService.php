@@ -4,10 +4,13 @@ namespace App\Application\Sales;
 
 use App\Application\Inventory\InventoryPostingService;
 use App\Application\Inventory\StockPostingData;
+use App\Events\Domain\Sales\WebOrderRecorded;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\Tenant;
+use App\Services\Accounting\CommerceRevenueRecognition;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -69,6 +72,8 @@ class RecordWebOrderService
                 'notes' => $checkoutData['notes'],
             ]);
 
+            $tenant = Tenant::find($order->tenant_id);
+
             foreach ($lines as $line) {
                 OrderItem::create([
                     'order_id' => $order->id,
@@ -97,6 +102,17 @@ class RecordWebOrderService
                 );
 
                 $product->refresh();
+            }
+
+            if ($tenant && CommerceRevenueRecognition::shouldRecognizeOnCheckout($tenant)) {
+                $orderId = (int) $order->id;
+                $tenantId = (int) $tenant->id;
+                DB::afterCommit(function () use ($orderId, $tenantId) {
+                    event(new WebOrderRecorded(
+                        orderId: $orderId,
+                        tenantId: $tenantId,
+                    ));
+                });
             }
         });
 

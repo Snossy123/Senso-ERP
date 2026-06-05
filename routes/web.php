@@ -168,6 +168,7 @@ Route::middleware(['auth', 'password.must_change'])->group(function () {
     Route::resource('inventory/stock-movements', StockMovementController::class)->names('inventory.movements');
     Route::resource('inventory/purchase-orders', PurchaseOrderController::class)->names('inventory.purchase-orders');
     Route::post('inventory/purchase-orders/{order}/receive', [PurchaseOrderController::class, 'receive'])->name('inventory.purchase-orders.receive');
+    Route::post('inventory/purchase-orders/{order}/pay', [PurchaseOrderController::class, 'pay'])->name('inventory.purchase-orders.pay');
     Route::resource('inventory/stock-transfers', StockTransferController::class)->names('inventory.transfers');
     Route::resource('inventory/units', UnitController::class)->names('inventory.units')->only(['index', 'store', 'destroy']);
 
@@ -175,6 +176,7 @@ Route::middleware(['auth', 'password.must_change'])->group(function () {
     Route::get('/admin/orders', [AdminOrderController::class, 'index'])->name('admin.orders.index');
     Route::get('/admin/orders/{order}', [AdminOrderController::class, 'show'])->name('admin.orders.show');
     Route::patch('/admin/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('admin.orders.status');
+    Route::post('/admin/orders/{order}/mark-paid', [AdminOrderController::class, 'markPaid'])->name('admin.orders.mark-paid');
 
     // Admin — User Management
     Route::resource('admin/users', UserController::class)->names('admin.users');
@@ -252,8 +254,34 @@ Route::middleware(['auth', 'password.must_change'])->group(function () {
         Route::get('/journal-entries', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'journalEntries'])->name('journal-entries');
         Route::get('/journal-entries/create', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'createJournalEntry'])->name('journal-entries.create');
         Route::post('/journal-entries', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'storeJournalEntry'])->name('journal-entries.store');
+        Route::post('/journal-entries/{entry}/approve', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'approveJournalEntry'])->name('journal-entries.approve');
+        Route::post('/journal-entries/{entry}/post', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'postJournalEntry'])->name('journal-entries.post');
 
         Route::get('/reports', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'reports'])->name('reports');
+        Route::get('/reports/trial-balance', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'reportTrialBalance'])->name('reports.trial-balance');
+        Route::get('/reports/income-statement', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'reportIncomeStatement'])->name('reports.income-statement');
+        Route::get('/reports/balance-sheet', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'reportBalanceSheet'])->name('reports.balance-sheet');
+        Route::get('/reports/general-ledger', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'reportGeneralLedger'])->name('reports.general-ledger');
+
+        Route::get('/reconciliation', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'reconciliation'])->name('reconciliation');
+        Route::get('/subsidiary-ledgers', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'subsidiaryLedgers'])->name('subsidiary-ledgers');
+        Route::get('/disbursements', [\App\Http\Controllers\Accounting\Web\SupplierDisbursementController::class, 'index'])->name('disbursements');
+        Route::post('/disbursements/{order}/pay', [\App\Http\Controllers\Accounting\Web\SupplierDisbursementController::class, 'pay'])->name('disbursements.pay');
+        Route::get('/customer-receipts', [\App\Http\Controllers\Accounting\Web\CustomerReceiptController::class, 'index'])->name('customer-receipts');
+        Route::post('/customer-receipts/{order}/collect', [\App\Http\Controllers\Accounting\Web\CustomerReceiptController::class, 'collect'])->name('customer-receipts.collect');
+        Route::post('/customer-receipts/sales/{sale}/collect', [\App\Http\Controllers\Accounting\Web\CustomerReceiptController::class, 'collectSale'])->name('customer-receipts.collect-sale');
+        Route::get('/bank-reconciliation', [\App\Http\Controllers\Accounting\Web\BankReconciliationController::class, 'index'])->name('bank-reconciliation');
+        Route::post('/bank-reconciliation/import', [\App\Http\Controllers\Accounting\Web\BankReconciliationController::class, 'importLine'])->name('bank-reconciliation.import');
+        Route::post('/bank-reconciliation/match', [\App\Http\Controllers\Accounting\Web\BankReconciliationController::class, 'match'])->name('bank-reconciliation.match');
+        Route::get('/audit-trail', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'auditTrail'])->name('audit-trail');
+
+        Route::get('/periods', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'periods'])->name('periods');
+        Route::post('/periods', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'storePeriod'])->name('periods.store');
+        Route::post('/periods/{period}/close', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'closePeriod'])->name('periods.close');
+
+        Route::get('/opening-balance', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'openingBalance'])->name('opening-balance');
+        Route::post('/opening-balance', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'storeOpeningBalance'])->name('opening-balance.store');
+
         Route::get('/settings', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'settings'])->name('settings');
         Route::post('/settings', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'updateSettings'])->name('settings.update');
     });

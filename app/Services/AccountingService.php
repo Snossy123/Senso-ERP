@@ -4,23 +4,92 @@ namespace App\Services;
 
 use App\Models\Account;
 use App\Models\JournalEntry;
+use App\Models\Tenant;
+use App\Services\Accounting\FinancialPeriodService;
+use App\Services\Accounting\JournalEntryLimitService;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class AccountingService
 {
+    public function __construct(
+        private readonly FinancialPeriodService $financialPeriodService,
+        private readonly JournalEntryLimitService $journalEntryLimitService,
+    ) {}
+
     /**
-     * Create a double-entry journal entry with total transactional safety.
+     * Create a posted double-entry journal entry (automated flows).
      *
-     * @param  array  $data  ['date' => 'Y-m-d', 'reference' => '...', 'description' => '...', 'source_type' => '...', 'source_id' => '...']
+     * @param  array  $data  ['date' => 'Y-m-d', 'reference' => '...', 'description' => '...', 'source_type' => '...', 'source_id' => '...', 'tenant_id' => int]
      * @param  array  $lines  [['account_id' => 1, 'description' => '...', 'debit' => 100, 'credit' => 0], ...]
-     * @return JournalEntry
-     *
-     * @throws Exception
      */
-    public function createJournalEntry(array $data, array $lines)
+    public function createJournalEntry(array $data, array $lines): JournalEntry
     {
-        // 1. Validate entries
+        $data['status'] = 'posted';
+
+        return $this->persistJournalEntry($data, $lines);
+    }
+
+    /**
+     * Manual entry saved as draft (requires approve + post).
+     */
+    public function createDraftJournalEntry(array $data, array $lines): JournalEntry
+    {
+        $data['status'] = 'draft';
+
+        return $this->persistJournalEntry($data, $lines);
+    }
+
+    public function approveJournalEntry(JournalEntry $entry): JournalEntry
+    {
+        if ($entry->status !== 'draft') {
+            throw new Exception('Only draft journal entries can be approved.');
+        }
+
+        $entry->update([
+            'status' => 'approved',
+            'approved_by' => Auth::id(),
+            'approved_at' => now(),
+        ]);
+
+        return $entry->fresh();
+    }
+
+    public function postJournalEntry(JournalEntry $entry): JournalEntry
+    {
+        if (! in_array($entry->status, ['draft', 'approved'], true)) {
+            throw new Exception('Only draft or approved journal entries can be posted.');
+        }
+
+        if ($entry->status === 'draft' && ! $entry->approved_at) {
+            throw new Exception('Journal entry must be approved before posting.');
+        }
+
+        $this->financialPeriodService->assertDateWritable(
+            $entry->tenant_id,
+            $entry->date->toDateString()
+        );
+
+        $entry->update(['status' => 'posted']);
+
+        return $entry->fresh();
+    }
+
+    /**
+     * Opening balance entry (posted immediately).
+     */
+    public function createOpeningBalanceEntry(array $data, array $lines): JournalEntry
+    {
+        $data['status'] = 'posted';
+        $data['reference'] = $data['reference'] ?? 'OPENING-'.now()->format('Ymd');
+        $data['description'] = $data['description'] ?? 'Opening balance entry';
+
+        return $this->persistJournalEntry($data, $lines);
+    }
+
+    private function persistJournalEntry(array $data, array $lines): JournalEntry
+    {
         $totalDebit = 0;
         $totalCredit = 0;
 
@@ -29,7 +98,6 @@ class AccountingService
             $totalCredit += (float) ($line['credit'] ?? 0);
         }
 
-        // Enforce the Golden Rule of Accounting
         if (abs($totalDebit - $totalCredit) > 0.0001) {
             throw new Exception("Journal Entry not balanced. Total Debit: {$totalDebit}, Total Credit: {$totalCredit}");
         }
@@ -38,24 +106,30 @@ class AccountingService
             throw new Exception('Journal entry must have a non-zero value.');
         }
 
-        DB::beginTransaction();
+        $tenantId = $data['tenant_id'] ?? request()->user()?->tenant_id ?? null;
+        $entryDate = $data['date'] ?? now()->toDateString();
 
-        try {
-            // 2. Create the Header
+        if (($data['status'] ?? 'posted') === 'posted') {
+            $this->financialPeriodService->assertDateWritable($tenantId, $entryDate);
+            $tenant = $tenantId ? Tenant::find($tenantId) : null;
+            if ($tenant) {
+                $this->journalEntryLimitService->assertCanCreate($tenant);
+            }
+        }
+
+        return DB::transaction(function () use ($data, $lines, $tenantId, $entryDate) {
             $journalEntry = JournalEntry::create([
-                'tenant_id' => request()->user()?->tenant_id ?? $data['tenant_id'] ?? null,
+                'tenant_id' => $tenantId,
                 'reference' => $data['reference'] ?? $this->generateReference(),
-                'date' => $data['date'] ?? now()->toDateString(),
+                'date' => $entryDate,
                 'description' => $data['description'],
-                'status' => 'posted', // Auto-post for automated entries
-                'created_by' => auth()->id(),
+                'status' => $data['status'] ?? 'posted',
+                'created_by' => Auth::id(),
                 'source_type' => $data['source_type'] ?? null,
                 'source_id' => $data['source_id'] ?? null,
             ]);
 
-            // 3. Create the Lines
             foreach ($lines as $line) {
-                // Ensure account exists and is valid
                 $account = Account::findOrFail($line['account_id']);
 
                 if (! $account->is_active) {
@@ -70,20 +144,11 @@ class AccountingService
                 ]);
             }
 
-            DB::commit();
-
             return $journalEntry;
-
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        });
     }
 
-    /**
-     * Generates a unique reference for journal entries.
-     */
-    private function generateReference()
+    private function generateReference(): string
     {
         $prefix = 'JE-';
         $latest = JournalEntry::latest('id')->first();
@@ -93,6 +158,6 @@ class AccountingService
 
         $number = intval(str_replace($prefix, '', $latest->reference)) + 1;
 
-        return $prefix.str_pad($number, 5, '0', STR_PAD_LEFT);
+        return $prefix.str_pad((string) $number, 5, '0', STR_PAD_LEFT);
     }
 }

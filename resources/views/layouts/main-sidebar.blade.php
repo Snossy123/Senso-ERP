@@ -279,6 +279,14 @@
 							<li><a class="slide-item" href="{{ route('accounting.accounts') }}">{{ __('messages.sidebar.chart_of_accounts') }}</a></li>
 							<li><a class="slide-item" href="{{ route('accounting.journal-entries') }}">{{ __('messages.sidebar.journal_entries') }}</a></li>
 							<li><a class="slide-item" href="{{ route('accounting.reports') }}">{{ __('messages.sidebar.financial_reports') }}</a></li>
+							<li><a class="slide-item" href="{{ route('accounting.reconciliation') }}">Reconciliation</a></li>
+							<li><a class="slide-item" href="{{ route('accounting.bank-reconciliation') }}">Bank Reconciliation</a></li>
+							<li><a class="slide-item" href="{{ route('accounting.subsidiary-ledgers') }}">AR / AP</a></li>
+							<li><a class="slide-item" href="{{ route('accounting.disbursements') }}">Cash Disbursements</a></li>
+							<li><a class="slide-item" href="{{ route('accounting.customer-receipts') }}">Customer Receipts</a></li>
+							<li><a class="slide-item" href="{{ route('accounting.audit-trail') }}">Audit Trail</a></li>
+							<li><a class="slide-item" href="{{ route('accounting.periods') }}">Financial Periods</a></li>
+							<li><a class="slide-item" href="{{ route('accounting.opening-balance') }}">Opening Balances</a></li>
 							<li><a class="slide-item" href="{{ route('accounting.settings') }}">{{ __('messages.sidebar.accounting_setup') }}</a></li>
 						</ul>
 					</li>

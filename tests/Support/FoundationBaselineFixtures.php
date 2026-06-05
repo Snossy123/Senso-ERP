@@ -101,6 +101,24 @@ trait FoundationBaselineFixtures
         AccountSetting::create(['tenant_id' => $tid, 'key' => 'sales_revenue', 'account_id' => $this->foundationRevenueAccount->id]);
         AccountSetting::create(['tenant_id' => $tid, 'key' => 'tax_payable', 'account_id' => $this->foundationTaxAccount->id]);
         AccountSetting::create(['tenant_id' => $tid, 'key' => 'pos_variance', 'account_id' => $this->foundationVarianceAccount->id]);
+
+        $inventory = Account::create([
+            'tenant_id' => $tid, 'name' => 'Inventory', 'code' => 'FB1200', 'type' => 'asset', 'is_active' => true,
+        ]);
+        $payable = Account::create([
+            'tenant_id' => $tid, 'name' => 'AP', 'code' => 'FB2100', 'type' => 'liability', 'is_active' => true,
+        ]);
+        $bank = Account::create([
+            'tenant_id' => $tid, 'name' => 'Bank', 'code' => 'FB1100', 'type' => 'asset', 'is_active' => true,
+        ]);
+        AccountSetting::create(['tenant_id' => $tid, 'key' => 'inventory_account', 'account_id' => $inventory->id]);
+        AccountSetting::create(['tenant_id' => $tid, 'key' => 'supplier_payable', 'account_id' => $payable->id]);
+        AccountSetting::create(['tenant_id' => $tid, 'key' => 'bank_payment', 'account_id' => $bank->id]);
+
+        $ar = Account::create([
+            'tenant_id' => $tid, 'name' => 'AR', 'code' => 'FB1300', 'type' => 'asset', 'is_active' => true,
+        ]);
+        AccountSetting::create(['tenant_id' => $tid, 'key' => 'customer_receivable', 'account_id' => $ar->id]);
     }
 
     protected function tenantHeader(): array

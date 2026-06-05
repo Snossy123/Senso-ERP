@@ -14,6 +14,23 @@
 @endsection
 
 @section('content')
+@if(($missingCount ?? 0) > 0)
+<div class="alert alert-warning">
+    <strong>{{ $missingCount }}</strong> business document(s) are missing journal entries.
+    <a href="{{ route('accounting.reconciliation') }}">View reconciliation</a>
+</div>
+@endif
+@if($goLiveDate ?? null)
+<div class="alert alert-info">Go-live date: <strong>{{ $goLiveDate }}</strong> — transactions before this date should be opening balances only.</div>
+@endif
+@if(($journalUsage['limit'] ?? 0) > 0)
+<div class="alert alert-{{ ($journalUsage['at_limit'] ?? false) ? 'danger' : 'secondary' }}">
+    Journal entries this month: <strong>{{ $journalUsage['current'] }}</strong> / {{ $journalUsage['limit'] }}
+    @if(($journalUsage['remaining'] ?? 0) > 0)
+        ({{ $journalUsage['remaining'] }} remaining)
+    @endif
+</div>
+@endif
 <!-- row -->
 <div class="row row-sm">
     <div class="col-xl-3 col-lg-6 col-md-6 col-xm-12">
