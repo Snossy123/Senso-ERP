@@ -183,6 +183,36 @@ class SalesInvoiceTest extends TestCase
         $this->assertSame(0, SalesInvoice::count());
     }
 
+    public function test_installment_down_payment_cannot_exceed_total_when_confirming_draft_from_show(): void
+    {
+        $this->actingAs($this->foundationUser)
+            ->withHeaders($this->tenantHeader())
+            ->post(route('sales.invoices.store'), [
+                'customer_id' => $this->customer->id,
+                'warehouse_id' => $this->warehouse->id,
+                'payment_term' => 'installment',
+                'lines' => $this->linePayload(),
+                'confirm_now' => 0,
+            ]);
+
+        $invoice = SalesInvoice::first();
+        $this->assertSame('draft', $invoice->status);
+
+        $response = $this->actingAs($this->foundationUser)
+            ->withHeaders($this->tenantHeader())
+            ->from(route('sales.invoices.show', $invoice))
+            ->post(route('sales.invoices.confirm', $invoice), [
+                'down_payment' => 500,
+                'installment_count' => 3,
+                'interval_days' => 30,
+                'first_due_date' => now()->addMonth()->toDateString(),
+            ]);
+
+        $response->assertRedirect(route('sales.invoices.show', $invoice));
+        $response->assertSessionHasErrors('down_payment');
+        $this->assertSame('draft', $invoice->fresh()->status);
+    }
+
     public function test_invoice_numbers_are_unique_per_tenant(): void
     {
         $this->createConfirmedInvoice(100);

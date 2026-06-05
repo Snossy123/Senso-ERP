@@ -157,12 +157,19 @@ class SalesInvoiceController extends Controller
 
         $installmentPlan = null;
         if ($invoice->payment_term === 'installment' || $request->input('payment_term') === 'installment') {
-            $installmentPlan = $request->validate([
-                'down_payment' => 'nullable|numeric|min:0',
-                'installment_count' => 'required|integer|min:1|max:120',
-                'interval_days' => 'required|integer|min:1|max:365',
-                'first_due_date' => 'required|date',
-            ]);
+            $invoice->load('lines');
+            $lines = $invoice->lines->map(fn ($line) => [
+                'quantity' => $line->quantity,
+                'unit_price' => $line->unit_price,
+                'discount' => $line->discount,
+                'tax_rate' => $line->tax_rate,
+            ])->all();
+
+            $installmentPlan = $this->validateInstallmentPlan(
+                $request,
+                $lines,
+                (float) ($invoice->discount_amount ?? 0)
+            );
         }
 
         try {
