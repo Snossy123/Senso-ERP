@@ -5,26 +5,30 @@ namespace Database\Seeders;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Supplier;
+use App\Models\Tenant;
 use App\Models\Warehouse;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class InventorySeeder extends Seeder
 {
     public function run(): void
     {
-        // Tech Store Electronics (tenant_id = 1)
         $this->seedTechStore();
-
-        // Fashion Hub Clothing (tenant_id = 2)
         $this->seedFashionHub();
-
-        // Home Essentials Store (tenant_id = 3)
         $this->seedHomeEssentials();
+    }
+
+    private function resolveTenantId(string $slug): int
+    {
+        return (int) Tenant::where('slug', $slug)->value('id');
     }
 
     private function seedTechStore(): void
     {
+        $tenantId = $this->resolveTenantId('tech-store');
+
         $categories = [
             'Laptops & Computers' => ['Gaming Laptops', 'Business Laptops', 'Desktop PCs', 'Monitors'],
             'Mobile Devices' => ['Smartphones', 'Tablets', 'Accessories'],
@@ -33,24 +37,26 @@ class InventorySeeder extends Seeder
         ];
 
         $suppliers = [
-            ['name' => 'TechDistrib Inc', 'email' => 'orders@techdistrib.com', 'phone' => '555-0101', 'city' => 'New York', 'tenant_id' => 1],
-            ['name' => 'Gadget Supply Co', 'email' => 'sales@gadgetsupply.com', 'phone' => '555-0102', 'city' => 'Los Angeles', 'tenant_id' => 1],
-            ['name' => 'Digital Parts Ltd', 'email' => 'parts@digitalparts.com', 'phone' => '555-0103', 'city' => 'Chicago', 'tenant_id' => 1],
+            ['name' => 'TechDistrib Inc', 'email' => 'orders@techdistrib.com', 'phone' => '555-0101', 'city' => 'New York', 'tenant_id' => $tenantId],
+            ['name' => 'Gadget Supply Co', 'email' => 'sales@gadgetsupply.com', 'phone' => '555-0102', 'city' => 'Los Angeles', 'tenant_id' => $tenantId],
+            ['name' => 'Digital Parts Ltd', 'email' => 'parts@digitalparts.com', 'phone' => '555-0103', 'city' => 'Chicago', 'tenant_id' => $tenantId],
         ];
 
         $warehouses = [
-            ['name' => 'Main Tech Warehouse', 'location' => '123 Tech Blvd, New York', 'manager_name' => 'John Smith', 'phone' => '555-1001', 'tenant_id' => 1],
-            ['name' => 'West Coast Tech Hub', 'location' => '456 Silicon Ave, Los Angeles', 'manager_name' => 'Jane Doe', 'phone' => '555-1002', 'tenant_id' => 1],
+            ['name' => 'Main Tech Warehouse', 'location' => '123 Tech Blvd, New York', 'manager_name' => 'John Smith', 'phone' => '555-1001', 'tenant_id' => $tenantId],
+            ['name' => 'West Coast Tech Hub', 'location' => '456 Silicon Ave, Los Angeles', 'manager_name' => 'Jane Doe', 'phone' => '555-1002', 'tenant_id' => $tenantId],
         ];
 
-        $this->createCategories($categories, 1);
-        $this->createSuppliers($suppliers);
-        $this->createWarehouses($warehouses);
-        $this->createProducts('tech', 1, $suppliers, $warehouses);
+        $this->createCategories($categories, $tenantId);
+        $supplierModels = $this->createSuppliers($suppliers);
+        $warehouseModels = $this->createWarehouses($warehouses);
+        $this->createProducts('tech', $tenantId, $supplierModels, $warehouseModels);
     }
 
     private function seedFashionHub(): void
     {
+        $tenantId = $this->resolveTenantId('fashion-hub');
+
         $categories = [
             'Men\'s Clothing' => ['T-Shirts', 'Jeans', 'Jackets', 'Formal Wear'],
             'Women\'s Clothing' => ['Dresses', 'Tops', 'Skirts', 'Sweaters'],
@@ -59,22 +65,24 @@ class InventorySeeder extends Seeder
         ];
 
         $suppliers = [
-            ['name' => 'Fashion Forward', 'email' => 'orders@fashionforward.com', 'phone' => '555-0201', 'city' => 'Miami', 'tenant_id' => 2],
-            ['name' => 'Style Wholesale', 'email' => 'sales@stylewholesale.com', 'phone' => '555-0202', 'city' => 'Los Angeles', 'tenant_id' => 2],
+            ['name' => 'Fashion Forward', 'email' => 'orders@fashionforward.com', 'phone' => '555-0201', 'city' => 'Miami', 'tenant_id' => $tenantId],
+            ['name' => 'Style Wholesale', 'email' => 'sales@stylewholesale.com', 'phone' => '555-0202', 'city' => 'Los Angeles', 'tenant_id' => $tenantId],
         ];
 
         $warehouses = [
-            ['name' => 'Fashion Central Warehouse', 'location' => '789 Fashion St, Miami', 'manager_name' => 'Sarah Wilson', 'phone' => '555-2001', 'tenant_id' => 2],
+            ['name' => 'Fashion Central Warehouse', 'location' => '789 Fashion St, Miami', 'manager_name' => 'Sarah Wilson', 'phone' => '555-2001', 'tenant_id' => $tenantId],
         ];
 
-        $this->createCategories($categories, 2);
-        $this->createSuppliers($suppliers);
-        $this->createWarehouses($warehouses);
-        $this->createProducts('fashion', 2, $suppliers, $warehouses);
+        $this->createCategories($categories, $tenantId);
+        $supplierModels = $this->createSuppliers($suppliers);
+        $warehouseModels = $this->createWarehouses($warehouses);
+        $this->createProducts('fashion', $tenantId, $supplierModels, $warehouseModels);
     }
 
     private function seedHomeEssentials(): void
     {
+        $tenantId = $this->resolveTenantId('home-essentials');
+
         $categories = [
             'Kitchen' => ['Cookware', 'Appliances', 'Utensils', 'Storage'],
             'Furniture' => ['Living Room', 'Bedroom', 'Office', 'Outdoor'],
@@ -83,18 +91,18 @@ class InventorySeeder extends Seeder
         ];
 
         $suppliers = [
-            ['name' => 'HomeGoods Distributors', 'email' => 'orders@homegoods.com', 'phone' => '555-0301', 'city' => 'Denver', 'tenant_id' => 3],
-            ['name' => 'Living Space Supplies', 'email' => 'sales@livingspace.com', 'phone' => '555-0302', 'city' => 'Seattle', 'tenant_id' => 3],
+            ['name' => 'HomeGoods Distributors', 'email' => 'orders@homegoods.com', 'phone' => '555-0301', 'city' => 'Denver', 'tenant_id' => $tenantId],
+            ['name' => 'Living Space Supplies', 'email' => 'sales@livingspace.com', 'phone' => '555-0302', 'city' => 'Seattle', 'tenant_id' => $tenantId],
         ];
 
         $warehouses = [
-            ['name' => 'Home Essentials Main', 'location' => '321 Home Ave, Denver', 'manager_name' => 'Mike Johnson', 'phone' => '555-3001', 'tenant_id' => 3],
+            ['name' => 'Home Essentials Main', 'location' => '321 Home Ave, Denver', 'manager_name' => 'Mike Johnson', 'phone' => '555-3001', 'tenant_id' => $tenantId],
         ];
 
-        $this->createCategories($categories, 3);
-        $this->createSuppliers($suppliers);
-        $this->createWarehouses($warehouses);
-        $this->createProducts('home', 3, $suppliers, $warehouses);
+        $this->createCategories($categories, $tenantId);
+        $supplierModels = $this->createSuppliers($suppliers);
+        $warehouseModels = $this->createWarehouses($warehouses);
+        $this->createProducts('home', $tenantId, $supplierModels, $warehouseModels);
     }
 
     private function createCategories(array $categories, int $tenantId): void
@@ -121,27 +129,27 @@ class InventorySeeder extends Seeder
         }
     }
 
-    private function createSuppliers(array $suppliers): void
+    private function createSuppliers(array $suppliers): Collection
     {
-        foreach ($suppliers as $supplier) {
-            Supplier::firstOrCreate(
+        return collect($suppliers)->map(function (array $supplier): Supplier {
+            return Supplier::firstOrCreate(
                 ['email' => $supplier['email'], 'tenant_id' => $supplier['tenant_id']],
                 array_merge($supplier, ['is_active' => true])
             );
-        }
+        });
     }
 
-    private function createWarehouses(array $warehouses): void
+    private function createWarehouses(array $warehouses): Collection
     {
-        foreach ($warehouses as $warehouse) {
-            Warehouse::firstOrCreate(
+        return collect($warehouses)->map(function (array $warehouse): Warehouse {
+            return Warehouse::firstOrCreate(
                 ['name' => $warehouse['name'], 'tenant_id' => $warehouse['tenant_id']],
                 array_merge($warehouse, ['is_active' => true])
             );
-        }
+        });
     }
 
-    private function createProducts(string $type, int $tenantId, array $suppliers, array $warehouses): void
+    private function createProducts(string $type, int $tenantId, Collection $suppliers, Collection $warehouses): void
     {
         $productsData = $this->getProductsData($type);
 
@@ -150,8 +158,8 @@ class InventorySeeder extends Seeder
                 ->where('name', $product['category'])
                 ->first();
 
-            $supplier = $suppliers[array_rand($suppliers)];
-            $warehouse = $warehouses[array_rand($warehouses)];
+            $supplier = $suppliers->random();
+            $warehouse = $warehouses->random();
 
             Product::firstOrCreate(
                 ['sku' => strtoupper($type).'-'.strtoupper(substr(md5($product['name']), 0, 6)), 'tenant_id' => $tenantId],
@@ -160,8 +168,8 @@ class InventorySeeder extends Seeder
                     'slug' => Str::slug($product['name']),
                     'description' => 'High quality '.strtolower($product['name']).' for everyday use.',
                     'category_id' => $category?->id,
-                    'supplier_id' => $supplier['id'] ?? null,
-                    'warehouse_id' => $warehouse['id'] ?? null,
+                    'supplier_id' => $supplier->id,
+                    'warehouse_id' => $warehouse->id,
                     'purchase_price' => $product['purchase_price'],
                     'selling_price' => $product['selling_price'],
                     'stock_quantity' => rand(5, 200),

@@ -58,6 +58,7 @@ return [
     'confirm_installment_hint' => 'حدد خطة التقسيط قبل التأكيد.',
     'all_statuses' => 'كل الحالات',
     'all_payment_statuses' => 'كل حالات السداد',
+    'all_payment_terms' => 'كل شروط الدفع',
     'status_draft' => 'مسودة',
     'status_confirmed' => 'مؤكدة',
     'status_cancelled' => 'ملغاة',
@@ -67,6 +68,7 @@ return [
     'term_cash' => 'نقدي',
     'term_credit' => 'آجل',
     'term_installment' => 'تقسيط',
+    'installment_total_hint' => 'إجمالي الفاتورة: :total — يجب أن يكون المقدم أقل من الإجمالي.',
     'messages' => [
         'draft_created' => 'تم إنشاء مسودة الفاتورة.',
         'updated' => 'تم تحديث الفاتورة.',
@@ -74,5 +76,9 @@ return [
         'cancelled' => 'تم إلغاء الفاتورة.',
         'payment_recorded' => 'تم تسجيل السداد.',
         'not_editable' => 'يمكن تعديل المسودات فقط.',
+        'confirm_failed' => 'تعذر تأكيد الفاتورة. راجع البيانات أو تواصل مع الدعم.',
+    ],
+    'validation' => [
+        'down_payment_too_high' => 'المقدم يجب أن يكون أقل من إجمالي الفاتورة (:total).',
     ],
 ];

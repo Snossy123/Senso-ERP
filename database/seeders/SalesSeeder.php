@@ -9,6 +9,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -22,9 +23,14 @@ class SalesSeeder extends Seeder
         $this->seedHomeEssentials();
     }
 
+    private function resolveTenantId(string $slug): int
+    {
+        return (int) Tenant::where('slug', $slug)->value('id');
+    }
+
     private function seedTechStore(): void
     {
-        $tenantId = 1;
+        $tenantId = $this->resolveTenantId('tech-store');
         $this->createCustomers($tenantId, 'tech');
         $this->createSales($tenantId);
         $this->createOrders($tenantId);
@@ -33,7 +39,7 @@ class SalesSeeder extends Seeder
 
     private function seedFashionHub(): void
     {
-        $tenantId = 2;
+        $tenantId = $this->resolveTenantId('fashion-hub');
         $this->createCustomers($tenantId, 'fashion');
         $this->createSales($tenantId);
         $this->createOrders($tenantId);
@@ -42,7 +48,7 @@ class SalesSeeder extends Seeder
 
     private function seedHomeEssentials(): void
     {
-        $tenantId = 3;
+        $tenantId = $this->resolveTenantId('home-essentials');
         $this->createCustomers($tenantId, 'home');
         $this->createSales($tenantId);
         $this->createOrders($tenantId);

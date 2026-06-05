@@ -63,6 +63,14 @@
                     @endforeach
                 </select>
             </div>
+            <div class="col-md-2">
+                <select name="payment_term" class="form-control">
+                    <option value="">{{ __('sales_invoices.all_payment_terms') }}</option>
+                    @foreach(['cash','credit','installment'] as $term)
+                    <option value="{{ $term }}" @selected(request('payment_term')===$term)>{{ __('sales_invoices.term_'.$term) }}</option>
+                    @endforeach
+                </select>
+            </div>
             <div class="col-md-2"><button class="btn btn-primary btn-block">{{ __('sales_invoices.filter') }}</button></div>
         </form>
 

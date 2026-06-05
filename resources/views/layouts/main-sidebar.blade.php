@@ -40,6 +40,16 @@
 					$showRelationshipsMenu = $canAny(['suppliers.view', 'warehouses.view', 'customers.view']);
 					$showCrmMenu = $can('customers.view');
 					$showSalesInvoicesMenu = $can('sales_invoices.view');
+					$showSalesInvoicesCreate = $can('sales_invoices.create');
+
+					$overdueInstallmentCount = 0;
+					if ($sidebarUser->tenant_id && $showSalesInvoicesMenu) {
+						$overdueInstallmentCount = \App\Models\InvoiceInstallment::withoutGlobalScopes()
+							->where('tenant_id', $sidebarUser->tenant_id)
+							->whereIn('status', ['pending', 'partial', 'overdue'])
+							->whereDate('due_date', '<', now()->toDateString())
+							->count();
+					}
 
 					$showInventorySection = $showStockMenu || $showOperationsMenu || $showRelationshipsMenu;
 
@@ -49,7 +59,7 @@
 
 					$showReportsSection = $can('reports.view');
 
-					$showAccountingSection = $can('reports.view');
+					$showAccountingSection = $can('reports.view') || $showSalesInvoicesMenu;
 
 					$showExternalSection = $sidebarUser->tenant_id !== null;
 
@@ -137,7 +147,7 @@
 						</a>
 					</li>
 					@endif
-					@if($showCrmMenu || $showSalesInvoicesMenu)
+					@if($showCrmMenu)
 					<li class="slide">
 						<a class="side-menu__item" data-toggle="slide" href="#">
 							<i class="side-menu__icon fe fe-users"></i>
@@ -148,10 +158,6 @@
 							@if($can('customers.view'))
 							<li><a class="slide-item" href="{{ route('crm.customers.index') }}">Customers</a></li>
 							<li><a class="slide-item" href="{{ route('crm.tags.index') }}">Tags</a></li>
-							@endif
-							@if($showSalesInvoicesMenu)
-							<li><a class="slide-item" href="{{ route('sales.invoices.index') }}">{{ __('sales_invoices.title') }}</a></li>
-							<li><a class="slide-item" href="{{ route('sales.invoices.index', ['overdue_installments' => 1]) }}">{{ __('sales_invoices.overdue_installments') }}</a></li>
 							@endif
 						</ul>
 					</li>
@@ -290,6 +296,20 @@
 							<li><a class="slide-item" href="{{ route('accounting.subsidiary-ledgers') }}">AR / AP</a></li>
 							<li><a class="slide-item" href="{{ route('accounting.disbursements') }}">Cash Disbursements</a></li>
 							<li><a class="slide-item" href="{{ route('accounting.customer-receipts') }}">Customer Receipts</a></li>
+							@if($showSalesInvoicesMenu)
+							<li><a class="slide-item" href="{{ route('sales.invoices.index') }}">{{ __('messages.sidebar.sales_invoices') }}</a></li>
+							@if($showSalesInvoicesCreate)
+							<li><a class="slide-item" href="{{ route('sales.invoices.create') }}">{{ __('messages.sidebar.new_sales_invoice') }}</a></li>
+							@endif
+							<li>
+								<a class="slide-item" href="{{ route('sales.invoices.index', ['overdue_installments' => 1]) }}">
+									{{ __('messages.sidebar.overdue_installments') }}
+									@if($overdueInstallmentCount > 0)
+										<span class="badge badge-danger ml-1">{{ $overdueInstallmentCount }}</span>
+									@endif
+								</a>
+							</li>
+							@endif
 							<li><a class="slide-item" href="{{ route('accounting.audit-trail') }}">Audit Trail</a></li>
 							<li><a class="slide-item" href="{{ route('accounting.periods') }}">Financial Periods</a></li>
 							<li><a class="slide-item" href="{{ route('accounting.opening-balance') }}">Opening Balances</a></li>

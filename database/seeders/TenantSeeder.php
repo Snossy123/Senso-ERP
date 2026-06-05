@@ -11,11 +11,20 @@ class TenantSeeder extends Seeder
     {
         $tenants = [
             [
-                'name' => 'Tech Store Electronics',
+                'name' => 'متجر التقنية للإلكترونيات',
                 'slug' => 'tech-store',
                 'domain' => 'techstore.local',
                 'settings' => ['plan' => 'premium', 'max_users' => 20],
                 'is_active' => true,
+                'status' => 'active',
+                'language' => 'ar',
+                'timezone' => 'Africa/Cairo',
+                'currency' => 'EGP',
+                'tax_settings' => [
+                    'tax_number' => '123-456-789',
+                    'tax_rate' => 14,
+                    'tax_included' => false,
+                ],
                 'trial_ends_at' => now()->addDays(30),
             ],
             [

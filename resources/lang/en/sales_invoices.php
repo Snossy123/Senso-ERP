@@ -58,6 +58,7 @@ return [
     'confirm_installment_hint' => 'Set installment plan before confirming.',
     'all_statuses' => 'All statuses',
     'all_payment_statuses' => 'All payment statuses',
+    'all_payment_terms' => 'All payment terms',
     'status_draft' => 'Draft',
     'status_confirmed' => 'Confirmed',
     'status_cancelled' => 'Cancelled',
@@ -67,6 +68,7 @@ return [
     'term_cash' => 'Cash',
     'term_credit' => 'Credit',
     'term_installment' => 'Installment',
+    'installment_total_hint' => 'Invoice total: :total — down payment must be less than the total.',
     'messages' => [
         'draft_created' => 'Draft invoice created.',
         'updated' => 'Invoice updated.',
@@ -74,5 +76,9 @@ return [
         'cancelled' => 'Invoice cancelled.',
         'payment_recorded' => 'Payment recorded.',
         'not_editable' => 'Only draft invoices can be edited.',
+        'confirm_failed' => 'Could not confirm the invoice. Check the data or contact support.',
+    ],
+    'validation' => [
+        'down_payment_too_high' => 'Down payment must be less than the invoice total (:total).',
     ],
 ];
