@@ -54,6 +54,8 @@ class JournalEntryFactory
 
         if ($model instanceof InvoicePayment) {
             return new InvoicePaymentJournalEntryGenerator;
+        }
+
         if ($model instanceof Order) {
             return new OrderJournalEntryGenerator;
         }

@@ -2,6 +2,7 @@
 
 namespace App\Scopes;
 
+use App\Models\User;
 use App\Services\TenantManager;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -21,6 +22,12 @@ class TenantScope implements Scope
                     ->orWhereNull($model->getTable().'.tenant_id');
             });
 
+            return;
+        }
+
+        // User must stay resolvable for session auth before TenantMiddleware binds context.
+        // Calling Auth::user() here would recurse while the users table is being queried.
+        if ($model instanceof User) {
             return;
         }
 
