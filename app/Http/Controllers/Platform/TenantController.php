@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Platform;
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
 use App\Models\Tenant;
+use App\Services\GoLiveChecklistService;
 use App\Services\Platform\ImpersonationService;
+use App\Services\TenantProvisioningService;
 use App\Services\TenantService;
 use App\Support\Locale;
 use Illuminate\Http\Request;
@@ -16,7 +18,9 @@ class TenantController extends Controller
 {
     public function __construct(
         protected TenantService $tenantService,
-        protected ImpersonationService $impersonationService
+        protected ImpersonationService $impersonationService,
+        protected GoLiveChecklistService $goLiveChecklist,
+        protected TenantProvisioningService $tenantProvisioning,
     ) {}
 
     public function index()
@@ -116,8 +120,28 @@ class TenantController extends Controller
         $usage = $this->tenantService->checkLimits($tenant);
         $daysUntilTrial = $this->tenantService->getDaysUntilTrialEnds($tenant);
         $daysUntilSubscription = $this->tenantService->getDaysUntilSubscriptionEnds($tenant);
+        $goLivePercent = $this->goLiveChecklist->completionPercentage($tenant);
+        $goLiveReady = $this->goLiveChecklist->isReadyForGoLive($tenant);
+        $goLiveItems = $this->goLiveChecklist->itemsForTenant($tenant);
 
-        return view('platform.tenants.show', compact('tenant', 'usage', 'daysUntilTrial', 'daysUntilSubscription'));
+        return view('platform.tenants.show', compact(
+            'tenant',
+            'usage',
+            'daysUntilTrial',
+            'daysUntilSubscription',
+            'goLivePercent',
+            'goLiveReady',
+            'goLiveItems',
+        ));
+    }
+
+    public function provision(Tenant $tenant)
+    {
+        $this->tenantProvisioning->provision($tenant);
+
+        return redirect()
+            ->route('platform.tenants.show', $tenant)
+            ->with('success', __('tenants.provision_success'));
     }
 
     public function edit(Tenant $tenant)

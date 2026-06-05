@@ -69,7 +69,7 @@
 					<li class="slide">
 						<a class="side-menu__item" href="{{ route('go-live.index') }}">
 							<i class="side-menu__icon fe fe-check-square"></i>
-							<span class="side-menu__label">Go-Live</span>
+							<span class="side-menu__label">{{ __('go_live.title') }}</span>
 						</a>
 					</li>
 					@endif

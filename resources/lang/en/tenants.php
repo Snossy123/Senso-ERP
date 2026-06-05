@@ -85,4 +85,9 @@ return [
     'no_users_for_login' => 'No active users for this tenant. Create an administrator when adding the tenant.',
     'user_not_found' => 'User not found in this tenant.',
     'impersonation_password_change' => 'This account must change its password on first use.',
+    'provision_success' => 'Tenant provisioning completed (accounting, warehouse, inventory masters, financial period, storefront).',
+    'provision_go_live' => 'Run provisioning',
+    'go_live_progress' => 'Go-live readiness',
+    'go_live_ready' => 'Ready',
+    'go_live_pending' => 'In progress',
 ];

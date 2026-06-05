@@ -7,6 +7,7 @@ use App\Modules\StorefrontBuilder\Models\StorefrontPage;
 use App\Modules\StorefrontBuilder\Models\StorefrontPublishVersion;
 use App\Modules\StorefrontBuilder\Models\StorefrontSection;
 use App\Modules\StorefrontBuilder\Models\StorefrontTemplateBinding;
+use App\Services\TenantManager;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -21,8 +22,16 @@ class StorefrontBuilderService
 
     public function getOrCreateDefaultStorefront(): Storefront
     {
-        $storefront = Storefront::firstOrCreate(
-            ['slug' => 'default-storefront'],
+        $tenantId = app(TenantManager::class)->getCurrentId();
+        if (! $tenantId) {
+            throw new \RuntimeException('Tenant context is required to resolve the default storefront.');
+        }
+
+        $storefront = Storefront::withoutGlobalScopes()->firstOrCreate(
+            [
+                'tenant_id' => $tenantId,
+                'slug' => 'default-storefront',
+            ],
             [
                 'name' => 'Default Storefront',
                 'status' => 'draft',

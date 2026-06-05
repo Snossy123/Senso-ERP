@@ -4,8 +4,12 @@ namespace Tests\Feature;
 
 use App\Models\Account;
 use App\Models\AccountSetting;
+use App\Models\Category;
+use App\Models\FinancialPeriod;
 use App\Models\Tenant;
+use App\Models\Unit;
 use App\Models\Warehouse;
+use App\Modules\StorefrontBuilder\Models\Storefront;
 use App\Services\TenantService;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -61,6 +65,13 @@ class TenantCreationTest extends TestCase
         $this->assertGreaterThanOrEqual(10, Account::withoutGlobalScopes()->where('tenant_id', $tenant->id)->count());
         $this->assertGreaterThanOrEqual(5, AccountSetting::withoutGlobalScopes()->where('tenant_id', $tenant->id)->count());
         $this->assertSame(1, Warehouse::withoutGlobalScopes()->where('tenant_id', $tenant->id)->count());
+        $this->assertSame(1, FinancialPeriod::withoutGlobalScopes()->where('tenant_id', $tenant->id)->count());
+        $this->assertSame(1, Category::withoutGlobalScopes()->where('tenant_id', $tenant->id)->count());
+        $this->assertSame(1, Unit::withoutGlobalScopes()->where('tenant_id', $tenant->id)->count());
+        $this->assertSame(
+            1,
+            Storefront::withoutGlobalScopes()->where('tenant_id', $tenant->id)->count()
+        );
     }
 
     public function test_create_tenant_without_support_user_leaves_no_users_and_null_password(): void

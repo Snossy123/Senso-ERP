@@ -78,6 +78,36 @@
         </div>
     @endif
 
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <div>
+                    <h5 class="mb-1">{{ __('tenants.go_live_progress') }}</h5>
+                    <span class="badge {{ $goLiveReady ? 'bg-success' : 'bg-warning' }}">
+                        {{ $goLiveReady ? __('tenants.go_live_ready') : __('tenants.go_live_pending') }}
+                    </span>
+                </div>
+                <form action="{{ route('platform.tenants.provision', $tenant) }}" method="POST" class="d-inline">
+                    @csrf
+                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-magic"></i> {{ __('tenants.provision_go_live') }}
+                    </button>
+                </form>
+            </div>
+            <div class="progress mb-3" style="height: 8px;">
+                <div class="progress-bar {{ $goLiveReady ? 'bg-success' : 'bg-primary' }}" style="width: {{ $goLivePercent }}%"></div>
+            </div>
+            <ul class="list-unstyled mb-0 small">
+                @foreach($goLiveItems as $item)
+                    <li class="mb-1">
+                        <i class="fas {{ $item['done'] ? 'fa-check-circle text-success' : 'fa-circle text-muted' }} me-1"></i>
+                        {{ $item['label'] }}
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    </div>
+
     <!-- Status & Plan Cards -->
     <div class="row">
         <div class="col-md-3 mb-4">

@@ -79,6 +79,7 @@ Route::middleware(['auth', 'password.must_change'])->group(function () {
         Route::post('tenants/{tenant}/upgrade-plan', [PlatformTenantController::class, 'upgradePlan'])->name('tenants.upgrade-plan');
         Route::post('tenants/{tenant}/login-as', [PlatformTenantController::class, 'loginAs'])->name('tenants.login-as');
         Route::post('tenants/{tenant}/sync-usage', [PlatformTenantController::class, 'syncUsage'])->name('tenants.sync-usage');
+        Route::post('tenants/{tenant}/provision', [PlatformTenantController::class, 'provision'])->name('tenants.provision');
         Route::patch('tenants/{tenant}/settings', [PlatformTenantController::class, 'updateSettings'])->name('tenants.settings');
 
         Route::get('subscriptions', [PlatformPlanController::class, 'index'])->name('subscriptions.index');
