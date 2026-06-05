@@ -56,8 +56,34 @@
                         </table>
                     </div>
                     
+                    <hr>
+                    <h5 class="mb-3">Go-live date</h5>
+                    <div class="form-group col-md-6">
+                        <label>Operational start date (opening balances & migration cutoff)</label>
+                        <input type="date" name="go_live_date" class="form-control" value="{{ $goLiveDate ?? '' }}">
+                    </div>
+
+                    <hr>
+                    <h5 class="mb-3">Card settlement fees (POS)</h5>
+                    <p class="text-muted small">When card sales are posted, this percent is withheld from the card clearing account and expensed to the payment fees account.</p>
+                    <div class="form-group col-md-4">
+                        <label>Card fee %</label>
+                        <input type="number" step="0.01" min="0" max="100" name="card_fee_percent" class="form-control" value="{{ $cardFeePercent ?? 0 }}">
+                    </div>
+                    <p class="text-muted small">Reporting currency: <strong>{{ $baseCurrency ?? 'USD' }}</strong> (tenant currency; GL is single-currency per tenant).</p>
+
+                    <hr>
+                    <h5 class="mb-3">Ecommerce revenue recognition</h5>
+                    <div class="form-group col-md-6">
+                        <label>When to post web order revenue to GL</label>
+                        <select name="revenue_recognition" class="form-control">
+                            <option value="on_place" {{ $revenueRecognition === 'on_place' ? 'selected' : '' }}>On order placement (default)</option>
+                            <option value="on_paid" {{ $revenueRecognition === 'on_paid' ? 'selected' : '' }}>When payment is marked paid</option>
+                        </select>
+                    </div>
+
                     <div class="mt-4">
-                        <button type="submit" class="btn btn-primary">Save Mappings</button>
+                        <button type="submit" class="btn btn-primary">Save Settings</button>
                         <a href="{{ route('accounting.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
                     </div>
                 </form>

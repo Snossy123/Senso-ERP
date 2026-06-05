@@ -149,10 +149,6 @@ class PurchaseOrderReceiveCharacterizationTest extends TestCase
             ->where('source_id', $order->id)
             ->count();
 
-        $this->assertSame(
-            0,
-            $journalAfter,
-            'Current behavior: PO receive sets status to received; AccountingObserver listens for status completed, so no automated GRNI/AP journal from observer.'
-        );
+        $this->assertSame(1, $journalAfter, 'GoodsReceived listener should post one journal entry when PO is received.');
     }
 }

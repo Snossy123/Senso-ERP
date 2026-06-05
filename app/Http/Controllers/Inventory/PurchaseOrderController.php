@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Inventory;
 
 use App\Application\Inventory\InventoryPostingService;
+use App\Application\Inventory\RecordSupplierPaymentService;
 use App\Application\Inventory\StockPostingData;
+use App\Events\Domain\Inventory\GoodsReceived;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
@@ -16,7 +18,8 @@ use Illuminate\Support\Facades\DB;
 class PurchaseOrderController extends Controller
 {
     public function __construct(
-        private readonly InventoryPostingService $inventoryPostingService
+        private readonly InventoryPostingService $inventoryPostingService,
+        private readonly RecordSupplierPaymentService $recordSupplierPaymentService,
     ) {
         $this->middleware('auth');
     }
@@ -115,8 +118,42 @@ class PurchaseOrderController extends Controller
                 'status' => 'received',
                 'received_at' => now(),
             ]);
+
+            $tenantId = (int) $order->tenant_id;
+            $orderId = (int) $order->id;
+
+            DB::afterCommit(function () use ($orderId, $tenantId) {
+                event(new GoodsReceived(
+                    purchaseOrderId: $orderId,
+                    tenantId: $tenantId,
+                ));
+            });
         });
 
         return redirect()->route('inventory.purchase-orders.show', $order)->with('success', 'Order received and stock updated.');
+    }
+
+    public function pay(Request $request, PurchaseOrder $order)
+    {
+        $user = Auth::user();
+        if (! $user->isAdmin() && ! $user->hasPermission('accounting.disburse')) {
+            return redirect()->back()->with('error', 'You do not have permission to record supplier payments.');
+        }
+
+        $validated = $request->validate([
+            'payment_date' => 'required|date',
+            'payment_method' => 'required|in:cash,bank_transfer',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        try {
+            $this->recordSupplierPaymentService->record($order, $validated, (int) $user->id);
+
+            return redirect()
+                ->route('inventory.purchase-orders.show', $order)
+                ->with('success', 'Supplier payment recorded and AP cleared.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
 }

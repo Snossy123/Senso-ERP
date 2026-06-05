@@ -65,7 +65,7 @@ class SaleController extends Controller
             'items.*.discount_pct' => 'nullable|numeric|min:0|max:100',
             'items.*.discount_amount' => 'nullable|numeric|min:0',
             'items.*.discount_mode' => 'nullable|in:pct,amount',
-            'payment_method' => 'required|in:cash,card,bank_transfer,split',
+            'payment_method' => 'required|in:cash,card,bank_transfer,credit,split',
             'discount' => 'nullable|numeric|min:0',
             'tax_rate' => 'nullable|numeric|min:0|max:100',
             'amount_tendered' => 'nullable|numeric|min:0',
@@ -161,8 +161,13 @@ class SaleController extends Controller
                 }
             }
 
+            $paymentMethod = $request->input('payment_method');
+            if ($paymentMethod === 'credit' && ! $request->filled('customer_id')) {
+                throw new \Exception('Credit sales require a customer to be selected.');
+            }
+
             $amountTendered = (float) $request->input('amount_tendered', $total);
-            $changeDue = max(0, $amountTendered - $total);
+            $changeDue = $paymentMethod === 'credit' ? 0 : max(0, $amountTendered - $total);
 
             $saleAttrs = [
                 'tenant_id' => $tenant->id,
@@ -175,8 +180,8 @@ class SaleController extends Controller
                 'discount_amount' => $discountAmt,
                 'tax_amount' => $taxAmount,
                 'total' => $total,
-                'payment_method' => $request->input('payment_method'),
-                'payment_status' => 'paid',
+                'payment_method' => $paymentMethod,
+                'payment_status' => $paymentMethod === 'credit' ? 'pending' : 'paid',
                 'amount_tendered' => $amountTendered,
                 'change_due' => $changeDue,
                 'status' => 'completed',
@@ -517,17 +522,15 @@ class SaleController extends Controller
                 $sale->update(['status' => 'refunded']);
             }
 
-            try {
-                $generator = \App\Services\Accounting\JournalEntryFactory::getGenerator($refund);
-                $jeData = $generator->generate($refund);
+            $refundId = (int) $refund->id;
+            $tenantId = (int) ($tenant?->id ?? $sale->tenant_id);
 
-                app(\App\Services\AccountingService::class)->createJournalEntry(
-                    $jeData['header'],
-                    $jeData['lines']
-                );
-            } catch (\Exception $e) {
-                throw new \Exception('Accounting integration failed for refund: '.$e->getMessage());
-            }
+            DB::afterCommit(function () use ($refundId, $tenantId) {
+                event(new \App\Events\Domain\Sales\RefundRecorded(
+                    refundId: $refundId,
+                    tenantId: $tenantId,
+                ));
+            });
 
             \App\Models\Activity::log(
                 'pos',

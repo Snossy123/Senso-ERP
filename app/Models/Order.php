@@ -16,7 +16,7 @@ class Order extends Model
         'order_number', 'customer_id', 'customer_name', 'customer_email', 'customer_phone',
         'shipping_address', 'city', 'status',
         'subtotal', 'shipping_cost', 'tax_amount', 'total',
-        'payment_method', 'payment_status', 'notes',
+        'payment_method', 'payment_status', 'paid_at', 'notes',
     ];
 
     protected $casts = [
@@ -24,6 +24,7 @@ class Order extends Model
         'shipping_cost' => 'decimal:2',
         'tax_amount' => 'decimal:2',
         'total' => 'decimal:2',
+        'paid_at' => 'datetime',
     ];
 
     public function customer(): BelongsTo
@@ -34,6 +35,16 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(CustomerPayment::class);
+    }
+
+    public function isCollectible(): bool
+    {
+        return $this->payment_status !== 'paid' && $this->status !== 'cancelled';
     }
 
     public static function generateOrderNumber(): string
