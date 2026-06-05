@@ -136,6 +136,19 @@ Route::middleware(['auth', 'password.must_change'])->group(function () {
     Route::post('/pos/customer/quick-store', [POSController::class, 'quickStoreCustomer'])->name('pos.customer.quick-store');
     Route::get('/pos/customers/search', [POSController::class, 'searchCustomers'])->name('pos.customers.search');
 
+    // Sales Invoices
+    Route::prefix('sales/invoices')->name('sales.invoices.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Sales\SalesInvoiceController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Sales\SalesInvoiceController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Sales\SalesInvoiceController::class, 'store'])->name('store');
+        Route::get('/{invoice}', [\App\Http\Controllers\Sales\SalesInvoiceController::class, 'show'])->name('show');
+        Route::get('/{invoice}/edit', [\App\Http\Controllers\Sales\SalesInvoiceController::class, 'edit'])->name('edit');
+        Route::put('/{invoice}', [\App\Http\Controllers\Sales\SalesInvoiceController::class, 'update'])->name('update');
+        Route::post('/{invoice}/confirm', [\App\Http\Controllers\Sales\SalesInvoiceController::class, 'confirm'])->name('confirm');
+        Route::post('/{invoice}/cancel', [\App\Http\Controllers\Sales\SalesInvoiceController::class, 'cancel'])->name('cancel');
+        Route::post('/{invoice}/payments', [\App\Http\Controllers\Sales\InvoicePaymentController::class, 'store'])->name('payments.store');
+    });
+
     // CRM
     Route::prefix('crm')->name('crm.')->group(function () {
         Route::resource('customers', \App\Http\Controllers\CRM\CustomerController::class);
@@ -230,6 +243,7 @@ Route::middleware(['auth', 'password.must_change'])->group(function () {
     Route::get('/exports/customers/excel', [ExportController::class, 'customersExcel'])->name('exports.customers.excel');
     Route::get('/exports/receipt/{sale}/pdf', [ExportController::class, 'receiptPdf'])->name('exports.receipt.pdf');
     Route::get('/exports/invoice/{order}/pdf', [ExportController::class, 'invoicePdf'])->name('exports.invoice.pdf');
+    Route::get('/exports/sales-invoice/{invoice}/pdf', [ExportController::class, 'salesInvoicePdf'])->name('exports.sales-invoice.pdf');
     // Accounting Web
     Route::prefix('accounting')->name('accounting.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Accounting\Web\AccountingController::class, 'dashboard'])->name('dashboard');
