@@ -30,23 +30,15 @@ class SalesInvoiceTest extends TestCase
         parent::setUp();
         $this->seedFoundationTenantAndStaff();
 
-        $this->arAccount = Account::create([
-            'tenant_id' => $this->foundationTenantId,
-            'name' => 'AR',
-            'code' => 'FB1300',
-            'type' => 'asset',
-            'is_active' => true,
-        ]);
-        AccountSetting::create([
-            'tenant_id' => $this->foundationTenantId,
-            'key' => 'customer_receivable',
-            'account_id' => $this->arAccount->id,
-        ]);
-        AccountSetting::create([
-            'tenant_id' => $this->foundationTenantId,
-            'key' => 'pos_bank',
-            'account_id' => $this->foundationCashAccount->id,
-        ]);
+        $this->arAccount = Account::withoutGlobalScopes()
+            ->where('tenant_id', $this->foundationTenantId)
+            ->where('code', 'FB1300')
+            ->firstOrFail();
+
+        AccountSetting::updateOrCreate(
+            ['tenant_id' => $this->foundationTenantId, 'key' => 'pos_bank'],
+            ['account_id' => $this->foundationCashAccount->id]
+        );
 
         foreach ([
             'sales_invoices.view', 'sales_invoices.create', 'sales_invoices.edit',
@@ -108,7 +100,7 @@ class SalesInvoiceTest extends TestCase
                 'confirm_now' => 1,
             ]);
 
-        $response->assertRedirect();
+        $response->assertRedirect(route('sales.invoices.index'));
         $invoice = SalesInvoice::first();
         $this->assertSame('confirmed', $invoice->status);
         $this->assertNotNull($invoice->invoice_number);
@@ -167,6 +159,58 @@ class SalesInvoiceTest extends TestCase
 
         $first->refresh();
         $this->assertSame('paid', $first->status);
+    }
+
+    public function test_installment_down_payment_cannot_exceed_total_on_confirm(): void
+    {
+        $response = $this->actingAs($this->foundationUser)
+            ->withHeaders($this->tenantHeader())
+            ->from(route('sales.invoices.create'))
+            ->post(route('sales.invoices.store'), [
+                'customer_id' => $this->customer->id,
+                'warehouse_id' => $this->warehouse->id,
+                'payment_term' => 'installment',
+                'lines' => $this->linePayload(),
+                'down_payment' => 500,
+                'installment_count' => 3,
+                'interval_days' => 30,
+                'first_due_date' => now()->addMonth()->toDateString(),
+                'confirm_now' => 1,
+            ]);
+
+        $response->assertRedirect(route('sales.invoices.create'));
+        $response->assertSessionHasErrors('down_payment');
+        $this->assertSame(0, SalesInvoice::count());
+    }
+
+    public function test_installment_down_payment_cannot_exceed_total_when_confirming_draft_from_show(): void
+    {
+        $this->actingAs($this->foundationUser)
+            ->withHeaders($this->tenantHeader())
+            ->post(route('sales.invoices.store'), [
+                'customer_id' => $this->customer->id,
+                'warehouse_id' => $this->warehouse->id,
+                'payment_term' => 'installment',
+                'lines' => $this->linePayload(),
+                'confirm_now' => 0,
+            ]);
+
+        $invoice = SalesInvoice::first();
+        $this->assertSame('draft', $invoice->status);
+
+        $response = $this->actingAs($this->foundationUser)
+            ->withHeaders($this->tenantHeader())
+            ->from(route('sales.invoices.show', $invoice))
+            ->post(route('sales.invoices.confirm', $invoice), [
+                'down_payment' => 500,
+                'installment_count' => 3,
+                'interval_days' => 30,
+                'first_due_date' => now()->addMonth()->toDateString(),
+            ]);
+
+        $response->assertRedirect(route('sales.invoices.show', $invoice));
+        $response->assertSessionHasErrors('down_payment');
+        $this->assertSame('draft', $invoice->fresh()->status);
     }
 
     public function test_invoice_numbers_are_unique_per_tenant(): void

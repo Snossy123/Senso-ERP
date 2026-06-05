@@ -8,6 +8,12 @@
         'discount' => $l->discount,
         'tax_rate' => $l->tax_rate,
     ])->toArray() : [['product_id' => '', 'quantity' => 1, 'unit_price' => 0, 'discount' => 0, 'tax_rate' => 0]]);
+    $productOptions = $products->map(fn ($p) => [
+        'id' => $p->id,
+        'name' => $p->name,
+        'sku' => $p->sku,
+        'price' => (float) $p->selling_price,
+    ])->values();
 @endphp
 <div class="row">
     <div class="col-md-4 form-group">
@@ -49,7 +55,9 @@
 <div id="installment-fields" class="row border rounded p-3 mb-3" style="display:none;">
     <div class="col-md-3 form-group">
         <label>{{ __('sales_invoices.down_payment') }}</label>
-        <input type="number" step="0.01" name="down_payment" class="form-control" value="{{ old('down_payment', 0) }}">
+        <input type="number" step="0.01" name="down_payment" class="form-control @error('down_payment') is-invalid @enderror" value="{{ old('down_payment', 0) }}">
+        @error('down_payment')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+        <small class="text-muted" id="installment-total-hint"></small>
     </div>
     <div class="col-md-2 form-group">
         <label>{{ __('sales_invoices.installment_count') }}</label>
@@ -113,7 +121,7 @@
 
 <script>
 (function () {
-    const products = @json($products->map(fn ($p) => ['id' => $p->id, 'name' => $p->name, 'sku' => $p->sku, 'price' => $p->selling_price]));
+    const products = @json($productOptions);
     let lineIndex = document.querySelectorAll('.line-row').length;
 
     function productOptions(selected) {
@@ -164,5 +172,47 @@
     }
     term?.addEventListener('change', toggleInst);
     toggleInst();
+
+    function parseNum(el) {
+        const v = parseFloat(el?.value);
+        return Number.isFinite(v) ? v : 0;
+    }
+
+    function invoiceTotal() {
+        let subtotal = 0;
+        let tax = 0;
+        document.querySelectorAll('.line-row').forEach(row => {
+            const qty = parseNum(row.querySelector('[name*="[quantity]"]'));
+            const price = parseNum(row.querySelector('.line-price'));
+            const disc = parseNum(row.querySelector('[name*="[discount]"]'));
+            const taxRate = parseNum(row.querySelector('[name*="[tax_rate]"]'));
+            const lineNet = Math.max(0, qty * price - disc);
+            subtotal += lineNet;
+            tax += Math.round(lineNet * taxRate / 100 * 100) / 100;
+        });
+        const orderDisc = parseNum(document.querySelector('[name="discount_amount"]'));
+        const subAfter = Math.max(0, subtotal - orderDisc);
+        const ratio = subtotal > 0 ? subAfter / subtotal : 1;
+        return Math.round((subAfter + tax * ratio) * 100) / 100;
+    }
+
+    function refreshInstallmentHint() {
+        const hint = document.getElementById('installment-total-hint');
+        const down = document.querySelector('[name="down_payment"]');
+        if (!hint || term.value !== 'installment') return;
+        const total = invoiceTotal();
+        hint.textContent = '{{ __('sales_invoices.installment_total_hint') }}'.replace(':total', total.toFixed(2));
+        if (down && parseNum(down) >= total && total > 0) {
+            down.classList.add('is-invalid');
+        } else if (down) {
+            down.classList.remove('is-invalid');
+        }
+    }
+
+    document.getElementById('lines-body')?.addEventListener('input', refreshInstallmentHint);
+    document.querySelector('[name="discount_amount"]')?.addEventListener('input', refreshInstallmentHint);
+    document.querySelector('[name="down_payment"]')?.addEventListener('input', refreshInstallmentHint);
+    term?.addEventListener('change', refreshInstallmentHint);
+    refreshInstallmentHint();
 })();
 </script>
