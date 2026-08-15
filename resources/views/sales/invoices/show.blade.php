@@ -147,6 +147,19 @@
         </div>
         @endif
 
+        @include('partials.shipment-card', [
+            'shipment' => $invoice->shipment,
+            'shippingIntegration' => $shippingIntegration ?? null,
+            'canManage' => $invoice->isConfirmed() && (auth()->user()->isAdmin() || auth()->user()->hasPermission('sales_invoices.edit')),
+            'refreshUrl' => $invoice->shipment ? route('sales.invoices.shipments.refresh', $invoice) : null,
+            'updateUrl' => $invoice->shipment ? route('sales.invoices.shipments.update', $invoice) : null,
+            'createUrl' => route('sales.invoices.shipments.store', $invoice),
+            'createMode' => 'invoice',
+            'invoice' => $invoice,
+            'shippingRates' => $shippingRates ?? collect(),
+            'notes' => $invoice->notes,
+        ])
+
         @if($invoice->paymentAllocations->isNotEmpty())
         <div class="card mt-3">
             <div class="card-header"><h5 class="mb-0">{{ __('sales_invoices.payments_history') }}</h5></div>

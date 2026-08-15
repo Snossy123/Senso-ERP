@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Modules\StorefrontBuilder\Services\StorefrontRenderer;
 use App\Notifications\LowStockAlertNotification;
 use App\Notifications\OrderPlacedNotification;
+use App\Services\Shipping\ShippingRateService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -20,6 +21,7 @@ class CheckoutController extends Controller
     public function __construct(
         private readonly StorefrontRenderer $storefrontRenderer,
         private readonly RecordWebOrderService $recordWebOrderService,
+        private readonly ShippingRateService $shippingRates,
     ) {}
 
     private function getCart(): array
@@ -54,13 +56,15 @@ class CheckoutController extends Controller
         }
 
         $checkoutIdempotencyKey = session('checkout_idempotency_key');
+        $shippingRates = $this->shippingRates->activeRates();
 
         return view('store.checkout.index', compact(
             'items',
             'subtotal',
             'customer',
             'storefrontRender',
-            'checkoutIdempotencyKey'
+            'checkoutIdempotencyKey',
+            'shippingRates'
         ));
     }
 

@@ -24,6 +24,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('accounting:reconcile')->dailyAt('02:00');
+        $schedule->command('shipping:sync-qp')->everyFifteenMinutes();
     }
 
     /**

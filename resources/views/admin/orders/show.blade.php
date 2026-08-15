@@ -9,6 +9,8 @@
 </div>
 @endsection
 @section('content')
+@if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
+@if(session('error'))<div class="alert alert-danger">{{ session('error') }}</div>@endif
 <div class="row row-sm">
     <div class="col-lg-8">
         <div class="card">
@@ -30,9 +32,9 @@
                         @foreach($order->items as $item)
                         <tr>
                             <td>{{ $item->product_name }}</td>
-                            <td>{{ config('app.currency') }} {{ number_format($item->price, 2) }}</td>
+                            <td>{{ config('app.currency') }} {{ number_format($item->unit_price, 2) }}</td>
                             <td class="text-center">{{ $item->quantity }}</td>
-                            <td class="text-right font-weight-bold">{{ config('app.currency') }} {{ number_format($item->subtotal, 2) }}</td>
+                            <td class="text-right font-weight-bold">{{ config('app.currency') }} {{ number_format($item->total, 2) }}</td>
                         </tr>
                         @endforeach
                     </tbody>
@@ -50,6 +52,10 @@
                          <div class="d-flex justify-content-end mb-2">
                              <span class="text-muted mr-3">Subtotal</span>
                              <strong>{{ config('app.currency') }} {{ number_format($order->subtotal, 2) }}</strong>
+                         </div>
+                         <div class="d-flex justify-content-end mb-2">
+                             <span class="text-muted mr-3">{{ __('shipping.fee') }}</span>
+                             <strong>{{ config('app.currency') }} {{ number_format($order->shipping_cost ?? 0, 2) }}</strong>
                          </div>
                          <div class="d-flex justify-content-end mb-2">
                              <span class="text-muted mr-3">Tax ({{ $order->tax_rate }}%)</span>
@@ -86,6 +92,17 @@
                  </form>
             </div>
         </div>
+        @include('partials.shipment-card', [
+            'shipment' => $order->shipment,
+            'shippingIntegration' => $shippingIntegration ?? null,
+            'canManage' => auth()->user()->isAdmin() || auth()->user()->hasPermission('orders.process'),
+            'refreshUrl' => $order->shipment ? route('admin.orders.shipments.refresh', $order) : null,
+            'updateUrl' => $order->shipment ? route('admin.orders.shipments.update', $order) : null,
+            'createUrl' => route('admin.orders.shipments.store', $order),
+            'createMode' => 'order',
+            'shippingRates' => $shippingRates ?? collect(),
+            'notes' => $order->notes,
+        ])
         @if($order->isCollectible() && (auth()->user()->isAdmin() || auth()->user()->hasPermission('accounting.collect')))
         <div class="card mt-3 border-success">
             <div class="card-body">

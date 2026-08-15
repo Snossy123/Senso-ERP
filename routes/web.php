@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Admin\ShipmentController;
+use App\Http\Controllers\Admin\ShippingSettingsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PasswordChangeController;
 use App\Http\Controllers\DashboardController;
@@ -180,6 +182,19 @@ Route::middleware(['auth', 'password.must_change'])->group(function () {
     Route::get('/admin/orders/{order}', [AdminOrderController::class, 'show'])->name('admin.orders.show');
     Route::patch('/admin/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('admin.orders.status');
     Route::post('/admin/orders/{order}/mark-paid', [AdminOrderController::class, 'markPaid'])->name('admin.orders.mark-paid');
+    Route::post('/admin/orders/{order}/shipments', [ShipmentController::class, 'storeForOrder'])->name('admin.orders.shipments.store');
+    Route::post('/admin/orders/{order}/shipments/refresh', [ShipmentController::class, 'refreshForOrder'])->name('admin.orders.shipments.refresh');
+    Route::put('/admin/orders/{order}/shipments', [ShipmentController::class, 'updateForOrder'])->name('admin.orders.shipments.update');
+
+    Route::post('/sales/invoices/{invoice}/shipments', [ShipmentController::class, 'storeForInvoice'])->name('sales.invoices.shipments.store');
+    Route::post('/sales/invoices/{invoice}/shipments/refresh', [ShipmentController::class, 'refreshForInvoice'])->name('sales.invoices.shipments.refresh');
+    Route::put('/sales/invoices/{invoice}/shipments', [ShipmentController::class, 'updateForInvoice'])->name('sales.invoices.shipments.update');
+
+    Route::get('/admin/shipping', [ShippingSettingsController::class, 'index'])->name('admin.shipping.index');
+    Route::post('/admin/shipping', [ShippingSettingsController::class, 'update'])->name('admin.shipping.update');
+    Route::post('/admin/shipping/rates', [ShippingSettingsController::class, 'storeRate'])->name('admin.shipping.rates.store');
+    Route::put('/admin/shipping/rates/{rate}', [ShippingSettingsController::class, 'updateRate'])->name('admin.shipping.rates.update');
+    Route::delete('/admin/shipping/rates/{rate}', [ShippingSettingsController::class, 'destroyRate'])->name('admin.shipping.rates.destroy');
 
     // Admin — User Management
     Route::resource('admin/users', UserController::class)->names('admin.users');

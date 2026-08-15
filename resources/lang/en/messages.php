@@ -9,6 +9,7 @@ return [
         'role_management' => 'Role Management',
         'tenant_management' => 'Tenant Management',
         'settings' => 'Settings',
+        'shipping' => 'Shipping',
         'activity_log' => 'Activity Log',
         'category_pos' => 'Point of Sale',
         'pos_terminal' => 'POS Terminal',

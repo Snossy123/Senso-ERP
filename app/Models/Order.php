@@ -7,6 +7,8 @@ use App\Traits\Loggable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class Order extends Model
 {
@@ -40,6 +42,16 @@ class Order extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(CustomerPayment::class);
+    }
+
+    public function shipments(): MorphMany
+    {
+        return $this->morphMany(Shipment::class, 'shippable');
+    }
+
+    public function shipment(): MorphOne
+    {
+        return $this->morphOne(Shipment::class, 'shippable')->latestOfMany();
     }
 
     public function isCollectible(): bool

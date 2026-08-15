@@ -5,13 +5,16 @@ namespace App\Http\Controllers\Admin;
 use App\Application\Sales\RecordCustomerPaymentService;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\ShippingIntegration;
+use App\Services\Shipping\ShippingRateService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
     public function __construct(
-        private readonly RecordCustomerPaymentService $recordCustomerPaymentService
+        private readonly RecordCustomerPaymentService $recordCustomerPaymentService,
+        private readonly ShippingRateService $shippingRates,
     ) {
         $this->middleware('auth');
     }
@@ -36,9 +39,11 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        $order->load('items.product', 'customer');
+        $order->load('items.product', 'customer', 'shipment');
+        $shippingIntegration = ShippingIntegration::query()->first();
+        $shippingRates = $this->shippingRates->activeRates();
 
-        return view('admin.orders.show', compact('order'));
+        return view('admin.orders.show', compact('order', 'shippingIntegration', 'shippingRates'));
     }
 
     public function updateStatus(Request $request, Order $order)

@@ -9,7 +9,9 @@ use App\Models\Customer;
 use App\Models\InvoiceInstallment;
 use App\Models\Product;
 use App\Models\SalesInvoice;
+use App\Models\ShippingIntegration;
 use App\Models\Warehouse;
+use App\Services\Shipping\ShippingRateService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -18,6 +20,7 @@ class SalesInvoiceController extends Controller
     public function __construct(
         protected SalesInvoiceService $invoiceService,
         protected InstallmentScheduleService $installmentSchedule,
+        protected ShippingRateService $shippingRates,
     ) {
         $this->middleware('auth');
     }
@@ -110,9 +113,13 @@ class SalesInvoiceController extends Controller
             'customer', 'lines.product', 'user', 'warehouse',
             'installmentPlan', 'installments',
             'paymentAllocations.payment',
+            'shipment',
         ]);
 
-        return view('sales.invoices.show', compact('invoice'));
+        $shippingIntegration = ShippingIntegration::query()->first();
+        $shippingRates = $this->shippingRates->activeRates();
+
+        return view('sales.invoices.show', compact('invoice', 'shippingIntegration', 'shippingRates'));
     }
 
     public function edit(SalesInvoice $invoice)

@@ -6,6 +6,7 @@ use App\Application\Inventory\InventoryPostingService;
 use App\Application\Sales\RecordWebOrderService;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\ShippingRate;
 use App\Models\StockMovement;
 use App\Services\TenantManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -149,6 +150,34 @@ class RecordWebOrderServiceTest extends TestCase
             'Order must not persist when posting rolls back the transaction.'
         );
         $this->assertSame(10, $product->fresh()->stock_quantity);
+    }
+
+    public function test_record_adds_city_shipping_rate_to_total(): void
+    {
+        ShippingRate::create([
+            'tenant_id' => $this->foundationTenantId,
+            'city' => 'City',
+            'city_label' => 'City',
+            'fee' => 15.5,
+            'is_active' => true,
+        ]);
+
+        $product = Product::factory()->create([
+            'tenant_id' => $this->foundationTenantId,
+            'stock_quantity' => 10,
+            'selling_price' => 20,
+            'is_ecommerce' => true,
+        ]);
+
+        $result = app(RecordWebOrderService::class)->record(
+            [$product->id => ['qty' => 2]],
+            $this->checkoutPayload(),
+            null,
+        );
+
+        $this->assertEquals(40, (float) $result->order->subtotal);
+        $this->assertEquals(15.5, (float) $result->order->shipping_cost);
+        $this->assertEquals(55.5, (float) $result->order->total);
     }
 
     public function test_record_rejects_empty_cart(): void

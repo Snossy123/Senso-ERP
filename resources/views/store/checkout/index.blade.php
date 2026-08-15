@@ -26,7 +26,18 @@
                     </div>
                     <div class="col-md-7">
                         <label class="form-label fw-bold">City <span class="text-danger">*</span></label>
-                        <input type="text" name="city" class="form-control rounded-pill px-3 bg-light border-0 py-2 mt-1" value="{{ old('city', $customer?->city) }}" placeholder="e.g. New York" required>
+                        @if(($shippingRates ?? collect())->isNotEmpty())
+                            <select name="city" id="checkout-city" class="form-control rounded-pill px-3 bg-light border-0 py-2 mt-1" required>
+                                <option value="">Select city</option>
+                                @foreach($shippingRates as $rate)
+                                    <option value="{{ $rate->city }}" data-fee="{{ $rate->fee }}" @selected(old('city', $customer?->city) === $rate->city)>
+                                        {{ $rate->displayName() }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        @else
+                            <input type="text" name="city" class="form-control rounded-pill px-3 bg-light border-0 py-2 mt-1" value="{{ old('city', $customer?->city) }}" placeholder="e.g. New York" required>
+                        @endif
                     </div>
                     <div class="col-12">
                         <label class="form-label fw-bold mb-3">Payment Method <span class="text-danger">*</span></label>
@@ -78,13 +89,36 @@
             </div>
             <div class="d-flex justify-content-between mb-3 text-muted">
                 <span>Shipping Fee</span>
-                <span class="text-success fw-bold">FREE</span>
+                <span class="fw-bold" id="checkout-shipping-fee">{{ config('app.currency') }} 0.00</span>
             </div>
             <div class="d-flex justify-content-between mt-5">
                 <strong class="fs-4">Order Total</strong>
-                <strong class="fs-4 text-primary">{{ config('app.currency') }} {{ number_format($subtotal, 2) }}</strong>
+                <strong class="fs-4 text-primary" id="checkout-order-total">{{ config('app.currency') }} {{ number_format($subtotal, 2) }}</strong>
             </div>
         </div>
     </div>
 </div>
+@endsection
+
+@section('js')
+<script>
+(function () {
+    var city = document.getElementById('checkout-city');
+    if (!city) return;
+    var feeEl = document.getElementById('checkout-shipping-fee');
+    var totalEl = document.getElementById('checkout-order-total');
+    var subtotal = {{ (float) $subtotal }};
+    var currency = @json(config('app.currency'));
+    function money(n) { return currency + ' ' + Number(n).toFixed(2); }
+    function update() {
+        var opt = city.options[city.selectedIndex];
+        var fee = opt && opt.dataset.fee ? parseFloat(opt.dataset.fee) : 0;
+        if (isNaN(fee)) fee = 0;
+        if (feeEl) feeEl.textContent = fee > 0 ? money(fee) : 'FREE';
+        if (totalEl) totalEl.textContent = money(subtotal + fee);
+    }
+    city.addEventListener('change', update);
+    update();
+})();
+</script>
 @endsection

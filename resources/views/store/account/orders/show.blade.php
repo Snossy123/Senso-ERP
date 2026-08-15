@@ -71,10 +71,18 @@
                 <div class="card-body">
                     <p class="mb-2"><strong>Order Date:</strong><br>{{ $order->created_at->format('M d, Y H:i') }}</p>
                     <p class="mb-2"><strong>Shipping Address:</strong><br>
-                        {{ $order->shipping_name }}<br>
+                        {{ $order->customer_name }}<br>
                         {{ $order->shipping_address }}<br>
-                        {{ $order->shipping_city }}, {{ $order->shipping_postal_code }}
+                        {{ $order->city }}
                     </p>
+                    @if($order->shipment)
+                    <p class="mb-2"><strong>Shipping:</strong><br>
+                        {{ $order->shipment->status ?: '—' }}
+                        @if($order->shipment->carrier_serial)
+                            <br><span class="text-muted">QP {{ $order->shipment->carrier_serial }}</span>
+                        @endif
+                    </p>
+                    @endif
                     @if($order->notes)
                     <p class="mb-0"><strong>Order Notes:</strong><br>{{ $order->notes }}</p>
                     @endif

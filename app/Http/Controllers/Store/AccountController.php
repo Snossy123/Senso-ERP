@@ -39,7 +39,7 @@ class AccountController extends Controller
     {
         $customer = Auth::guard('customer')->user();
         abort_if($order->customer_id !== $customer->id, 403);
-        $order->load('items.product');
+        $order->load('items.product', 'shipment');
         $storefrontRender = $this->storefrontRenderer->forPage('account');
 
         return view('store.account.orders.show', compact('order', 'storefrontRender'));

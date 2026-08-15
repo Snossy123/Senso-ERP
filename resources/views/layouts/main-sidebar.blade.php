@@ -110,6 +110,12 @@
 							<span class="side-menu__label">{{ __('messages.sidebar.settings') }}</span>
 						</a>
 					</li>
+					<li class="slide">
+						<a class="side-menu__item" href="{{ route('admin.shipping.index') }}">
+							<i class="side-menu__icon fe fe-truck"></i>
+							<span class="side-menu__label">{{ __('messages.sidebar.shipping') }}</span>
+						</a>
+					</li>
 					@endif
 					@if($sidebarUser->isAdmin())
 					<li class="slide">

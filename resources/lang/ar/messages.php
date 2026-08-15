@@ -9,6 +9,7 @@ return [
         'role_management' => 'إدارة الأدوار',
         'tenant_management' => 'إدارة المستأجرين',
         'settings' => 'الإعدادات',
+        'shipping' => 'الشحن',
         'activity_log' => 'سجل النشاط',
         'category_pos' => 'نقطة البيع',
         'pos_terminal' => 'شاشة نقطة البيع',

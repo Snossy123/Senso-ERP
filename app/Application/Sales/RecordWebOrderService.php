@@ -12,6 +12,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Tenant;
 use App\Services\Accounting\CommerceRevenueRecognition;
+use App\Services\Shipping\ShippingRateService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
@@ -25,6 +26,7 @@ class RecordWebOrderService
     public function __construct(
         private readonly InventoryPostingService $inventoryPostingService,
         private readonly StockAvailabilityService $stockAvailability,
+        private readonly ShippingRateService $shippingRates,
     ) {}
 
     /**
@@ -88,6 +90,8 @@ class RecordWebOrderService
                 $lines[] = ['product' => $product, 'qty' => $qty, 'lineTotal' => $lineTotal];
             }
 
+            $shippingCost = $this->shippingRates->feeForCity($checkoutData['city'] ?? null);
+
             $orderAttrs = [
                 'order_number' => Order::generateOrderNumber(),
                 'customer_id' => $customer?->id,
@@ -97,7 +101,8 @@ class RecordWebOrderService
                 'shipping_address' => $checkoutData['shipping_address'],
                 'city' => $checkoutData['city'],
                 'subtotal' => $subtotal,
-                'total' => $subtotal,
+                'shipping_cost' => $shippingCost,
+                'total' => $subtotal + $shippingCost,
                 'payment_method' => $checkoutData['payment_method'],
                 'payment_status' => 'pending',
                 'status' => 'pending',

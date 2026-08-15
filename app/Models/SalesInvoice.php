@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class SalesInvoice extends Model
 {
@@ -64,6 +66,16 @@ class SalesInvoice extends Model
     public function paymentAllocations(): HasMany
     {
         return $this->hasMany(InvoicePaymentAllocation::class);
+    }
+
+    public function shipments(): MorphMany
+    {
+        return $this->morphMany(Shipment::class, 'shippable');
+    }
+
+    public function shipment(): MorphOne
+    {
+        return $this->morphOne(Shipment::class, 'shippable')->latestOfMany();
     }
 
     public function isDraft(): bool
